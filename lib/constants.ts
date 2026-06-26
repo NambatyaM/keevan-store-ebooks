@@ -1,6 +1,6 @@
 export const site = {
   name: "Keevan Store",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://keevanstore.in",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://keevanstore.in",
   supportPhone: process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? "+256768345905",
   supportWhatsApp: process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? "https://wa.me/256768345905",
   commissionRate: Number(process.env.NEXT_PUBLIC_COMMISSION_RATE) || 0.1,

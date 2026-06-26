@@ -11,7 +11,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   const supabase = createClient(url, key);
   const { error } = await supabase.auth.resetPasswordForEmail(input.email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://keevanstore.in"}/update-password`
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://keevanstore.in"}/update-password`
   });
   if (error) return apiError(error.message, 400);
   return json({ ok: true });
