@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Check, Download, ShieldCheck, WifiOff } from "lucide-react";
 import { ButtonLink } from "@/components/button";
+import { BuyNowModal } from "@/components/buy-now-modal";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TrackView } from "@/components/track-view";
@@ -147,9 +148,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <ShieldCheck className="text-brand-green" aria-hidden />
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <ButtonLink href={`/checkout/${product.slug}`} icon>
-                Buy Now
-              </ButtonLink>
+              <BuyNowModal productId={product.id} productSlug={product.slug} />
               <ButtonLink href={`/store/${product.storeHandle}`} variant="secondary">
                 Visit Creator Store
               </ButtonLink>
