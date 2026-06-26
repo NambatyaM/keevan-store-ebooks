@@ -11,19 +11,30 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     email: input.email,
     password: input.password,
     email_confirm: true,
-    user_metadata: { full_name: input.fullName }
+    user_metadata: { full_name: input.fullName, role: "creator" }
   });
 
   if (error || !data.user) return apiError(error?.message ?? "Unable to register user", 400);
 
-  await supabase.from("users").insert({ id: data.user.id, email: input.email, full_name: input.fullName, role: "creator" });
+  const userId = data.user.id;
+
+  const { error: userError } = await supabase.from("users").insert({ id: userId, email: input.email, full_name: input.fullName, role: "creator" });
+  if (userError) {
+    await supabase.auth.admin.deleteUser(userId);
+    return apiError(userError.message, 400);
+  }
+
   const { data: creator, error: creatorError } = await supabase
     .from("creators")
-    .insert({ user_id: data.user.id, display_name: input.fullName })
+    .insert({ user_id: userId, display_name: input.fullName })
     .select("id")
     .single();
 
-  if (creatorError || !creator) return apiError(creatorError?.message ?? "Unable to create creator profile", 400);
+  if (creatorError || !creator) {
+    await supabase.from("users").delete().eq("id", userId);
+    await supabase.auth.admin.deleteUser(userId);
+    return apiError(creatorError?.message ?? "Unable to create creator profile", 400);
+  }
 
   const { error: storeError } = await supabase.from("stores").insert({
     creator_id: creator.id,
@@ -31,7 +42,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     name: `${input.fullName}'s Store`
   });
 
-  if (storeError) return apiError(storeError.message, 400);
+  if (storeError) {
+    await supabase.from("creators").delete().eq("id", creator.id);
+    await supabase.from("users").delete().eq("id", userId);
+    await supabase.auth.admin.deleteUser(userId);
+    return apiError(storeError.message, 400);
+  }
 
-  return json({ userId: data.user.id, creatorId: creator.id, storeHandle: input.storeHandle }, { status: 201 });
+  return json({ userId, creatorId: creator.id, storeHandle: input.storeHandle }, { status: 201 });
 });

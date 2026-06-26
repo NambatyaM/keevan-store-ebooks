@@ -1,0 +1,77 @@
+import { NextRequest } from "next/server";
+import { apiError, json, logAdminAction, readJson, requireAdmin, withErrorHandling } from "@/lib/api";
+import { refundDecisionSchema } from "@/lib/schemas";
+import { refundPesapalOrder, getPesapalTransactionStatus } from "@/lib/pesapal";
+import { getSupabaseAdminClient } from "@/lib/supabase";
+
+export const POST = withErrorHandling(async (request: NextRequest, context?: unknown) => {
+  const input = await readJson(request, refundDecisionSchema);
+  const { params } = context as { params: Promise<{ id: string }> };
+  const { id } = await params;
+  const { supabase, authUser } = await requireAdmin(request);
+
+  const { data: refund } = await supabase
+    .from("refunds")
+    .select("*,orders!inner(amount,creator_id),payments!inner(tracking_id,merchant_reference)")
+    .eq("id", id)
+    .single();
+
+  if (!refund) return apiError("Refund not found", 404);
+  if (refund.status !== "pending") return apiError("Refund already processed", 400);
+
+  let pesapalRefundResponse: Record<string, unknown> | null = null;
+
+  const payment = Array.isArray(refund.payments) ? refund.payments[0] : refund.payments;
+  const order = Array.isArray(refund.orders) ? refund.orders[0] : refund.orders;
+
+  if (payment?.tracking_id) {
+    try {
+      const statusData = await getPesapalTransactionStatus(payment.tracking_id);
+      const confirmationCode = statusData.confirmation_code;
+
+      if (confirmationCode) {
+        const result = await refundPesapalOrder({
+          confirmationCode,
+          amount: order.amount,
+          username: authUser.email ?? authUser.id,
+          remarks: input.notes ?? "Refund approved by admin"
+        });
+
+        if (result.ok) {
+          pesapalRefundResponse = { ...result.raw, pesapal_status: "submitted" };
+        } else {
+          pesapalRefundResponse = { error: result.error, pesapal_status: "failed" };
+        }
+      } else {
+        pesapalRefundResponse = { pesapal_status: "skipped", reason: "No confirmation code available" };
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("Pesapal refund attempt failed:", message);
+      pesapalRefundResponse = { pesapal_status: "error", error: message };
+    }
+  }
+
+  const { data: result, error: rpcError } = await supabase.rpc("process_refund", {
+    p_refund_id: id,
+    p_admin_user_id: authUser.id,
+    p_decision: "approved",
+    p_admin_note: input.notes ?? null
+  });
+
+  if (rpcError) return apiError(rpcError.message, 400);
+
+  if (pesapalRefundResponse) {
+    await supabase.from("refunds").update({ pesapal_refund_response: pesapalRefundResponse }).eq("id", id);
+  }
+
+  await logAdminAction({
+    adminUserId: authUser.id,
+    action: "refund.approve",
+    targetTable: "refunds",
+    targetId: id,
+    metadata: { order_id: refund.order_id, amount: order.amount, pesapal: pesapalRefundResponse?.pesapal_status }
+  });
+
+  return json({ refund: result, pesapalRefund: pesapalRefundResponse });
+});

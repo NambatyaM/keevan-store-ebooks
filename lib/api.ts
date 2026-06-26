@@ -1,11 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-
-const buckets = new Map<string, { count: number; resetAt: number }>();
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export function json(data: unknown, init?: ResponseInit) {
   return NextResponse.json(data, init);
+}
+
+export function checkCSRF(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+  const allowedOrigin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
+  if (!allowedOrigin) return;
+
+  const source = origin ?? referer ?? "";
+  try {
+    const sourceOrigin = new URL(source).origin;
+    const allowed = new URL(allowedOrigin).origin;
+    if (sourceOrigin !== allowed) {
+      throw Object.assign(new Error("Cross-site request forbidden"), { status: 403 });
+    }
+  } catch (e) {
+    if (e instanceof TypeError) {
+      throw Object.assign(new Error("Cross-site request forbidden"), { status: 403 });
+    }
+    throw e;
+  }
 }
 
 export function apiError(message: string, status = 400, details?: unknown) {
@@ -26,56 +46,95 @@ export async function readJson<T>(request: NextRequest, schema: z.Schema<T>) {
 export function withErrorHandling(handler: (request: NextRequest, context?: unknown) => Promise<Response>) {
   return async (request: NextRequest, context?: unknown) => {
     try {
-      const limited = rateLimit(request);
+      const limited = await rateLimit(request);
       if (limited) return limited;
       return await handler(request, context);
     } catch (error) {
       const err = error as Error & { status?: number; details?: unknown };
-      return apiError(err.message || "Unexpected server error", err.status ?? 500, err.details);
+      console.error(
+        JSON.stringify({
+          level: "error",
+          timestamp: new Date().toISOString(),
+          path: request.nextUrl?.pathname ?? "unknown",
+          method: request.method,
+          message: err.message,
+          status: err.status ?? 500,
+          ...(process.env.NODE_ENV === "development" ? { details: err.details, stack: err.stack } : {})
+        })
+      );
+      return apiError(err.status === 500 ? "Unexpected server error" : err.message, err.status ?? 500, err.details);
     }
   };
 }
 
-export function rateLimit(request: NextRequest) {
-  const key = request.headers.get("x-forwarded-for") ?? "local";
-  const now = Date.now();
-  const bucket = buckets.get(key);
+export async function rateLimit(request: NextRequest, maxRequests = 120, windowSeconds = 60) {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  const realIp = request.headers.get("x-real-ip");
+  const ip = forwardedFor?.split(",")[0]?.trim() || realIp || "local";
+  const windowStart = new Date(Math.floor(Date.now() / (windowSeconds * 1000)) * (windowSeconds * 1000)).toISOString();
 
-  if (!bucket || bucket.resetAt < now) {
-    buckets.set(key, { count: 1, resetAt: now + 60_000 });
+  try {
+    const supabase = getSupabaseAdminClient();
+    await supabase.rpc("rate_limit_check_and_increment", {
+      p_key: ip,
+      p_window_start: windowStart,
+      p_max_requests: maxRequests,
+      p_window_seconds: windowSeconds
+    });
+
+    const { data: current } = await supabase
+      .from("rate_limits")
+      .select("count")
+      .eq("key", ip)
+      .eq("window_start", windowStart)
+      .maybeSingle();
+
+    if (current && current.count > maxRequests) {
+      return apiError("Too many requests. Please try again shortly.", 429);
+    }
+  } catch {
     return null;
   }
 
-  if (bucket.count >= 120) {
-    return apiError("Too many requests. Please try again shortly.", 429);
-  }
-
-  bucket.count += 1;
   return null;
 }
 
-export async function requireUser(request: NextRequest) {
+async function resolveUser(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.replace(/^Bearer\s+/i, "");
 
-  if (!token) {
+  if (token) {
+    const supabase = getSupabaseAdminClient();
+    const { data, error } = await supabase.auth.getUser(token);
+    if (!error && data.user) {
+      return { user: data.user };
+    }
+  }
+
+  const cookieClient = createServerSupabaseClient(request);
+  const { data: sessionData } = await cookieClient.auth.getSession();
+  if (sessionData.session?.user) {
+    return { user: sessionData.session.user };
+  }
+
+  return { user: null };
+}
+
+export async function requireUser(request: NextRequest) {
+  const { user } = await resolveUser(request);
+
+  if (!user) {
     throw Object.assign(new Error("Authentication required"), { status: 401 });
   }
 
   const supabase = getSupabaseAdminClient();
-  const { data, error } = await supabase.auth.getUser(token);
-
-  if (error || !data.user) {
-    throw Object.assign(new Error("Invalid authentication token"), { status: 401 });
-  }
-
-  const { data: profile, error: profileError } = await supabase.from("users").select("*").eq("id", data.user.id).single();
+  const { data: profile, error: profileError } = await supabase.from("users").select("*").eq("id", user.id).single();
 
   if (profileError || !profile) {
     throw Object.assign(new Error("User profile not found"), { status: 403 });
   }
 
-  return { supabase, authUser: data.user, profile };
+  return { supabase, authUser: user, profile };
 }
 
 export async function requireAdmin(request: NextRequest) {

@@ -14,11 +14,13 @@ Core tables:
 - `withdrawal_requests`
 - `analytics_events`
 - `admin_logs`
+- `refunds`
+- `email_queue`
 
 Requirements:
 
 - UUID primary keys on every core entity.
-- Foreign keys for user, creator, store, product, order, payment, download, withdrawal, analytics, and admin-log relationships.
+- Foreign keys for user, creator, store, product, order, payment, download, withdrawal, analytics, refund, and admin-log relationships.
 - Indexes for public slugs, creator/store lookups, order/payment references, withdrawal status, and analytics reporting.
 - Data constraints for commission, upload metadata, statuses, non-negative monetary values, and withdrawal minimums.
 - Row Level Security enabled on every table.

@@ -8,7 +8,7 @@ export const GET = withErrorHandling(async (_request: NextRequest, context?: unk
   const supabase = getSupabaseAdminClient();
   const { data: download, error } = await supabase
     .from("downloads")
-    .select("id,expires_at,products(file_path)")
+    .select("id,expires_at,order_id,product_id,products(file_path)")
     .eq("token", token)
     .single();
 
@@ -20,5 +20,12 @@ export const GET = withErrorHandling(async (_request: NextRequest, context?: unk
   if (signedError || !data?.signedUrl) return apiError("Unable to create signed download URL", 500);
 
   await supabase.from("downloads").update({ downloaded_at: new Date().toISOString() }).eq("id", download.id);
+
+  await supabase.from("analytics_events").insert({
+    product_id: download.product_id,
+    event_type: "download",
+    metadata: { order_id: download.order_id }
+  });
+
   return NextResponse.redirect(data.signedUrl);
 });

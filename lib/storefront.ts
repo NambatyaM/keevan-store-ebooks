@@ -29,13 +29,19 @@ export type DownloadPageState = {
   product: StorefrontProduct | null;
   verifiedToken: string | null;
   expired: boolean;
+  serviceAvailable: boolean;
 };
 
-export async function getPublishedProductBySlug(slug: string): Promise<StorefrontProduct | null> {
+async function requireSupabase() {
   const supabase = getOptionalSupabaseAdminClient();
   if (!supabase) {
-    return null;
+    throw new Error("Service temporarily unavailable");
   }
+  return supabase;
+}
+
+export async function getPublishedProductBySlug(slug: string): Promise<StorefrontProduct | null> {
+  const supabase = await requireSupabase();
 
   const { data: product } = await supabase
     .from("products")
@@ -75,10 +81,7 @@ export async function getPublishedProductBySlug(slug: string): Promise<Storefron
 }
 
 export async function getPublishedStoreByHandle(handle: string): Promise<StorefrontStore | null> {
-  const supabase = getOptionalSupabaseAdminClient();
-  if (!supabase) {
-    return null;
-  }
+  const supabase = await requireSupabase();
 
   const { data: store } = await supabase
     .from("stores")
@@ -130,32 +133,34 @@ export async function getPublishedStoreByHandle(handle: string): Promise<Storefr
 }
 
 export async function getDownloadPageState(slug: string, token?: string): Promise<DownloadPageState> {
-  const product = await getPublishedProductBySlug(slug);
-  if (!product || !token) {
-    return { product, verifiedToken: null, expired: false };
+  try {
+    const product = await getPublishedProductBySlug(slug);
+    if (!product || !token) {
+      return { product, verifiedToken: null, expired: false, serviceAvailable: true };
+    }
+
+    const supabase = await requireSupabase();
+
+    const { data: download } = await supabase
+      .from("downloads")
+      .select("token,expires_at,product_id")
+      .eq("token", token)
+      .eq("product_id", product.id)
+      .single();
+
+    if (!download) {
+      return { product, verifiedToken: null, expired: false, serviceAvailable: true };
+    }
+
+    const expired = new Date(download.expires_at).getTime() < Date.now();
+
+    return {
+      product,
+      verifiedToken: expired ? null : download.token,
+      expired,
+      serviceAvailable: true
+    };
+  } catch {
+    return { product: null, verifiedToken: null, expired: false, serviceAvailable: false };
   }
-
-  const supabase = getOptionalSupabaseAdminClient();
-  if (!supabase) {
-    return { product, verifiedToken: null, expired: false };
-  }
-
-  const { data: download } = await supabase
-    .from("downloads")
-    .select("token,expires_at,product_id")
-    .eq("token", token)
-    .eq("product_id", product.id)
-    .single();
-
-  if (!download) {
-    return { product, verifiedToken: null, expired: false };
-  }
-
-  const expired = new Date(download.expires_at).getTime() < Date.now();
-
-  return {
-    product,
-    verifiedToken: expired ? null : download.token,
-    expired
-  };
 }

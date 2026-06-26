@@ -1,0 +1,23 @@
+# Keevan Store — Creator Commerce for East Africa
+> Sell e-books, PDFs, guides, templates, and digital products online. East African creators keep 90% of every sale. Pesapal payments. Instant delivery. No monthly fees.
+
+## Essential pages
+- [Homepage](https://keevanstore.in) — Overview of the platform, features, and how it works
+- [About](https://keevanstore.in/about) — What Keevan Store is and who it serves
+- [Features](https://keevanstore.in/features) — Full feature list for creators
+- [Pricing](https://keevanstore.in/pricing) — 10% platform commission, no monthly fees
+- [FAQ](https://keevanstore.in/faq) — Frequently asked questions about buying and selling
+
+## For creators
+- [Sign up](https://keevanstore.in/signup) — Create a free creator account
+- [Login](https://keevanstore.in/login) — Creator and admin login
+- [Pricing](https://keevanstore.in/pricing) — Commission rates, minimum withdrawals
+
+## Policies
+- [Terms of Service](https://keevanstore.in/terms)
+- [Privacy Policy](https://keevanstore.in/privacy)
+- [Refund Policy](https://keevanstore.in/refund-policy)
+
+## Contact
+- WhatsApp: +256768345905
+- Support page: https://keevanstore.in/contact

@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { Menu, Store } from "lucide-react";
-import { ButtonLink } from "@/components/button";
+import { Store } from "lucide-react";
+import { SiteHeaderAuth } from "@/components/site-header-auth";
+import { MobileNav } from "@/components/mobile-nav";
 
 const nav = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/about", label: "About" },
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" }
 ];
@@ -26,17 +28,8 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-3 md:flex">
-          <ButtonLink href="/login" variant="secondary" className="min-h-10 px-4 py-2">
-            Login
-          </ButtonLink>
-          <ButtonLink href="/signup" className="min-h-10 px-4 py-2">
-            Start Selling Free
-          </ButtonLink>
-        </div>
-        <button className="focus-ring grid h-10 w-10 place-items-center rounded-md border border-neutral-200 md:hidden" aria-label="Open menu">
-          <Menu size={20} />
-        </button>
+        <SiteHeaderAuth />
+        <MobileNav />
       </div>
     </header>
   );

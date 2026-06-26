@@ -16,6 +16,7 @@
 - Submit buyer details and start Pesapal checkout.
 - Receive download access only after payment verification.
 - Download through a signed Supabase Storage URL.
+- Request a refund by looking up orders via email and submitting a reason.
 
 ## Admin Features
 
@@ -24,6 +25,7 @@
 - Approve, reject, and mark withdrawals paid.
 - Disable products and suspend stores.
 - Record all admin actions in audit logs.
+- Review, approve, and reject customer refund requests with admin notes.
 
 ## Business Rules
 
@@ -32,3 +34,4 @@
 - Minimum withdrawal: 50,000 UGX.
 - Payment verification is required before sale creation, creator balance changes, or download unlock.
 - Buyers are not required to create accounts.
+- Refunds are processed against the original payment via Pesapal and reverse the creator's earnings.

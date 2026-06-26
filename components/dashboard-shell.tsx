@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Gauge, Settings, Store } from "lucide-react";
+import { Gauge, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function DashboardShell({
@@ -57,29 +57,5 @@ export function DashboardShell({
         {children}
       </section>
     </main>
-  );
-}
-
-export function EmptyPanel({ title, text }: { title: string; text: string }) {
-  return (
-    <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-8 text-center">
-      <BookOpen className="mx-auto text-brand-green" aria-hidden />
-      <h2 className="mt-3 text-xl font-bold">{title}</h2>
-      <p className="mt-2 text-neutral-600">{text}</p>
-    </div>
-  );
-}
-
-export function SettingsPanel() {
-  return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-5">
-      <Settings className="text-brand-green" aria-hidden />
-      <h2 className="mt-3 text-xl font-bold">Store Settings</h2>
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <input className="focus-ring rounded-md border border-neutral-300 px-4 py-3" aria-label="Creator name" placeholder="Creator name" />
-        <input className="focus-ring rounded-md border border-neutral-300 px-4 py-3" aria-label="Store handle" placeholder="Store handle" />
-        <textarea className="focus-ring min-h-28 rounded-md border border-neutral-300 px-4 py-3 md:col-span-2" aria-label="Store bio" placeholder="Describe your store" />
-      </div>
-    </div>
   );
 }

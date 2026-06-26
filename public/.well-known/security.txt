@@ -1,0 +1,5 @@
+Contact: mailto:security@keevanstore.in
+Contact: https://wa.me/256768345905
+Preferred-Languages: en
+Canonical: https://keevanstore.in/.well-known/security.txt
+Policy: https://keevanstore.in/terms

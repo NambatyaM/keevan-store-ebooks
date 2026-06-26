@@ -39,9 +39,22 @@ All mutating APIs validate input with Zod, return structured JSON errors, and en
 - `POST /api/admin/withdrawals/[id]/reject`
 - `POST /api/admin/withdrawals/[id]/mark-paid`
 
+## Refunds
+
+- `POST /api/refunds/request` — Submit a refund request (email-verified, public)
+- `GET /api/orders/lookup?email=` — Look up paid orders by email (public, rate-limited: 5 req/min)
+- `GET /api/admin/refunds` — List refund requests (admin)
+- `POST /api/admin/refunds/[id]/approve` — Approve and process refund (admin)
+- `POST /api/admin/refunds/[id]/reject` — Reject refund (admin)
+
+## Email Queue
+
+- `POST /api/emails/process` — Process pending email queue (admin or cron)
+
 ## Admin Moderation
 
 - `POST /api/admin/products/[id]/disable`
+- `POST /api/admin/products/[id]/reactivate`
 - `POST /api/admin/stores/[id]/suspend`
 - `POST /api/admin/stores/[id]/reactivate`
 

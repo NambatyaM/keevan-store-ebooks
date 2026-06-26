@@ -1,10 +1,10 @@
 export const site = {
   name: "Keevan Store",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://keevanstore.in",
-  supportPhone: "+256768345905",
-  supportWhatsApp: "https://wa.me/256768345905",
-  commissionRate: 0.1,
-  minimumWithdrawal: 50000,
+  supportPhone: process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? "+256768345905",
+  supportWhatsApp: process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? "https://wa.me/256768345905",
+  commissionRate: Number(process.env.NEXT_PUBLIC_COMMISSION_RATE) || 0.1,
+  minimumWithdrawal: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL) || 50000,
   currency: "UGX"
 };
 
