@@ -48,3 +48,9 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          SENTRY_ORG: ""
+          SENTRY_PROJECT: ""
+          NEXT_PUBLIC_SENTRY_DSN: ""
+          SENTRY_DSN: ""
+          NEXT_TELEMETRY_DISABLED: "1"
+          SENTRY_TELEMETRY: "false"
