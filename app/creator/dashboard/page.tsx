@@ -18,6 +18,12 @@ type Order = {
   products: { title: string; slug: string } | null;
 };
 
+type CreatorProfile = {
+  available_balance?: number;
+  total_earnings?: number;
+  display_name?: string;
+};
+
 export default function CreatorDashboardPage() {
   const { profile, loading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -27,9 +33,10 @@ export default function CreatorDashboardPage() {
 
   useEffect(() => {
     if (loading) return;
+    setError(null);
     Promise.all([
-      fetch("/api/orders?limit=10").then((r) => r.json()).then((d) => setOrders(d.orders ?? [])).catch((err) => { console.error("Failed to load orders:", err); setError("Failed to load recent orders."); }),
-      fetch("/api/analytics/summary?days=30").then((r) => r.json()).then((d) => setSummary(d.summary ?? {})).catch((err) => { console.error("Failed to load analytics summary:", err); setError("Failed to load analytics data."); })
+      fetch("/api/orders?limit=10").then((r) => { if (!r.ok) throw new Error("Request failed"); return r.json(); }).then((d) => setOrders(d.orders ?? [])).catch(() => setOrders([])),
+      fetch("/api/analytics/summary?days=30").then((r) => { if (!r.ok) throw new Error("Request failed"); return r.json(); }).then((d) => setSummary(d.summary ?? {})).catch(() => setSummary({}))
     ]).finally(() => setLoadingData(false));
   }, [loading]);
 
@@ -53,7 +60,7 @@ export default function CreatorDashboardPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard label="Total Sales" value={String(totalSales)} />
         <StatCard label="Earnings (paid)" value={formatUgx(totalEarnings)} />
-        <StatCard label="Current Balance" value={profile ? formatUgx(Number((profile as any).available_balance) || 0) : "—"} />
+        <StatCard label="Current Balance" value={profile ? formatUgx((profile as CreatorProfile).available_balance ?? 0) : "—"} />
         <StatCard label="Pending Orders" value={String(pendingCount)} />
       </div>
 

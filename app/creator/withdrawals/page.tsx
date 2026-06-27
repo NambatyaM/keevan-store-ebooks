@@ -31,7 +31,7 @@ export default function CreatorWithdrawalsPage() {
     Promise.all([
       fetch("/api/withdrawals").then((r) => r.json()).then((d) => setWithdrawals(d.withdrawals ?? [])).catch((err) => { console.error("Failed to load withdrawals:", err); setError("Failed to load withdrawal history."); }),
       fetch("/api/auth/me").then((r) => r.json()).then((d) => {
-        if (d.profile) setBalance(Number((d.profile as any).available_balance) || 0);
+        if (d.profile) setBalance(Number(d.profile.available_balance) || 0);
       }).catch((err) => { console.error("Failed to load profile:", err); setError("Failed to load profile."); })
     ]).finally(() => setLoading(false));
   };
