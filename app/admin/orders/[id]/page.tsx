@@ -126,7 +126,7 @@ export default function AdminOrderDetailPage() {
                   <dt className="text-neutral-500">Product</dt>
                   <dd className="font-medium">
                     {order.products ? (
-                      <Link href={`/${order.products.slug}`} className="text-brand-green hover:underline">
+                      <Link href={`/product/${order.products.slug}`} className="text-brand-green hover:underline">
                         {order.products.title}
                       </Link>
                     ) : "—"}

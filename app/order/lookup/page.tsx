@@ -41,8 +41,14 @@ export default function OrderLookupPage() {
   };
 
   const handleDownload = async (orderId: string) => {
-    if (downloadUrls[orderId]) {
-      window.open(downloadUrls[orderId], "_blank");
+    const existingUrl = downloadUrls[orderId];
+    if (existingUrl) {
+      const a = document.createElement("a");
+      a.href = existingUrl;
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       return;
     }
     setLoadingDl((prev) => ({ ...prev, [orderId]: true }));
@@ -51,7 +57,12 @@ export default function OrderLookupPage() {
       const data = await res.json();
       if (data.downloadUrl) {
         setDownloadUrls((prev) => ({ ...prev, [orderId]: data.downloadUrl }));
-        window.open(data.downloadUrl, "_blank");
+        const a = document.createElement("a");
+        a.href = data.downloadUrl;
+        a.download = "";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
     } catch {
     } finally {

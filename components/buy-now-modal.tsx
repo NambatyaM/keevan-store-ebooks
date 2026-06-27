@@ -100,6 +100,7 @@ export function BuyNowModal({ productId, productSlug, price, title, className }:
       if (!response.ok) {
         if (response.status === 409) {
           setDuplicateError(true);
+          setError(payload?.error?.message ?? null);
         } else {
           setError(payload?.error?.message ?? "Unable to start checkout.");
         }
@@ -274,12 +275,10 @@ export function BuyNowModal({ productId, productSlug, price, title, className }:
 
               {duplicateError && (
                 <p className="text-sm text-red-600" role="alert">
-                  You already have a pending order for this product.{" "}
-                  <a href="/buyer/dashboard" className="font-semibold underline">Check your orders</a>{" "}
-                  or try again later.
+                  {error ?? "You already have a pending order for this product."}
                 </p>
               )}
-              {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
+              {!duplicateError && error && <p className="text-sm text-red-600" role="alert">{error}</p>}
               <button
                 className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-brand-green px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#006f43] disabled:cursor-not-allowed disabled:opacity-70"
                 disabled={submitting}
