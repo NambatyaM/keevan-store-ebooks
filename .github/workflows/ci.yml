@@ -42,6 +42,7 @@ jobs:
           node-version: 22
           cache: "npm"
       - run: npm ci
+      - run: npm rebuild sharp
       - id: build
         continue-on-error: true
         run: |
@@ -50,17 +51,19 @@ jobs:
           exit_code="${PIPESTATUS[0]}"
           set -e
           echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-          if [ "$exit_code" != "0" ]; then
-            log=$(cat /tmp/build.log 2>/dev/null | head -c 8000)
-            echo "::error title=Build exit $exit_code, $(wc -c < /tmp/build.log 2>/dev/null) bytes::$log"
-          fi
           exit $exit_code
         shell: bash
         env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log
+          path: /tmp/build.log
       - name: Fail if build failed
-        if: steps.build.outputs.exit_code != '0' && steps.build.outputs.exit_code != ''
+        if: steps.build.outputs.exit_code != '0'
         run: exit 1
