@@ -41,41 +41,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refresh = useCallback(async () => {
-    const supabase = createBrowserClient();
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
-    setSession(currentSession);
-    setUser(currentSession?.user ?? null);
-    if (currentSession?.user) {
-      await fetchProfile(currentSession.user.id);
-    } else {
-      setProfile(null);
+    try {
+      const supabase = createBrowserClient();
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      if (currentSession?.user) {
+        await fetchProfile(currentSession.user.id);
+      } else {
+        setProfile(null);
+      }
+    } catch (err) {
+      console.error("Auth client unavailable:", err);
     }
   }, [fetchProfile]);
 
   useEffect(() => {
-    const supabase = createBrowserClient();
+    let subscription: { unsubscribe: () => void } | null = null;
 
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      if (currentSession?.user) {
-        fetchProfile(currentSession.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
+    try {
+      const supabase = createBrowserClient();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      if (currentSession?.user) {
-        fetchProfile(currentSession.user.id);
-      } else {
-        setProfile(null);
-      }
-    });
+      supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        if (currentSession?.user) {
+          fetchProfile(currentSession.user.id).finally(() => setLoading(false));
+        } else {
+          setLoading(false);
+        }
+      });
 
-    return () => subscription.unsubscribe();
+      subscription = supabase.auth.onAuthStateChange((_event, currentSession) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        if (currentSession?.user) {
+          fetchProfile(currentSession.user.id);
+        } else {
+          setProfile(null);
+        }
+      }).data.subscription;
+    } catch (err) {
+      console.error("Auth client unavailable:", err);
+      setLoading(false);
+    }
+
+    return () => subscription?.unsubscribe();
   }, [fetchProfile]);
 
   return (
