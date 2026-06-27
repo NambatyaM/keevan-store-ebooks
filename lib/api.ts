@@ -8,24 +8,35 @@ export function json(data: unknown, init?: ResponseInit) {
 }
 
 export function checkCSRF(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  const referer = request.headers.get("referer");
   const allowedOrigin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
+
   if (!allowedOrigin) {
-    if (process.env.NODE_ENV === "development") {
-      return;
-    }
+    if (process.env.NODE_ENV === "development") return;
     console.warn("CSRF check skipped: NEXT_PUBLIC_SITE_URL not configured");
     return;
   }
 
-  const source = origin ?? referer ?? "";
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+  const source = (origin && origin !== "null") ? origin : (referer && referer !== "null") ? referer : null;
+
+  if (!source) {
+    throw Object.assign(new Error("Cross-site request forbidden"), { status: 403 });
+  }
+
   try {
     const sourceOrigin = new URL(source).origin;
     const allowed = new URL(allowedOrigin).origin;
-    if (sourceOrigin !== allowed) {
-      throw Object.assign(new Error("Cross-site request forbidden"), { status: 403 });
+
+    if (sourceOrigin === allowed) return;
+
+    const vercelUrl = process.env.VERCEL_URL;
+    if (vercelUrl) {
+      const vercelOrigin = new URL(`https://${vercelUrl}`).origin;
+      if (sourceOrigin === vercelOrigin) return;
     }
+
+    throw Object.assign(new Error("Cross-site request forbidden"), { status: 403 });
   } catch (e) {
     if (e instanceof TypeError) {
       throw Object.assign(new Error("Cross-site request forbidden"), { status: 403 });

@@ -130,6 +130,11 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     return apiError(paymentError.message, 400);
   }
 
+  const requestOrigin = request.headers.get("origin") || site.url;
+  const callbackBase = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : requestOrigin !== "null" ? requestOrigin : site.url;
+
   try {
     const pesapal = await createPesapalOrder({
       id: merchantReference,
@@ -139,7 +144,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       firstName: input.buyerName.split(" ")[0] || input.buyerName,
       lastName: input.buyerName.split(" ").slice(1).join(" ") || "Customer",
       description: product.title,
-      callbackUrl: `${site.url}/order/success?order_id=${order.id}`
+      callbackUrl: `${callbackBase}/order/success?order_id=${order.id}`
     });
 
     return json({ orderId: order.id, merchantReference, redirectUrl: pesapal.redirect_url });

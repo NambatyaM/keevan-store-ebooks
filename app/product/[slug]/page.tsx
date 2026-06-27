@@ -47,6 +47,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   try {
     product = await getPublishedProductBySlug(slug);
   } catch {
+    console.error("ProductPage: getPublishedProductBySlug failed");
     return (
       <>
         <SiteHeader />
@@ -82,7 +83,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             }
           }
         }
-      } catch {}
+      } catch (e) { console.error("ProductPage: draft preview failed", e); }
     }
     if (!product) notFound();
   }
