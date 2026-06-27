@@ -46,7 +46,7 @@ jobs:
         continue-on-error: true
         run: |
           set +e
-          npm run build 2>&1 | tee /tmp/build.log
+          npx next build 2>&1 | tee /tmp/build.log
           exit_code="${PIPESTATUS[0]}"
           set -e
           echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
@@ -57,6 +57,8 @@ jobs:
           exit $exit_code
         shell: bash
         env:
+          SENTRY_ORG: ""
+          SENTRY_PROJECT: ""
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -66,6 +68,9 @@ jobs:
         with:
           name: build-log
           path: /tmp/build.log
+      - name: Disk space check
+        if: steps.build.outputs.exit_code != '0'
+        run: df -h
       - name: Fail if build failed
         if: steps.build.outputs.exit_code != '0' && steps.build.outputs.exit_code != ''
         run: |
