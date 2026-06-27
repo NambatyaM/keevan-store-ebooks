@@ -13,8 +13,8 @@ const mockCreateClient = vi.fn(() => ({
   },
 }));
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient: (...args: unknown[]) => mockCreateClient(...args),
+vi.mock("@supabase/ssr", () => ({
+  createBrowserClient: (...args: unknown[]) => mockCreateClient(...args),
 }));
 
 const OLD_ENV = process.env;
@@ -29,18 +29,18 @@ afterAll(() => {
   process.env = OLD_ENV;
 });
 
-describe("createBrowserClient", () => {
+describe("createSupabaseBrowserClient", () => {
   it("creates a Supabase client with env vars", async () => {
-    const { createBrowserClient } = await import("@/lib/auth");
-    const client = createBrowserClient();
+    const { createSupabaseBrowserClient } = await import("@/lib/auth");
+    const client = createSupabaseBrowserClient();
     expect(mockCreateClient).toHaveBeenCalledWith("https://test.supabase.co", "test-anon-key");
     expect(client).toBeDefined();
   });
 
   it("throws when env vars are missing", async () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
-    const { createBrowserClient } = await import("@/lib/auth");
-    expect(() => createBrowserClient()).toThrow("Supabase public environment variables are missing");
+    const { createSupabaseBrowserClient } = await import("@/lib/auth");
+    expect(() => createSupabaseBrowserClient()).toThrow("Supabase public environment variables are missing");
   });
 });
 

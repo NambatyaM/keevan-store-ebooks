@@ -27,6 +27,7 @@ function mockFromChain(data: unknown, error: unknown = null) {
     limit: vi.fn(() => chain),
     gte: vi.fn(() => chain),
     lt: vi.fn(() => chain),
+    lte: vi.fn(() => chain),
   };
   return chain;
 }
@@ -105,22 +106,28 @@ describe("POST /api/payments/create", () => {
     return import("@/app/api/payments/create/route").then((m) => m.POST);
   }
 
+  function queryChain(data: unknown, error: unknown = null) {
+    const chain = mockFromChain(data, error);
+    chain.maybeSingle = vi.fn().mockResolvedValue({ data, error });
+    return chain;
+  }
+
   function setupDefaultMocks() {
     let orderCallCount = 0;
     mockSupabase.from.mockImplementation((table: string) => {
-      if (table === "products") return mockFromChain({ id: "prod-1", slug: "my-ebook", title: "E-Book", price: 50000, creator_id: "c1", status: "published", store_id: "s1" });
-      if (table === "stores") return mockFromChain({ status: "active" });
+      if (table === "products") return queryChain({ id: "prod-1", slug: "my-ebook", title: "E-Book", price: 50000, creator_id: "c1", status: "published", store_id: "s1" });
+      if (table === "stores") return queryChain({ status: "active" });
       if (table === "orders") {
         orderCallCount++;
-        if (orderCallCount === 1) {
-          // Pending order check - return null
-          const chain = mockFromChain(null);
-          chain.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-          return chain;
+        if (orderCallCount <= 2) {
+          // 1st call: pending order check, 2nd call: paid order check - both return null
+          return queryChain(null);
         }
-        // Order insert
+        // 3rd call: Order insert
         return mockFromChain({ id: "o1", amount: 50000, platform_fee: 5000, creator_earnings: 45000 });
       }
+      if (table === "discounts") return queryChain(null);
+      if (table === "buyers") return mockFromChain({ id: "b1" });
       if (table === "payments") return mockFromChain(null);
       return rateLimitChain;
     });
@@ -166,13 +173,11 @@ describe("POST /api/payments/create", () => {
 
   it("returns 409 when pending order exists", async () => {
     mockSupabase.from.mockImplementation((table: string) => {
-      if (table === "products") return mockFromChain({ id: "prod-1", slug: "my-ebook", title: "E-Book", price: 50000, creator_id: "c1", status: "published", store_id: "s1" });
-      if (table === "stores") return mockFromChain({ status: "active" });
-      if (table === "orders") {
-        const chain = mockFromChain(null);
-        chain.maybeSingle = vi.fn().mockResolvedValue({ data: { id: "existing-order" }, error: null });
-        return chain;
-      }
+      if (table === "products") return queryChain({ id: "prod-1", slug: "my-ebook", title: "E-Book", price: 50000, creator_id: "c1", status: "published", store_id: "s1" });
+      if (table === "stores") return queryChain({ status: "active" });
+      if (table === "orders") return queryChain({ id: "existing-order" });
+      if (table === "discounts") return queryChain(null);
+      if (table === "buyers") return mockFromChain({ id: "b1" });
       return rateLimitChain;
     });
     const POST = await importCreate();
@@ -183,17 +188,15 @@ describe("POST /api/payments/create", () => {
   it("rolls back order when payment insert fails", async () => {
     let orderCallCount = 0;
     mockSupabase.from.mockImplementation((table: string) => {
-      if (table === "products") return mockFromChain({ id: "prod-1", slug: "my-ebook", title: "E-Book", price: 50000, creator_id: "c1", status: "published", store_id: "s1" });
-      if (table === "stores") return mockFromChain({ status: "active" });
+      if (table === "products") return queryChain({ id: "prod-1", slug: "my-ebook", title: "E-Book", price: 50000, creator_id: "c1", status: "published", store_id: "s1" });
+      if (table === "stores") return queryChain({ status: "active" });
       if (table === "orders") {
         orderCallCount++;
-        if (orderCallCount === 1) {
-          const chain = mockFromChain(null);
-          chain.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-          return chain;
-        }
+        if (orderCallCount <= 2) return queryChain(null);
         return mockFromChain({ id: "o1", amount: 50000, platform_fee: 5000, creator_earnings: 45000 });
       }
+      if (table === "discounts") return queryChain(null);
+      if (table === "buyers") return mockFromChain({ id: "b1" });
       if (table === "payments") return mockFromChain(null, new Error("Insert failed"));
       return rateLimitChain;
     });
@@ -206,17 +209,15 @@ describe("POST /api/payments/create", () => {
     mockCreatePesapalOrder.mockRejectedValue(new Error("Pesapal error"));
     let orderCallCount = 0;
     mockSupabase.from.mockImplementation((table: string) => {
-      if (table === "products") return mockFromChain({ id: "prod-1", slug: "my-ebook", title: "E-Book", price: 50000, creator_id: "c1", status: "published", store_id: "s1" });
-      if (table === "stores") return mockFromChain({ status: "active" });
+      if (table === "products") return queryChain({ id: "prod-1", slug: "my-ebook", title: "E-Book", price: 50000, creator_id: "c1", status: "published", store_id: "s1" });
+      if (table === "stores") return queryChain({ status: "active" });
       if (table === "orders") {
         orderCallCount++;
-        if (orderCallCount === 1) {
-          const chain = mockFromChain(null);
-          chain.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-          return chain;
-        }
+        if (orderCallCount <= 2) return queryChain(null);
         return mockFromChain({ id: "o1", amount: 50000, platform_fee: 5000, creator_earnings: 45000 });
       }
+      if (table === "discounts") return queryChain(null);
+      if (table === "buyers") return mockFromChain({ id: "b1" });
       if (table === "payments") return mockFromChain(null);
       return rateLimitChain;
     });
