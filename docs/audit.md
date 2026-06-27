@@ -15,7 +15,7 @@
 - Created admin endpoints: `/api/admin/stats`, `/api/admin/creators`, `/api/admin/orders`, `/api/admin/withdrawals`.
 - Added Supabase-based rate limiting (migration `003_rate_limiting.sql`) replacing in-memory Map.
 - Wired all 6 creator dashboard pages with live API data (overview, products, analytics, earnings, withdrawals, settings).
-- Wired all 7 admin dashboard pages with live API data (overview, creators, products, sales, withdrawals, reports, settings).
+- Wired all 11 admin dashboard pages with live API data (dashboard, orders, creators, buyers, withdrawals, refunds, audit-log, emails, reports, sales, settings).
 
 ## Refactoring Audit
 
@@ -31,7 +31,7 @@
 
 - Created `lib/auth.ts` server helpers (`requireUser`, `requireAdmin`, `resolveUser`).
 - Installed `@supabase/ssr` for cookie-based server auth in route handlers.
-- Created `middleware.ts` — protects `/creator/*` and `/admin/*` by checking for `sb-*-auth-token` cookie, redirects to `/login?redirect=` if missing.
+- Created `middleware.ts` — protects `/creator/*`, `/admin/*`, and `/buyer/*` by checking for `sb-*-auth-token` cookie, redirects to `/login?redirect=` if missing.
 - Fixed `requireUser()` to support cookie-based auth (Bearer token fallback for programmatic access).
 - Fixed login role detection (reads `raw_user_meta_data->>'role'`).
 - Fixed registration to store role in `user_metadata`.
@@ -85,6 +85,7 @@
 - Restricted public `POST /api/analytics/events` to only accept `store_view` / `product_view` events (rejects `purchase` / `download` from client).
 - Added `purchase` analytics event emission in `verifyPesapalPayment()` after successful payment finalization (deduped — only for new, not re-verifications).
 - Fixed creator analytics page: sums `product_view` + `store_view` for total views (was reading non-existent `page_view`).
+- Added `@vercel/analytics` integration in root layout (`<Analytics />` at `app/layout.tsx:100`).
 
 ## Admin Feature Audit (Migration 007)
 
@@ -102,10 +103,11 @@
 - Added suspend/reactivate store buttons to admin creators page.
 - Added disable/reactivate product buttons to admin products page.
 - Added notes input + confirmation step before withdrawal actions (approve/reject/mark-paid).
-- All 7 state-changing admin actions log to `admin_logs` with action type, target table, target ID, and acting admin user:
+- All 9 state-changing admin actions log to `admin_logs` with action type, target table, target ID, and acting admin user:
   - `withdrawal.approve`, `withdrawal.reject`, `withdrawal.mark_paid`
   - `product.disable`, `product.reactivate`
   - `store.suspend`, `store.reactivate`
+  - `refund.approve`, `refund.reject`
 
 ## Refund System Audit (Migration 009)
 
@@ -121,19 +123,54 @@
 - Footer, refund-policy page, and download page link to refund request
 - 36 regression tests in `lib/__tests__/refunds.test.ts`
 
-## Email System Audit (Migration 010, anticipated)
+## Email System Audit (Migration 010)
 
 - Migration 010 creates `email_queue` table with pending/sent/failed states
-- Database triggers enqueue emails on: order paid, withdrawal status change, refund approval
+- Database triggers enqueue emails on: order paid, withdrawal status change, refund approval, refund rejection
 - `lib/email.ts` sends via SMTP using `nodemailer` with Supabase-configured SMTP credentials
 - `lib/email-templates.ts` contains HTML templates for each email type
 - `POST /api/emails/process` processes pending queue items (idempotent, admin-auth)
+- `POST /api/cron/process-emails` — Vercel Cron endpoint (daily at 6:00 AM via `vercel.json`)
 - Environment variables `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` added
+- `CRON_SECRET` env var for securing the cron endpoint
+
+## Security Hardening Audit (Migration 011)
+
+- 10 SECURITY DEFINER functions hardened with proper auth checks
+- `rate_limit_check_and_increment` now enforces `p_max_requests` threshold
+- `transition_withdrawal_request` fixed column name bug (`admin_notes`)
+- `reserve_withdrawal` closes impersonation vector (derives user from `auth.uid()`)
+- `increment_creator_balance` and `decrement_creator_balance` add auth checks
+- `cleanup_expired_rate_limits` made admin-only
+
+## Later Migrations (012–014)
+
+- Migration 012: Hotfix for `finalize_pesapal_payment` RPC
+- Migration 013: Storage bucket configuration (products bucket)
+- Migration 014: Buyer features and dashboard support
+
+## Buyer Dashboard
+
+- Created `/buyer/dashboard` — purchase history and download access for buyers
+- Updated middleware to protect `/buyer/*` routes
+- Added buyer route handler support
+
+## Logo and Visual Identity
+
+- **Logo URL:** `https://i.ibb.co/v6h94WVG/keevan-favicon.jpg` (favicon, apple-touch-icon, structured data)
+- **Hero image:** `/hero.webp` — African woman reading/studying with books and laptop
+- **Theme color:** `#00854a` (green)
+
+## @vercel/analytics Integration
+
+- `@vercel/analytics` added to `package.json` dependencies
+- `<Analytics />` component rendered in root layout (`app/layout.tsx`)
+- Captures page-view and traffic analytics automatically
 
 ## Migrations Summary
 
 | Migration | File | Changes |
-|-----------|------|---------|
+|---|---|---|
 | 001 | `001_initial_schema.sql` | Core tables, RLS, seed data |
 | 002 | `002_payment_and_withdrawal_guards.sql` | Withdrawal RLS, `finalize_pesapal_payment` RPC |
 | 003 | `003_rate_limiting.sql` | `rate_limits` table for Supabase-based rate limiting |
@@ -144,11 +181,30 @@
 | 008 | `008_production_security_fixes.sql` | Security DEFINER auth checks, `bigint` conversions, partial indexes, rate_limits TTL, notifications, platform_config |
 | 009 | `009_refund_system.sql` | Refunds table, process_refund RPC, decrement_creator_balance, notification trigger |
 | 010 | `010_email_system.sql` | Email queue table, automated email triggers |
+| 011 | `011_production_security_hardening.sql` | Auth hardening: 10 SECURITY DEFINER functions fixed, rate_limit enforcement, transition withdrawal column bug, refunds updated_at trigger, rejection notifications |
+| 012 | `012_hotfix_finalize_pesapal.sql` | Hotfix for finalize_pesapal_payment RPC |
+| 013 | `013_storage_buckets.sql` | Storage bucket configuration |
+| 014 | `014_buyer_features.sql` | Buyer features and dashboard support |
+
+## Test Coverage
+
+- **23 test files** across `lib/__tests__/` and `app/api/__tests__/`
+- **~388 tests** covering: constants, file validation, schemas, Pesapal, storefront, utils, API, refunds, email, database security, API integration, migrations, RPCs, auth routes, admin routes, payment routes, email processor, cron emails, supabase client, supabase server, extended tests
+- Testing with Vitest
 
 ## Build Verification
 
-- `npm run build` passes clean: 0 errors, 0 warnings, 50 routes.
+- `npm run build` passes clean: 0 errors, 0 warnings.
 - `typecheck` and `lint` pass after all phases.
+
+## Deployment Configuration
+
+- Hosted on Vercel at `https://keevanstore.in`
+- Supabase project for database, auth, and storage
+- Vercel Cron: `0 6 * * *` triggers `POST /api/cron/process-emails`
+- Sentry DSN configured for error monitoring
+- @vercel/analytics integrated for traffic analytics
+- CSP header includes `https://i.ibb.co` in `img-src` for hosted logo
 
 ## Remaining Deployment Dependencies
 
@@ -164,4 +220,4 @@
   - `WEBHOOK_SECRET`
 - Supabase Storage bucket `products` must exist for file uploads and signed download URLs.
 - Webhook endpoint (`/api/webhooks/pesapal`) must be registered with Pesapal.
-- All 10 migrations (001–010) must be applied to the Supabase project before deployment.
+- All 14 migrations (001–014) must be applied to the Supabase project before deployment.

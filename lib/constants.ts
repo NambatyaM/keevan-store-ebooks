@@ -1,10 +1,22 @@
+function requireEnv(key: string): string {
+  const value = process.env[key];
+  if (!value) throw new Error(`Missing required environment variable: ${key}`);
+  return value;
+}
+
+function requireNum(key: string): number {
+  const value = Number(process.env[key]);
+  if (!value && value !== 0) throw new Error(`Missing required environment variable: ${key}`);
+  return value;
+}
+
 export const site = {
   name: "Keevan Store",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://keevanstore.in",
-  supportPhone: process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? "+256768345905",
-  supportWhatsApp: process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? "https://wa.me/256768345905",
-  commissionRate: Number(process.env.NEXT_PUBLIC_COMMISSION_RATE) || 0.1,
-  minimumWithdrawal: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL) || 50000,
+  url: requireEnv("NEXT_PUBLIC_SITE_URL"),
+  supportPhone: requireEnv("NEXT_PUBLIC_SUPPORT_PHONE"),
+  supportWhatsApp: requireEnv("NEXT_PUBLIC_SUPPORT_WHATSAPP"),
+  commissionRate: requireNum("NEXT_PUBLIC_COMMISSION_RATE"),
+  minimumWithdrawal: requireNum("NEXT_PUBLIC_MIN_WITHDRAWAL"),
   currency: "UGX"
 };
 

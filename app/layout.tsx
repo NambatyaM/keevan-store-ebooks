@@ -3,6 +3,7 @@ import "./globals.css";
 import { site } from "@/lib/constants";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { AuthProvider } from "@/components/auth-provider";
+import { Analytics } from "@vercel/analytics/react";
 
 const titleTemplate = "%s | Keevan Store";
 const defaultTitle = "Keevan Store — Sell E-books Online in Minutes | East African Creator Commerce";
@@ -50,7 +51,7 @@ const organizationSchema = {
   "@type": "Organization",
   name: site.name,
   url: site.url,
-  logo: `${site.url}/logo.svg`,
+  logo: "https://i.ibb.co/v6h94WVG/keevan-favicon.jpg",
   sameAs: [
     site.supportWhatsApp
   ],
@@ -74,7 +75,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <head>
         <link rel="canonical" href={site.url} />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/jpeg" href="https://i.ibb.co/v6h94WVG/keevan-favicon.jpg" />
+        <link rel="apple-touch-icon" href="https://i.ibb.co/v6h94WVG/keevan-favicon.jpg" />
         <meta name="theme-color" content="#00854a" />
         {supabaseOrigin && (
           <>
@@ -95,6 +97,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AuthProvider>
           {children}
           <WhatsAppButton />
+          <Analytics />
         </AuthProvider>
       </body>
     </html>
