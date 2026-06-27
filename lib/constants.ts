@@ -12,11 +12,11 @@ function requireNum(key: string): number {
 
 export const site = {
   name: "Keevan Store",
-  url: requireEnv("NEXT_PUBLIC_SITE_URL"),
-  supportPhone: requireEnv("NEXT_PUBLIC_SUPPORT_PHONE"),
-  supportWhatsApp: requireEnv("NEXT_PUBLIC_SUPPORT_WHATSAPP"),
-  commissionRate: requireNum("NEXT_PUBLIC_COMMISSION_RATE"),
-  minimumWithdrawal: requireNum("NEXT_PUBLIC_MIN_WITHDRAWAL"),
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "",
+  supportPhone: process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? "",
+  supportWhatsApp: process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? "",
+  commissionRate: Number(process.env.NEXT_PUBLIC_COMMISSION_RATE || "0.1"),
+  minimumWithdrawal: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL || "50000"),
   currency: "UGX"
 };
 
