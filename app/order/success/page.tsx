@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { useEffect, useState, useCallback } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, Loader2, Download, XCircle, ShoppingBag } from "lucide-react";
+import { CheckCircle, Loader2, Download, XCircle } from "lucide-react";
 import { SimplePage } from "@/components/simple-page";
 
 type OrderStatus = {
@@ -17,9 +18,8 @@ type OrderStatus = {
   buyerId?: string;
 };
 
-export default function OrderSuccessPage() {
+function OrderSuccessContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const orderId = searchParams.get("order_id");
   const [status, setStatus] = useState<OrderStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -136,5 +136,19 @@ export default function OrderSuccessPage() {
         </div>
       </div>
     </SimplePage>
+  );
+}
+
+export default function OrderSuccessPage() {
+  return (
+    <Suspense fallback={
+      <SimplePage title="Loading..." eyebrow="Order">
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="animate-spin text-brand-green" size={32} />
+        </div>
+      </SimplePage>
+    }>
+      <OrderSuccessContent />
+    </Suspense>
   );
 }
