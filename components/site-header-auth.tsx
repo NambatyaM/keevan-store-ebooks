@@ -26,7 +26,9 @@ export function SiteHeaderAuth() {
   }
 
   if (role) {
-    const href = role === "admin" ? "/admin/dashboard" : "/creator/dashboard";
+    const href = role === "admin" ? "/admin/dashboard"
+      : role === "buyer" ? "/buyer/dashboard"
+      : "/creator/dashboard";
     return (
       <div className="hidden items-center gap-3 md:flex">
         <ButtonLink href={href} variant="secondary" className="min-h-10 px-4 py-2">
@@ -40,6 +42,9 @@ export function SiteHeaderAuth() {
     <div className="hidden items-center gap-3 md:flex">
       <ButtonLink href="/login" variant="secondary" className="min-h-10 px-4 py-2">
         Login
+      </ButtonLink>
+      <ButtonLink href="/signup-buyer" variant="secondary" className="min-h-10 px-4 py-2">
+        Sign Up
       </ButtonLink>
       <ButtonLink href="/signup" className="min-h-10 px-4 py-2">
         Start Selling Free

@@ -36,9 +36,11 @@ export type UserProfile = {
   id: string;
   email: string;
   full_name: string;
-  role: "creator" | "admin";
+  role: "creator" | "admin" | "buyer";
   creator_id?: string;
   display_name?: string;
   store_id?: string;
   store_slug?: string;
+  buyer_id?: string;
+  phone?: string;
 };

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
-import { apiError, json, readJson, withErrorHandling, checkCSRF } from "@/lib/api";
+import { apiError, json, readJson, withErrorHandling, checkCSRF, requireUser } from "@/lib/api";
 import { checkoutSchema } from "@/lib/schemas";
 import { calculateSaleSplit, site } from "@/lib/constants";
 import { createPesapalOrder } from "@/lib/pesapal";
@@ -10,6 +10,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   checkCSRF(request);
   const input = await readJson(request, checkoutSchema);
   const supabase = getSupabaseAdminClient();
+
   const { data: product, error: productError } = await supabase
     .from("products")
     .select("id,slug,title,price,creator_id,status,store_id")
@@ -37,22 +38,66 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     return apiError("You already have a pending order for this product. Please complete or wait for it to expire.", 409);
   }
 
-  const split = calculateSaleSplit(product.price);
+  // Check for active discount
+  let discountPrice = product.price;
+  let discountId: string | null = null;
+
+  const { data: activeDiscount } = await supabase
+    .from("discounts")
+    .select("id, discount_percent, max_uses, use_count")
+    .eq("product_id", input.productId)
+    .eq("is_active", true)
+    .lte("starts_at", new Date().toISOString())
+    .gte("expires_at", new Date().toISOString())
+    .maybeSingle();
+
+  if (activeDiscount) {
+    if (!activeDiscount.max_uses || activeDiscount.use_count < activeDiscount.max_uses) {
+      discountPrice = Math.round(product.price * (1 - activeDiscount.discount_percent / 100));
+      discountId = activeDiscount.id;
+    }
+  }
+
+  // Check if buyer is logged in
+  let buyerId: string | null = null;
+  try {
+    const { profile } = await requireUser(request);
+    if (profile.role === "buyer") {
+      const { data: buyer } = await supabase
+        .from("buyers")
+        .select("id")
+        .eq("user_id", profile.id)
+        .single();
+      if (buyer) buyerId = buyer.id;
+    }
+  } catch {}
+
+  const split = calculateSaleSplit(discountPrice);
+  const orderInsert: Record<string, unknown> = {
+    product_id: product.id,
+    creator_id: product.creator_id,
+    buyer_email: input.buyerEmail,
+    buyer_name: input.buyerName,
+    amount: split.grossAmount,
+    platform_fee: split.platformFee,
+    creator_earnings: split.creatorEarnings
+  };
+
+  if (buyerId) orderInsert.buyer_id = buyerId;
+  if (discountId) orderInsert.discount_id = discountId;
+
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .insert({
-      product_id: product.id,
-      creator_id: product.creator_id,
-      buyer_email: input.buyerEmail,
-      buyer_name: input.buyerName,
-      amount: split.grossAmount,
-      platform_fee: split.platformFee,
-      creator_earnings: split.creatorEarnings
-    })
+    .insert(orderInsert)
     .select("*")
     .single();
 
   if (orderError || !order) return apiError(orderError?.message ?? "Unable to create order", 400);
+
+  // Increment discount use count
+  if (discountId) {
+    await supabase.rpc("increment_discount_use", { discount_id: discountId });
+  }
 
   const merchantReference = randomUUID();
   const { error: paymentError } = await supabase
@@ -73,7 +118,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       firstName: input.buyerName.split(" ")[0] || input.buyerName,
       lastName: input.buyerName.split(" ").slice(1).join(" ") || "Customer",
       description: product.title,
-      callbackUrl: `${site.url}/download/${product.slug}?merchantReference=${encodeURIComponent(merchantReference)}`
+      callbackUrl: `${site.url}/order/success?order_id=${order.id}`
     });
 
     return json({ orderId: order.id, merchantReference, redirectUrl: pesapal.redirect_url });

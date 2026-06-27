@@ -25,6 +25,17 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     }
   }
 
+  let buyerData: Record<string, unknown> | null = null;
+
+  if (userProfile.role === "buyer") {
+    const { data: buyer } = await supabase
+      .from("buyers")
+      .select("id,display_name,phone")
+      .eq("user_id", authUser.id)
+      .single();
+    buyerData = buyer;
+  }
+
   return json({
     profile: {
       id: authUser.id,
@@ -45,6 +56,11 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
         store_name: storeData.name,
         store_description: storeData.description,
         store_status: storeData.status
+      }),
+      ...(buyerData && {
+        buyer_id: buyerData.id,
+        display_name: buyerData.display_name,
+        phone: buyerData.phone
       })
     }
   });

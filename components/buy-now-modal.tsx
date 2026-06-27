@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ArrowRight, X, Loader2 } from "lucide-react";
+import { ArrowRight, X, Loader2, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type BuyNowModalProps = {
@@ -17,6 +17,34 @@ export function BuyNowModal({ productId, productSlug, className }: BuyNowModalPr
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [discountPercent, setDiscountPercent] = useState<number | null>(null);
+  const [loadCheck, setLoadCheck] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.profile?.role === "buyer") {
+          setUserRole("buyer");
+          setUserEmail(d.profile.email);
+          setUserName(d.profile.full_name);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    setLoadCheck(true);
+    fetch(`/api/discounts/active?productId=${productId}`)
+      .then((r) => r.json())
+      .then((d) => setDiscountPercent(d.discount?.discount_percent ?? null))
+      .catch(() => setDiscountPercent(null))
+      .finally(() => setLoadCheck(false));
+  }, [open, productId]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === "Escape") setOpen(false);
@@ -33,8 +61,7 @@ export function BuyNowModal({ productId, productSlug, className }: BuyNowModalPr
     };
   }, [open, handleKeyDown]);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function startCheckout(name: string, email: string, phoneVal: string) {
     setSubmitting(true);
     setError(null);
 
@@ -44,9 +71,9 @@ export function BuyNowModal({ productId, productSlug, className }: BuyNowModalPr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productId,
-          buyerName,
-          buyerEmail,
-          phone: phone || undefined
+          buyerName: name,
+          buyerEmail: email,
+          phone: phoneVal || undefined
         })
       });
 
@@ -54,20 +81,30 @@ export function BuyNowModal({ productId, productSlug, className }: BuyNowModalPr
 
       if (!response.ok) {
         setError(payload?.error?.message ?? "Unable to start checkout.");
+        setSubmitting(false);
         return;
       }
 
       if (!payload?.redirectUrl) {
         setError("Pesapal did not return a redirect URL.");
+        setSubmitting(false);
         return;
       }
 
       window.location.assign(payload.redirectUrl);
     } catch {
       setError("Unable to reach the checkout service. Please try again.");
-    } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await startCheckout(buyerName, buyerEmail, phone);
+  }
+
+  async function handleLoggedInCheckout() {
+    await startCheckout(userName!, userEmail!, "");
   }
 
   return (
@@ -77,7 +114,13 @@ export function BuyNowModal({ productId, productSlug, className }: BuyNowModalPr
           "focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-brand-green px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#006f43]",
           className
         )}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          if (userRole === "buyer") {
+            handleLoggedInCheckout();
+          } else {
+            setOpen(true);
+          }
+        }}
       >
         Buy Now
         <ArrowRight aria-hidden size={17} />
@@ -105,6 +148,13 @@ export function BuyNowModal({ productId, productSlug, className }: BuyNowModalPr
                 <X size={20} />
               </button>
             </div>
+
+            {discountPercent && (
+              <div className="mb-4 flex items-center gap-2 rounded-md bg-amber-50 p-3 text-sm font-semibold text-amber-800">
+                <Tag size={16} aria-hidden />
+                {discountPercent}% discount applied at checkout
+              </div>
+            )}
 
             <form className="grid gap-4" onSubmit={handleSubmit}>
               <label className="grid gap-2 text-sm font-medium text-neutral-700">
@@ -138,6 +188,11 @@ export function BuyNowModal({ productId, productSlug, className }: BuyNowModalPr
                   autoComplete="tel"
                 />
               </label>
+              <p className="text-xs text-neutral-500">
+                Already have an account?{" "}
+                <a href="/login?role=buyer" className="text-brand-green hover:underline">Sign in</a>
+                {" "}to skip this step.
+              </p>
               {error && <p className="text-sm text-red-600">{error}</p>}
               <button
                 className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-brand-green px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#006f43] disabled:cursor-not-allowed disabled:opacity-70"

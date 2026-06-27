@@ -9,6 +9,7 @@ import { TrackView } from "@/components/track-view";
 import Image from "next/image";
 import { formatUgx, site } from "@/lib/constants";
 import { getCoverUrl, getPublishedProductBySlug } from "@/lib/storefront";
+import { ProductReviews } from "@/components/product-reviews";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -177,6 +178,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 </section>
               ))}
             </div>
+          <ProductReviews productId={product.id} />
           </div>
         </section>
       </main>

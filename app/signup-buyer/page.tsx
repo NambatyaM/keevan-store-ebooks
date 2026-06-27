@@ -7,10 +7,12 @@ import { login } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
 import { PasswordInput } from "@/components/password-input";
 
-export default function LoginPage() {
+export default function BuyerSignupPage() {
   const router = useRouter();
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -20,35 +22,41 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await login(email, password);
+      const response = await fetch("/api/auth/register-buyer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName, email, password, phone: phone || undefined })
+      });
 
-      const redirect = new URL(window.location.href).searchParams.get("redirect");
-      if (redirect?.startsWith("/")) {
-        router.push(redirect);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        setError(payload?.error?.message ?? "Unable to create account.");
         return;
       }
 
-      const res = await fetch("/api/auth/me");
-      if (res.ok) {
-        const { profile } = await res.json();
-        if (profile?.role === "admin") router.push("/admin/dashboard");
-        else if (profile?.role === "buyer") router.push("/buyer/dashboard");
-        else router.push("/creator/dashboard");
-      } else {
-        router.push("/creator/dashboard");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to log in.");
+      await login(email, password);
+      router.push("/buyer/dashboard");
+    } catch {
+      setError("Unable to reach the registration service.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  const role = typeof window !== "undefined" ? new URL(window.location.href).searchParams.get("role") : null;
-
   return (
-    <SimplePage title={role === "buyer" ? "Buyer Login" : "Creator Login"} eyebrow="Welcome back">
+    <SimplePage title="Create Your Buyer Account" eyebrow="Welcome">
       <form className="grid gap-4 rounded-lg border border-neutral-200 p-5" onSubmit={handleSubmit}>
+        <label className="grid gap-2 text-sm font-medium text-neutral-700">
+          Full name
+          <input
+            className="focus-ring rounded-md border border-neutral-300 px-4 py-3"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            autoComplete="name"
+            required
+          />
+        </label>
         <label className="grid gap-2 text-sm font-medium text-neutral-700">
           Email address
           <input
@@ -65,8 +73,19 @@ export default function LoginPage() {
           <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
+            autoComplete="new-password"
+            minLength={8}
             required
+          />
+        </label>
+        <label className="grid gap-2 text-sm font-medium text-neutral-700">
+          Phone number (optional)
+          <input
+            className="focus-ring rounded-md border border-neutral-300 px-4 py-3"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            autoComplete="tel"
           />
         </label>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -75,17 +94,18 @@ export default function LoginPage() {
           disabled={submitting}
           type="submit"
         >
-          {submitting ? "Logging in..." : "Login"}
+          {submitting ? "Creating account..." : "Create Account"}
         </button>
         <p className="text-center text-sm text-neutral-600">
-          <Link href="/forgot-password" className="text-brand-green hover:underline">
-            Forgot password?
+          Already have an account?{" "}
+          <Link href="/login?role=buyer" className="text-brand-green hover:underline">
+            Log in
           </Link>
         </p>
         <p className="text-center text-sm text-neutral-600">
-          Don&apos;t have an account?{" "}
+          Want to sell?{" "}
           <Link href="/signup" className="text-brand-green hover:underline">
-            Sign up
+            Create a creator store
           </Link>
         </p>
       </form>

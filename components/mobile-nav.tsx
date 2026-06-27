@@ -49,13 +49,20 @@ export function MobileNav() {
             ))}
             <hr className="my-2 border-neutral-200" />
             {role ? (
-              <Link href={role === "admin" ? "/admin/dashboard" : "/creator/dashboard"} onClick={() => setOpen(false)} className="rounded-md bg-brand-green px-3 py-2 text-lg font-semibold text-white text-center">
+              <Link
+                href={role === "admin" ? "/admin/dashboard" : role === "buyer" ? "/buyer/dashboard" : "/creator/dashboard"}
+                onClick={() => setOpen(false)}
+                className="rounded-md bg-brand-green px-3 py-2 text-lg font-semibold text-white text-center"
+              >
                 Dashboard
               </Link>
             ) : (
               <>
                 <Link href="/login" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-lg font-semibold hover:bg-brand-mist">
                   Login
+                </Link>
+                <Link href="/signup-buyer" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-lg font-semibold hover:bg-brand-mist">
+                  Sign Up as Buyer
                 </Link>
                 <Link href="/signup" onClick={() => setOpen(false)} className="rounded-md bg-brand-green px-3 py-2 text-lg font-semibold text-white text-center">
                   Start Selling Free

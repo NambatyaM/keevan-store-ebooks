@@ -76,7 +76,7 @@ export default function Home() {
             </div>
             <div className="relative min-h-[520px] overflow-hidden rounded-lg bg-neutral-950 text-white">
               <Image
-                src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80"
+                src="/hero.jpg"
                 alt="East African creators and authors collaborating on digital content"
                 fill
                 priority
