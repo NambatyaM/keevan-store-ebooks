@@ -66,3 +66,11 @@ jobs:
         with:
           name: build-log
           path: /tmp/build.log
+      - name: Fail if build failed
+        if: steps.build.outputs.exit_code != '0' && steps.build.outputs.exit_code != ''
+        run: |
+          echo "## Build failed with exit code ${{ steps.build.outputs.exit_code }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          tail -100 /tmp/build.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
