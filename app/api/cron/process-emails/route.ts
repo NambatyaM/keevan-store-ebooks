@@ -25,7 +25,7 @@ async function processEmails(request: NextRequest): Promise<Response> {
   const supabase = getSupabaseAdminClient();
 
   const url = new URL(request.url);
-  const limit = Math.min(Number(url.searchParams.get("limit")) || 50, 100);
+  const limit = Math.min(Number(url.searchParams.get("limit")) || 100, 500);
 
   const { data: queueItems, error: fetchError } = await supabase
     .from("email_queue")
