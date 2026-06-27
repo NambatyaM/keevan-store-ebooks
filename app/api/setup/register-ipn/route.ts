@@ -1,14 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { json, requireAdmin, withErrorHandling } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get("secret");
-
-  if (!secret || secret !== process.env.WEBHOOK_SECRET) {
-    console.warn("[register-ipn] Unauthorized attempt — missing or invalid secret");
-    return NextResponse.json({ error: "Unauthorized. Pass ?secret=YOUR_WEBHOOK_SECRET" }, { status: 401 });
-  }
+export const GET = withErrorHandling(async (request: NextRequest) => {
+  await requireAdmin(request);
 
   console.log("[register-ipn] Starting IPN registration...");
 
@@ -20,11 +16,11 @@ export async function GET(request: NextRequest) {
 
   if (!consumerKey) {
     console.error("[register-ipn] Missing PESAPAL_CONSUMER_KEY");
-    return NextResponse.json({ error: "PESAPAL_CONSUMER_KEY is not configured" }, { status: 500 });
+    return json({ error: "PESAPAL_CONSUMER_KEY is not configured" }, { status: 500 });
   }
   if (!consumerSecret) {
     console.error("[register-ipn] Missing PESAPAL_CONSUMER_SECRET");
-    return NextResponse.json({ error: "PESAPAL_CONSUMER_SECRET is not configured" }, { status: 500 });
+    return json({ error: "PESAPAL_CONSUMER_SECRET is not configured" }, { status: 500 });
   }
 
   // ── Step 1: Get OAuth token ──────────────────────────────
@@ -43,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     if (!tokenRes.ok) {
       console.error("[register-ipn] Token request failed:", JSON.stringify(tokenBody));
-      return NextResponse.json({
+      return json({
         error: "Token request failed",
         status: tokenRes.status,
         response: tokenBody,
@@ -53,7 +49,7 @@ export async function GET(request: NextRequest) {
     token = tokenBody.token as string;
     if (!token) {
       console.error("[register-ipn] No token in response:", JSON.stringify(tokenBody));
-      return NextResponse.json({
+      return json({
         error: "Token response missing 'token' field",
         response: tokenBody,
       }, { status: 502 });
@@ -63,7 +59,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[register-ipn] Network error during token request:", message);
-    return NextResponse.json({ error: "Network error during token request", detail: message }, { status: 502 });
+    return json({ error: "Network error during token request", detail: message }, { status: 502 });
   }
 
   // ── Step 2: Register IPN URL ─────────────────────────────
@@ -89,7 +85,7 @@ export async function GET(request: NextRequest) {
 
     if (!ipnRes.ok) {
       console.error("[register-ipn] IPN registration failed:", JSON.stringify(ipnBody));
-      return NextResponse.json({
+      return json({
         error: "IPN registration failed",
         status: ipnRes.status,
         response: ipnBody,
@@ -100,7 +96,7 @@ export async function GET(request: NextRequest) {
 
     if (!ipnId) {
       console.warn("[register-ipn] IPN registered but no ID field found in response");
-      return NextResponse.json({
+      return json({
         message: "IPN URL registered, but could not extract IPN ID. Check the response for the ID field.",
         ipnUrl: webhookUrl,
         response: ipnBody,
@@ -110,7 +106,7 @@ export async function GET(request: NextRequest) {
 
     console.log("[register-ipn] ✔ IPN registered successfully. ID:", ipnId);
 
-    return NextResponse.json({
+    return json({
       success: true,
       ipn_id: ipnId,
       ipn_url: webhookUrl,
@@ -121,6 +117,6 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[register-ipn] Network error during IPN registration:", message);
-    return NextResponse.json({ error: "Network error during IPN registration", detail: message }, { status: 502 });
+    return json({ error: "Network error during IPN registration", detail: message }, { status: 502 });
   }
-}
+});

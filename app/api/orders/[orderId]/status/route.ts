@@ -1,11 +1,14 @@
 import { NextRequest } from "next/server";
-import { apiError, json, withErrorHandling } from "@/lib/api";
+import { apiError, json, rateLimit, withErrorHandling } from "@/lib/api";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const url = new URL(request.url);
   const orderId = url.pathname.split("/").at(-2);
   if (!orderId) return apiError("Missing order ID", 400);
+
+  const limited = await rateLimit(request, 10, 60);
+  if (limited) return limited;
 
   const supabase = getSupabaseAdminClient();
 

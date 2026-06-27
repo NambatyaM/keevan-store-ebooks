@@ -19,11 +19,19 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const slug = url.searchParams.get("slug");
   if (!slug) return apiError("Missing product slug", 400);
 
+  const { data: productMatch } = await supabase
+    .from("products")
+    .select("id")
+    .eq("slug", slug)
+    .single();
+
+  if (!productMatch) return apiError("Product not found", 404);
+
   const { data: purchase } = await supabase
     .from("buyer_purchases")
     .select("product_id")
     .eq("buyer_id", buyer.id)
-    .in("product_id", supabase.from("products").select("id").eq("slug", slug) as any)
+    .eq("product_id", productMatch.id)
     .maybeSingle();
 
   if (!purchase) return apiError("Purchase not found", 404);
