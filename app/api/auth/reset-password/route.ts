@@ -9,9 +9,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return apiError("Supabase public environment variables are missing.", 500);
 
+  const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "https://keevanstore.in";
   const supabase = createClient(url, key);
   const { error } = await supabase.auth.resetPasswordForEmail(input.email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://keevanstore.in"}/update-password`
+    redirectTo: `${origin.replace(/\/+$/, "")}/update-password`
   });
   if (error) return apiError(error.message, 400);
   return json({ ok: true });

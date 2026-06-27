@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
+import { PasswordInput } from "@/components/password-input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -57,9 +58,7 @@ export default function LoginPage() {
         </label>
         <label className="grid gap-2 text-sm font-medium text-neutral-700">
           Password
-          <input
-            className="focus-ring rounded-md border border-neutral-300 px-4 py-3"
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"

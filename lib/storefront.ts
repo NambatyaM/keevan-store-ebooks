@@ -1,5 +1,13 @@
 import { getOptionalSupabaseAdminClient } from "@/lib/supabase";
 
+export function getCoverUrl(coverPath: string | null): string | null {
+  if (!coverPath) return null;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) return null;
+  const bucket = "products";
+  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${coverPath}`;
+}
+
 export type StorefrontProduct = {
   id: string;
   slug: string;

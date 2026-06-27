@@ -4,8 +4,9 @@ import { WifiOff } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TrackView } from "@/components/track-view";
+import Image from "next/image";
 import { formatUgx, site } from "@/lib/constants";
-import { getPublishedStoreByHandle } from "@/lib/storefront";
+import { getCoverUrl, getPublishedStoreByHandle } from "@/lib/storefront";
 
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
@@ -100,21 +101,28 @@ export default async function StorePage({ params }: { params: Promise<{ handle: 
           <h2 className="text-2xl font-bold">Products by {store.creatorName}</h2>
           {store.products.length ? (
             <div className="mt-6 grid gap-5 md:grid-cols-2">
-              {store.products.map((product) => (
-              <Link key={product.id} href={`/product/${product.slug}`} className="group rounded-lg border border-neutral-200 bg-white p-4 transition hover:shadow-soft">
-                <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
-                  <div className="grid aspect-[4/3] place-items-center rounded-md bg-neutral-100 px-4 text-center text-sm font-semibold text-neutral-500">
-                    Digital product
+              {store.products.map((product) => {
+                const coverUrl = getCoverUrl(product.coverPath);
+                return (
+                <Link key={product.id} href={`/product/${product.slug}`} className="group rounded-lg border border-neutral-200 bg-white p-4 transition hover:shadow-soft">
+                  <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
+                    <div className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-md bg-neutral-100 px-4 text-center text-sm font-semibold text-neutral-500">
+                      {coverUrl ? (
+                        <Image src={coverUrl} alt={product.title} fill className="object-cover" sizes="160px" />
+                      ) : (
+                        "Digital product"
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-brand-green">{product.fileMime}</p>
+                      <h3 className="mt-1 text-xl font-bold text-brand-black">{product.title}</h3>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-neutral-600">{product.description}</p>
+                      <p className="mt-4 text-lg font-black">{formatUgx(product.price)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-brand-green">{product.fileMime}</p>
-                    <h3 className="mt-1 text-xl font-bold text-brand-black">{product.title}</h3>
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-neutral-600">{product.description}</p>
-                    <p className="mt-4 text-lg font-black">{formatUgx(product.price)}</p>
-                  </div>
-                </div>
-              </Link>
-              ))}
+                </Link>
+                );
+              })}
             </div>
           ) : (
             <div className="mt-6 rounded-lg border border-dashed border-neutral-300 bg-white p-8 text-center text-neutral-600">

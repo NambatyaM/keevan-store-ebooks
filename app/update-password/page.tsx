@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createBrowserClient } from "@/lib/auth";
+import { createSupabaseBrowserClient } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
+import { PasswordInput } from "@/components/password-input";
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function UpdatePasswordPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const supabase = createBrowserClient();
+    const supabase = createSupabaseBrowserClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY" && session) {
         setReady(true);
@@ -43,7 +44,7 @@ export default function UpdatePasswordPage() {
     }
 
     try {
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
       setSuccess(true);
@@ -89,9 +90,7 @@ export default function UpdatePasswordPage() {
       <form className="grid gap-4 rounded-lg border border-neutral-200 p-5" onSubmit={handleSubmit}>
         <label className="grid gap-2 text-sm font-medium text-neutral-700">
           New password
-          <input
-            className="focus-ring rounded-md border border-neutral-300 px-4 py-3"
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
@@ -101,9 +100,7 @@ export default function UpdatePasswordPage() {
         </label>
         <label className="grid gap-2 text-sm font-medium text-neutral-700">
           Confirm new password
-          <input
-            className="focus-ring rounded-md border border-neutral-300 px-4 py-3"
-            type="password"
+          <PasswordInput
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             autoComplete="new-password"

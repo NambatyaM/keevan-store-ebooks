@@ -6,8 +6,9 @@ import { BuyNowModal } from "@/components/buy-now-modal";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TrackView } from "@/components/track-view";
+import Image from "next/image";
 import { formatUgx, site } from "@/lib/constants";
-import { getPublishedProductBySlug } from "@/lib/storefront";
+import { getCoverUrl, getPublishedProductBySlug } from "@/lib/storefront";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -113,12 +114,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <span className="mx-2">/</span>
           <span className="text-neutral-800">{product.title}</span>
         </nav>
-        <div className="grid aspect-[4/5] place-items-center rounded-lg bg-neutral-100 p-6 text-center">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">Digital Product</p>
-            <h2 className="mt-3 text-3xl font-black text-brand-black">{product.title}</h2>
-            <p className="mt-4 text-sm text-neutral-500">{product.fileMime} &middot; Instant download</p>
-          </div>
+        <div className="relative grid aspect-[4/5] place-items-center overflow-hidden rounded-lg bg-neutral-100 p-6 text-center">
+          {getCoverUrl(product.coverPath) ? (
+            <Image src={getCoverUrl(product.coverPath)!} alt={product.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+          ) : (
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">Digital Product</p>
+              <h2 className="mt-3 text-3xl font-black text-brand-black">{product.title}</h2>
+              <p className="mt-4 text-sm text-neutral-500">{product.fileMime} &middot; Instant download</p>
+            </div>
+          )}
         </div>
         <section>
           <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">{product.fileMime}</p>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
+import { PasswordInput } from "@/components/password-input";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -36,13 +37,8 @@ export default function SignupPage() {
 
       await login(email, password);
 
-      const res = await fetch("/api/auth/me");
-      if (res.ok) {
-        const { profile } = await res.json();
-        router.push(profile?.role === "admin" ? "/admin/dashboard" : "/creator/dashboard");
-      } else {
-        router.push("/creator/dashboard");
-      }
+      const newStoreHandle = payload.storeHandle;
+      router.push(`/store/${newStoreHandle}`);
     } catch {
       setError("Unable to reach the registration service.");
     } finally {
@@ -76,9 +72,7 @@ export default function SignupPage() {
         </label>
         <label className="grid gap-2 text-sm font-medium text-neutral-700">
           Password
-          <input
-            className="focus-ring rounded-md border border-neutral-300 px-4 py-3"
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"

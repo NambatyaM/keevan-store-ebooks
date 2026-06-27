@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createBrowserClient } from "@/lib/auth";
+import { createSupabaseBrowserClient } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
-import { site } from "@/lib/constants";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -18,9 +17,10 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
+      const origin = window.location.origin;
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${site.url}/update-password`
+        redirectTo: `${origin}/update-password`
       });
       if (resetError) throw resetError;
       setSent(true);

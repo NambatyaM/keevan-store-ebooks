@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { LogoIcon } from "@/components/logo";
 
 const nav = [
   { href: "/features", label: "Features" },
@@ -31,7 +32,9 @@ export function MobileNav() {
         <div className="fixed inset-0 z-50 flex flex-col bg-white md:hidden">
           <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
             <Link href="/" className="flex items-center gap-2 font-bold">
-              <span className="grid h-9 w-9 place-items-center rounded-md bg-brand-green text-white text-sm">KS</span>
+              <span className="grid h-9 w-9 place-items-center">
+                <LogoIcon size={36} />
+              </span>
               Keevan Store
             </Link>
             <button onClick={() => setOpen(false)} className="focus-ring grid h-10 w-10 place-items-center rounded-md border border-neutral-200" aria-label="Close menu">

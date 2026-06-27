@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Gauge, Store } from "lucide-react";
+import { Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoIcon } from "@/components/logo";
 
 export function DashboardShell({
   title,
@@ -21,8 +22,8 @@ export function DashboardShell({
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-2 font-bold">
-              <span className="grid h-9 w-9 place-items-center rounded-md bg-brand-green text-white">
-                <Store size={18} aria-hidden />
+              <span className="grid h-9 w-9 place-items-center">
+                <LogoIcon size={36} />
               </span>
               Keevan Store
             </Link>

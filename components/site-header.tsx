@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Store } from "lucide-react";
 import { SiteHeaderAuth } from "@/components/site-header-auth";
 import { MobileNav } from "@/components/mobile-nav";
+import { LogoIcon } from "@/components/logo";
 
 const nav = [
   { href: "/features", label: "Features" },
@@ -16,8 +16,8 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 font-bold">
-          <span className="grid h-9 w-9 place-items-center rounded-md bg-brand-green text-white">
-            <Store size={19} aria-hidden />
+          <span className="grid h-9 w-9 place-items-center">
+            <LogoIcon size={36} />
           </span>
           Keevan Store
         </Link>

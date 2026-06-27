@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import type { UserProfile } from "@/lib/auth";
-import { createBrowserClient } from "@/lib/auth";
+import { createSupabaseBrowserClient } from "@/lib/auth";
 
 type AuthState = {
   user: User | null;
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let subscription: { unsubscribe: () => void } | null = null;
 
     try {
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
 
       supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
         setSession(currentSession);
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      subscription = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         if (currentSession?.user) {
@@ -80,7 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setProfile(null);
         }
-      }).data.subscription;
+      });
+      subscription = authSubscription;
     } catch (err) {
       console.error("Auth client unavailable:", err);
       setLoading(false);
