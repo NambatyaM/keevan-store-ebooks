@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 import { Check, Download, ShieldCheck, WifiOff } from "lucide-react";
 import { ButtonLink } from "@/components/button";
 import { BuyNowModal } from "@/components/buy-now-modal";
@@ -61,7 +63,29 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     );
   }
 
-  if (!product) notFound();
+  if (!product) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (supabaseUrl && supabaseKey) {
+      try {
+        const cookieStore = await cookies();
+        const sb = createServerClient(supabaseUrl, supabaseKey, {
+          cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} },
+        });
+        const { data: { session } } = await sb.auth.getSession();
+        if (session?.user) {
+          const draftProduct = await getPublishedProductBySlug(slug, true);
+          if (draftProduct) {
+            const { data: creator } = await sb.from("creators").select("id").eq("user_id", session.user.id).maybeSingle();
+            if (creator && creator.id === draftProduct.creatorId) {
+              product = draftProduct;
+            }
+          }
+        }
+      } catch {}
+    }
+    if (!product) notFound();
+  }
 
   const productSchema = {
     "@context": "https://schema.org",

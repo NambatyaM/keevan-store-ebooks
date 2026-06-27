@@ -6,11 +6,11 @@ import { getSupabaseClient } from "@/lib/supabase";
 export const GET = withErrorHandling(async (request: NextRequest, context?: unknown) => {
   const { params } = context as { params: Promise<{ id: string }> };
   const { id } = await params;
-  const authHeader = request.headers.get("authorization");
+  const { supabase, authUser, profile } = await requireUser(request).catch(() => ({ supabase: null, authUser: null, profile: null }));
 
-  if (!authHeader) {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
+  if (!authUser) {
+    const anon = getSupabaseClient();
+    const { data, error } = await anon
       .from("products")
       .select("id,store_id,slug,title,description,price,currency,status,cover_path,cover_size,cover_mime,created_at,updated_at")
       .eq("id", id)
@@ -21,13 +21,12 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
     return json({ product: data });
   }
 
-  const { supabase, authUser, profile } = await requireUser(request);
-  const { data, error } = await supabase.from("products").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase!.from("products").select("*").eq("id", id).maybeSingle();
 
   if (error || !data) return apiError("Product not found", 404);
 
-  if (profile.role !== "admin") {
-    const { data: creator } = await supabase
+  if (profile!.role !== "admin") {
+    const { data: creator } = await supabase!
       .from("creators")
       .select("id")
       .eq("user_id", authUser.id)

@@ -51,15 +51,17 @@ async function requireSupabase() {
   return supabase;
 }
 
-export async function getPublishedProductBySlug(slug: string): Promise<StorefrontProduct | null> {
+export async function getPublishedProductBySlug(slug: string, bypassStatus = false): Promise<StorefrontProduct | null> {
   const supabase = await requireSupabase();
 
-  const { data: product } = await supabase
+  let query = supabase
     .from("products")
     .select("id,creator_id,store_id,slug,title,description,price,currency,file_mime,cover_path")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .single();
+    .eq("slug", slug);
+
+  if (!bypassStatus) query = query.eq("status", "published");
+
+  const { data: product } = await query.single();
 
   if (!product) {
     return null;
