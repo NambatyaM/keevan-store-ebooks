@@ -16,9 +16,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const supabase = getSupabaseAdminClient();
   const { data } = await supabase
     .from("orders")
-    .select("id,amount,created_at,products!inner(title)")
+    .select("id,amount,created_at,status,buyer_id,products!inner(title,slug)")
     .eq("buyer_email", email.toLowerCase())
-    .eq("status", "paid")
     .order("created_at", { ascending: false })
     .limit(10);
 

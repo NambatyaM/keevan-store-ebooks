@@ -1,11 +1,14 @@
 "use client";
 
 import { Suspense } from "react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, Loader2, Download, XCircle } from "lucide-react";
 import { SimplePage } from "@/components/simple-page";
+import { site } from "@/lib/constants";
+
+const POLLING_TIMEOUT_MS = 120000;
 
 type OrderStatus = {
   ok: boolean;
@@ -23,6 +26,8 @@ function OrderSuccessContent() {
   const orderId = searchParams.get("order_id");
   const [status, setStatus] = useState<OrderStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pollingExpired, setPollingExpired] = useState(false);
+  const pollStartRef = useRef<number | null>(null);
 
   const checkOrder = useCallback(async () => {
     if (!orderId) { setError("No order ID provided."); return; }
@@ -34,6 +39,13 @@ function OrderSuccessContent() {
       setStatus(data);
 
       if (data.status === "pending") {
+        if (!pollStartRef.current) {
+          pollStartRef.current = Date.now();
+        }
+        if (Date.now() - pollStartRef.current >= POLLING_TIMEOUT_MS) {
+          setPollingExpired(true);
+          return;
+        }
         setTimeout(checkOrder, 3000);
       }
     } catch {
@@ -45,6 +57,13 @@ function OrderSuccessContent() {
     if (orderId) checkOrder();
     else setError("No order ID provided.");
   }, [orderId, checkOrder]);
+
+  const handleVerify = useCallback(async () => {
+    try {
+      await fetch(`/api/payments/verify?order_id=${orderId}`);
+    } catch {}
+    window.location.reload();
+  }, [orderId]);
 
   if (error) {
     return (
@@ -68,7 +87,31 @@ function OrderSuccessContent() {
           <p className="mt-2 text-neutral-600">
             We are verifying your payment with Pesapal. This usually takes a few seconds.
           </p>
-          <p className="mt-4 text-sm text-neutral-500">This page will update automatically when confirmed.</p>
+          {!pollingExpired ? (
+            <p className="mt-4 text-sm text-neutral-500">This page will update automatically when confirmed.</p>
+          ) : (
+            <div className="mt-6 space-y-3">
+              <p className="text-sm text-amber-600">
+                Your payment is taking longer than expected. This can happen with mobile money delays.
+              </p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <button
+                  onClick={handleVerify}
+                  className="inline-flex items-center gap-2 rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-[#006f43]"
+                >
+                  Check payment status
+                </button>
+                <a
+                  href={site.supportWhatsApp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                >
+                  Contact support on WhatsApp
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       </SimplePage>
     );

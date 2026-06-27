@@ -74,13 +74,7 @@ export default function BuyerDashboardPage() {
                   UGX {p.amount.toLocaleString()} &middot; {new Date(p.paid_at).toLocaleDateString()}
                 </p>
               </div>
-              <button
-                onClick={() => generateDownload(p.product_slug)}
-                className="flex items-center gap-2 rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-[#006f43]"
-              >
-                <Download size={16} aria-hidden />
-                Download
-              </button>
+              <DownloadButton slug={p.product_slug} />
             </div>
           ))}
         </div>
@@ -89,13 +83,36 @@ export default function BuyerDashboardPage() {
   );
 }
 
-async function generateDownload(slug: string) {
-  try {
-    const res = await fetch(`/api/buyer/download?slug=${encodeURIComponent(slug)}`);
-    if (!res.ok) { alert("Unable to generate download link."); return; }
-    const { url } = await res.json();
-    window.open(url, "_blank");
-  } catch {
-    alert("Unable to generate download link.");
+function DownloadButton({ slug }: { slug: string }) {
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownload() {
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/buyer/download?slug=${encodeURIComponent(slug)}`);
+      if (!res.ok) { alert("Unable to generate download link."); return; }
+      const { url } = await res.json();
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch {
+      alert("Unable to generate download link.");
+    } finally {
+      setDownloading(false);
+    }
   }
+
+  return (
+    <button
+      onClick={handleDownload}
+      disabled={downloading}
+      className="flex items-center gap-2 rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-[#006f43] disabled:opacity-70"
+    >
+      {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} aria-hidden />}
+      {downloading ? "Downloading..." : "Download"}
+    </button>
+  );
 }

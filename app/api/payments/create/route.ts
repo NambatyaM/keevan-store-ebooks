@@ -35,7 +35,28 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     .maybeSingle();
 
   if (existingPending) {
-    return apiError("You already have a pending order for this product. Please complete or wait for it to expire.", 409);
+    return apiError(
+      "You have a payment still in progress. Please complete it on Pesapal, or wait 15 minutes for it to expire. " +
+      "Need help? Contact us on WhatsApp. If you already paid, check your order status.",
+      409
+    );
+  }
+
+  // Check for existing paid orders (duplicate purchase prevention)
+  const { data: existingPaid } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("buyer_email", input.buyerEmail)
+    .eq("product_id", input.productId)
+    .eq("status", "paid")
+    .limit(1)
+    .maybeSingle();
+
+  if (existingPaid) {
+    return apiError(
+      "You already purchased this product. Visit your purchases at /buyer/dashboard or contact support if you need help.",
+      409
+    );
   }
 
   // Check for active discount

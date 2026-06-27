@@ -54,7 +54,9 @@ export default function CreatorProductsPage() {
             <tbody>
               {products.map((p) => (
                 <tr key={p.id} className="border-b border-neutral-100">
-                  <td className="p-3 font-medium">{p.title}</td>
+                  <td className="p-3 font-medium">
+                    <Link href={`/product/${p.slug}`} className="text-brand-green hover:underline">{p.title}</Link>
+                  </td>
                   <td className="p-3">{formatUgx(p.price)}</td>
                   <td className="p-3">
                     <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
@@ -63,6 +65,8 @@ export default function CreatorProductsPage() {
                   </td>
                   <td className="p-3 text-neutral-500">{new Date(p.created_at).toLocaleDateString("en-UG")}</td>
                   <td className="p-3">
+                    <Link href={`/product/${p.slug}`} className="text-sm font-semibold text-brand-green">View</Link>
+                    {" / "}
                     <Link href={`/creator/products/${p.id}/edit`} className="text-sm font-semibold text-brand-green">Edit</Link>
                   </td>
                 </tr>

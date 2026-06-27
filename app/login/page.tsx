@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
 import { PasswordInput } from "@/components/password-input";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const role = searchParams.get("role");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,7 +25,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
 
-      const redirect = new URL(window.location.href).searchParams.get("redirect");
+      const redirect = searchParams.get("redirect");
       if (redirect?.startsWith("/")) {
         router.push(redirect);
         return;
@@ -43,8 +46,6 @@ export default function LoginPage() {
       setSubmitting(false);
     }
   }
-
-  const role = typeof window !== "undefined" ? new URL(window.location.href).searchParams.get("role") : null;
 
   return (
     <SimplePage title={role === "buyer" ? "Buyer Login" : "Creator Login"} eyebrow="Welcome back">
@@ -90,5 +91,13 @@ export default function LoginPage() {
         </p>
       </form>
     </SimplePage>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<SimplePage title="Loading..." eyebrow="Welcome"><div className="h-64 animate-pulse rounded-lg bg-neutral-100" /></SimplePage>}>
+      <LoginForm />
+    </Suspense>
   );
 }

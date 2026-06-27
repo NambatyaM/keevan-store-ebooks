@@ -49,5 +49,38 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     return apiError(buyerError.message, 400);
   }
 
+  // After successful buyer creation, link any guest purchases with matching email
+  const { data: buyerRecord } = await supabase
+    .from("buyers")
+    .select("id")
+    .eq("user_id", userId)
+    .single();
+
+  if (buyerRecord) {
+    const { data: existingOrders } = await supabase
+      .from("orders")
+      .select("id, product_id, creator_id, store_id")
+      .eq("buyer_email", input.email)
+      .eq("status", "paid")
+      .is("buyer_id", null);
+
+    if (existingOrders && existingOrders.length > 0) {
+      const purchaseInserts = existingOrders.map((order) => ({
+        buyer_id: buyerRecord.id,
+        order_id: order.id,
+        product_id: order.product_id,
+        creator_id: order.creator_id,
+        store_id: order.store_id,
+      }));
+
+      await supabase.from("buyer_purchases").insert(purchaseInserts);
+
+      await supabase
+        .from("orders")
+        .update({ buyer_id: buyerRecord.id })
+        .in("id", existingOrders.map((o) => o.id));
+    }
+  }
+
   return json({ userId, role: "buyer" }, { status: 201 });
 });

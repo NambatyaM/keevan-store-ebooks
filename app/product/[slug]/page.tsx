@@ -154,7 +154,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <ShieldCheck className="text-brand-green" aria-hidden />
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <BuyNowModal productId={product.id} productSlug={product.slug} />
+              <BuyNowModal productId={product.id} productSlug={product.slug} price={product.price} title={product.title} />
               <ButtonLink href={`/store/${product.storeHandle}`} variant="secondary">
                 Visit Creator Store
               </ButtonLink>
