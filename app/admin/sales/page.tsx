@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { StatCard } from "@/components/stat-card";
 import { adminNav } from "@/app/admin/nav";
+import { formatUgx } from "@/lib/constants";
 
 type Order = {
   id: string;
@@ -40,8 +41,8 @@ export default function AdminSalesPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard label="Total Orders" value={String(orders.length)} />
         <StatCard label="Paid Orders" value={String(paid.length)} />
-        <StatCard label="Total Revenue" value={new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(totalRevenue)} />
-        <StatCard label="Platform Earnings" value={new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(platformEarnings)} />
+        <StatCard label="Total Revenue" value={formatUgx(totalRevenue)} />
+        <StatCard label="Platform Earnings" value={formatUgx(platformEarnings)} />
       </div>
 
       <div className="mt-6">
@@ -68,8 +69,8 @@ export default function AdminSalesPage() {
                   <tr key={o.id} className="border-b border-neutral-100">
                     <td className="p-3 font-medium">{o.products?.title ?? "—"}</td>
                     <td className="p-3 text-neutral-600">{o.creators?.display_name ?? "—"}</td>
-                    <td className="p-3">{new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(o.amount)}</td>
-                    <td className="p-3">{new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(o.platform_fee)}</td>
+                    <td className="p-3">{formatUgx(o.amount)}</td>
+                    <td className="p-3">{formatUgx(o.platform_fee)}</td>
                     <td className="p-3">
                       <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
                         o.status === "paid" ? "bg-green-100 text-green-800" :

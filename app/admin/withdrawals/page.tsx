@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { adminNav } from "@/app/admin/nav";
+import { formatUgx } from "@/lib/constants";
 
 type Withdrawal = {
   id: string;
@@ -89,7 +90,7 @@ export default function AdminWithdrawalsPage() {
               {withdrawals.map((w) => (
                 <tr key={w.id} className="border-b border-neutral-100">
                   <td className="p-3 font-medium">{w.creators?.display_name ?? "—"}</td>
-                  <td className="p-3">{new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(w.amount)}</td>
+                    <td className="p-3">{formatUgx(w.amount)}</td>
                   <td className="p-3 text-neutral-600">{String(w.payout_method ?? "—")}</td>
                   <td className="p-3 text-neutral-600 max-w-[150px] truncate">{typeof w.payout_details === "object" ? JSON.stringify(w.payout_details) : String(w.payout_details ?? "—")}</td>
                   <td className="p-3">

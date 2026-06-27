@@ -89,7 +89,7 @@ export default function CreatorWithdrawalsPage() {
 
           <form onSubmit={handleRequest} className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-neutral-700">Amount ({formatUgx(0).split("0")[0]})</label>
+              <label className="block text-sm font-semibold text-neutral-700">Amount (UGX)</label>
               <input
                 type="number"
                 min={site.minimumWithdrawal}

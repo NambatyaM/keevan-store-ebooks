@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { adminNav } from "@/app/admin/nav";
+import { formatUgx } from "@/lib/constants";
 
 type Refund = {
   id: string;
@@ -96,7 +97,7 @@ export default function AdminRefundsPage() {
                     <div>{r.buyer_name}</div>
                     <div className="text-xs text-neutral-400">{r.buyer_email}</div>
                   </td>
-                  <td className="p-3">{new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(orderAmount(r))}</td>
+                  <td className="p-3">{formatUgx(orderAmount(r))}</td>
                   <td className="max-w-[200px] truncate p-3 text-neutral-600" title={r.reason}>{r.reason}</td>
                   <td className="p-3">
                     <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${

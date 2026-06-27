@@ -15,9 +15,9 @@ function listMigrations(): string[] {
 describe("Migration files", () => {
   it("all 11 migrations exist and are in order", () => {
     const migrations = listMigrations();
-    expect(migrations).toHaveLength(11);
+    expect(migrations).toHaveLength(12);
     expect(migrations[0]).toBe("001_initial_schema.sql");
-    expect(migrations[10]).toBe("011_production_security_hardening.sql");
+    expect(migrations[11]).toBe("012_hotfix_finalize_pesapal.sql");
   });
 
   it("each migration has a sequential number prefix", () => {

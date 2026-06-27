@@ -25,6 +25,7 @@ const mockSupabase = {
 
 vi.mock("@/lib/supabase", () => ({
   getSupabaseAdminClient: vi.fn(() => mockSupabase),
+  getOptionalSupabaseAdminClient: vi.fn(() => mockSupabase),
 }));
 
 vi.mock("@/lib/email", () => ({

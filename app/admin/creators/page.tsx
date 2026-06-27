@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { adminNav } from "@/app/admin/nav";
+import { formatUgx } from "@/lib/constants";
 
 export default function AdminCreatorsPage() {
   const [creators, setCreators] = useState<any[]>([]);
@@ -83,7 +84,7 @@ export default function AdminCreatorsPage() {
                       "bg-neutral-100 text-neutral-600"
                     }`}>{c.store_status ?? "no store"}</span>
                   </td>
-                  <td className="p-3">{new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(c.available_balance ?? 0)}</td>
+                    <td className="p-3">{formatUgx(c.available_balance ?? 0)}</td>
                   <td className="p-3 text-neutral-500">{new Date(c.created_at).toLocaleDateString("en-UG")}</td>
                   <td className="p-3">
                     {c.store_id && c.store_status === "active" && (

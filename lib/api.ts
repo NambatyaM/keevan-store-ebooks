@@ -11,7 +11,13 @@ export function checkCSRF(request: NextRequest) {
   const origin = request.headers.get("origin");
   const referer = request.headers.get("referer");
   const allowedOrigin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
-  if (!allowedOrigin) return;
+  if (!allowedOrigin) {
+    if (process.env.NODE_ENV === "development") {
+      return;
+    }
+    console.warn("CSRF check skipped: NEXT_PUBLIC_SITE_URL not configured");
+    return;
+  }
 
   const source = origin ?? referer ?? "";
   try {

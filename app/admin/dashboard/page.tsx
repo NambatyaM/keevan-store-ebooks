@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { StatCard } from "@/components/stat-card";
 import { adminNav } from "@/app/admin/nav";
+import { formatUgx } from "@/lib/constants";
 
 type LogEntry = {
   id: string;
@@ -59,8 +60,8 @@ export default function AdminDashboardPage() {
         <StatCard label="Total Sales" value={String(stats.totalSales ?? 0)} />
       </div>
       <div className="mt-4 grid gap-4 md:grid-cols-4">
-        <StatCard label="Revenue" value={new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(stats.totalRevenue ?? 0)} />
-        <StatCard label="Platform Earnings" value={new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(stats.platformEarnings ?? 0)} />
+        <StatCard label="Revenue" value={formatUgx(stats.totalRevenue ?? 0)} />
+        <StatCard label="Platform Earnings" value={formatUgx(stats.platformEarnings ?? 0)} />
         <StatCard label="Active / Suspended" value={`${stats.activeStores ?? 0} / ${stats.suspendedStores ?? 0}`} />
         <StatCard label="Pending Withdrawals" value={String(stats.pendingWithdrawals ?? 0)} />
       </div>

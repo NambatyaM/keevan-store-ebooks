@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { adminNav } from "@/app/admin/nav";
+import { formatUgx } from "@/lib/constants";
 
 type Product = {
   id: string;
@@ -80,7 +81,7 @@ export default function AdminProductsPage() {
                 <tr key={p.id} className="border-b border-neutral-100">
                   <td className="p-3 font-medium">{p.title}</td>
                   <td className="p-3 text-neutral-600">{p.stores?.name ?? "—"}</td>
-                  <td className="p-3">{new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(p.price)}</td>
+                    <td className="p-3">{formatUgx(p.price)}</td>
                   <td className="p-3">
                     <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
                       p.status === "published" ? "bg-green-100 text-green-800" :
