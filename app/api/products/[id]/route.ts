@@ -44,7 +44,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
 export const PATCH = withErrorHandling(async (request: NextRequest, context?: unknown) => {
   const { params } = context as { params: Promise<{ id: string }> };
   const { id } = await params;
-  const input = await readJson(request, productUpdateSchema);
+  const input = await readJson(request, productUpdateSchema.partial());
   const { supabase, authUser, profile } = await requireUser(request);
 
   const { data: product } = await supabase.from("products").select("creator_id").eq("id", id).maybeSingle();

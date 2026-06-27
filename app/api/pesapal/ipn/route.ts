@@ -139,7 +139,7 @@ async function handleCompleted(
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .select("id, creator_id, amount, product_id, status")
+    .select("id, creator_id, amount, creator_earnings, product_id, status")
     .eq("id", payment.order_id)
     .single();
 
@@ -179,10 +179,12 @@ async function handleCompleted(
     console.log("[Pesapal IPN] Download token created");
   }
 
+  const earnings = order.creator_earnings ?? order.amount;
+
   try {
     const { error: balanceError } = await supabase.rpc("increment_creator_balance", {
       creator_row_id: order.creator_id,
-      amount: order.amount,
+      amount: earnings,
     });
     if (balanceError) {
       console.error("[Pesapal IPN] RPC balance update failed, trying direct update:", balanceError);
@@ -195,8 +197,8 @@ async function handleCompleted(
         await supabase
           .from("creators")
           .update({
-            available_balance: creator.available_balance + order.amount,
-            total_earnings: creator.total_earnings + order.amount,
+            available_balance: creator.available_balance + earnings,
+            total_earnings: creator.total_earnings + earnings,
             updated_at: new Date().toISOString(),
           })
           .eq("id", order.creator_id);

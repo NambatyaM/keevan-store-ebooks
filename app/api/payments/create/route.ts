@@ -70,7 +70,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       amount: split.grossAmount,
       email: input.buyerEmail,
       phone: input.phone,
-      firstName: input.buyerName.split(" ")[0] ?? input.buyerName,
+      firstName: input.buyerName.split(" ")[0] || input.buyerName,
       lastName: input.buyerName.split(" ").slice(1).join(" ") || "Customer",
       description: product.title,
       callbackUrl: `${site.url}/download/${product.slug}?merchantReference=${encodeURIComponent(merchantReference)}`

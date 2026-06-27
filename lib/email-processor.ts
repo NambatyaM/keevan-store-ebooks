@@ -1,6 +1,6 @@
 import { sendEmail } from "@/lib/email";
 import { orderConfirmationHtml, withdrawalStatusHtml, refundStatusHtml } from "@/lib/email-templates";
-import { getSupabaseAdminClient } from "@/lib/supabase";
+import { getOptionalSupabaseAdminClient } from "@/lib/supabase";
 
 export type QueueItem = {
   id: string;
@@ -13,7 +13,8 @@ export type QueueItem = {
 };
 
 export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { ok: false; error: string }> {
-  const supabase = getSupabaseAdminClient();
+  const supabase = getOptionalSupabaseAdminClient();
+  if (!supabase) return { ok: false, error: "Server configuration error: admin client unavailable" };
 
   switch (item.type) {
     case "order_confirmation": {
@@ -33,8 +34,8 @@ export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { o
 
       if (!download) return { ok: false, error: "Download token not found" };
 
-      const productTitle = Array.isArray(order.products) ? order.products[0]?.title : (order as Record<string, unknown>).products;
-      const creatorName = Array.isArray(order.creators) ? order.creators[0]?.display_name : (order as Record<string, unknown>).creators;
+      const productTitle = Array.isArray(order.products) ? order.products[0]?.title : (order.products as { title?: string } | undefined)?.title ?? null;
+      const creatorName = Array.isArray(order.creators) ? order.creators[0]?.display_name : (order.creators as { display_name?: string } | undefined)?.display_name ?? null;
 
       const html = orderConfirmationHtml({
         buyerName: item.to_name ?? "Customer",
