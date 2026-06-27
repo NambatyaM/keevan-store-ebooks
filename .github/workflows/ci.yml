@@ -42,15 +42,20 @@ jobs:
           node-version: 22
           cache: "npm"
       - run: npm ci
-      - run: npm run build 2>&1 | tee /tmp/build.log
+      - id: build
+        run: |
+          npm run build 2>&1 | tee /tmp/build.log; exit_code="${PIPESTATUS[0]}"
+          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+          if [ "$exit_code" != "0" ]; then
+            echo "## Build failed with exit code $exit_code" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat /tmp/build.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+          exit $exit_code
         shell: bash
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: build-log
-          path: /tmp/build.log
