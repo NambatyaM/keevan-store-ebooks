@@ -29,7 +29,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   const { data: purchase } = await supabase
     .from("buyer_purchases")
-    .select("product_id")
+    .select("product_id, store_id, order_id")
     .eq("buyer_id", buyer.id)
     .eq("product_id", productMatch.id)
     .maybeSingle();
@@ -54,6 +54,18 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     .createSignedUrl(product.file_path, 86400);
 
   if (!signedUrl) return apiError("Unable to generate download URL", 500);
+
+  await Promise.allSettled([
+    admin.from("analytics_events").insert({
+      product_id: productMatch.id,
+      store_id: purchase.store_id ?? null,
+      event_type: "download",
+      metadata: { source: "buyer_dashboard", order_id: purchase.order_id }
+    }),
+    admin.from("downloads")
+      .update({ downloaded_at: new Date().toISOString() })
+      .eq("order_id", purchase.order_id)
+  ]);
 
   return json({ url: signedUrl.signedUrl });
 });

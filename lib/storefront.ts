@@ -4,7 +4,7 @@ export function getCoverUrl(coverPath: string | null, width?: number): string | 
   if (!coverPath) return null;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl) return null;
-  const bucket = "products";
+  const bucket = "covers";
   const base = `${supabaseUrl}/storage/v1/render/image/public/${bucket}/${coverPath}`;
   const params = new URLSearchParams({ format: "webp" });
   if (width) params.set("width", String(width));

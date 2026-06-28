@@ -60,9 +60,16 @@ function OrderSuccessContent() {
 
   const handleVerify = useCallback(async () => {
     try {
-      await fetch(`/api/payments/verify?order_id=${orderId}`);
-    } catch {}
-    window.location.reload();
+      const verifyRes = await fetch(`/api/payments/verify?order_id=${orderId}`);
+      if (verifyRes.ok) {
+        window.location.reload();
+        return;
+      }
+      const payload = await verifyRes.json();
+      setError(payload?.error?.message ?? "Payment verification failed. Contact support.");
+    } catch {
+      setError("Unable to reach payment verification. Please try again.");
+    }
   }, [orderId]);
 
   if (error) {

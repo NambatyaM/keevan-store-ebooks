@@ -7,6 +7,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   const hasAuthCookie = request.cookies.getAll().some(
     (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token")
   );

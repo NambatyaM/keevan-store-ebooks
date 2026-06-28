@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { apiError, json, readJson, requireUser, withErrorHandling } from "@/lib/api";
 import { withdrawalSchema } from "@/lib/schemas";
+import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const { supabase, authUser } = await requireUser(request);
@@ -19,12 +20,12 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const input = await readJson(request, withdrawalSchema);
-  const { supabase, authUser } = await requireUser(request);
+  await requireUser(request);
+  const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase.rpc("reserve_withdrawal", {
-    creator_user_id: authUser.id,
-    withdrawal_amount: input.amount,
-    withdrawal_method: input.payoutMethod,
-    withdrawal_details: input.payoutDetails
+    p_amount: input.amount,
+    p_payout_method: input.payoutMethod,
+    p_payout_details: input.payoutDetails
   });
 
   if (error) return apiError(error.message, 400);

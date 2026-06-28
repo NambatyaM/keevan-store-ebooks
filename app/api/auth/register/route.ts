@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { apiError, json, readJson, withErrorHandling } from "@/lib/api";
+import { apiError, json, readJson, withOptionalCsrf } from "@/lib/api";
 import { registerSchema } from "@/lib/schemas";
 
-export const POST = withErrorHandling(async (request: NextRequest) => {
+export const POST = withOptionalCsrf(async (request: NextRequest) => {
   const input = await readJson(request, registerSchema);
   const supabase = getSupabaseAdminClient();
 

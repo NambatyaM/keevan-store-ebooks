@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { json, withErrorHandling } from "@/lib/api";
+import { json, withOptionalCsrf } from "@/lib/api";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { type QueueItem, renderAndSend } from "@/lib/email-processor";
 
@@ -89,5 +89,5 @@ async function processEmails(request: NextRequest): Promise<Response> {
   return json({ ok: true, processed, failed, total: queueItems.length });
 }
 
-export const GET = withErrorHandling(processEmails);
-export const POST = withErrorHandling(processEmails);
+export const GET = withOptionalCsrf(processEmails);
+export const POST = withOptionalCsrf(processEmails);

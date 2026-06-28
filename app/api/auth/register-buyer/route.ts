@@ -1,16 +1,16 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { apiError, json, readJson, withErrorHandling } from "@/lib/api";
+import { apiError, json, readJson, withOptionalCsrf } from "@/lib/api";
 import { z } from "zod";
 
 const registerBuyerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(8).regex(/[a-z]/, "Password must contain a lowercase letter").regex(/[A-Z]/, "Password must contain an uppercase letter").regex(/[0-9]/, "Password must contain a number"),
   fullName: z.string().min(2),
   phone: z.string().optional()
 });
 
-export const POST = withErrorHandling(async (request: NextRequest) => {
+export const POST = withOptionalCsrf(async (request: NextRequest) => {
   const input = await readJson(request, registerBuyerSchema);
   const supabase = getSupabaseAdminClient();
 

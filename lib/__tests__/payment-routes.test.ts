@@ -95,6 +95,12 @@ function makeRequest(url: string, overrides: Partial<RequestInit & { headers?: R
   });
 }
 
+function queryChain(data: unknown, error: unknown = null) {
+  const chain = mockFromChain(data, error);
+  chain.maybeSingle = vi.fn().mockResolvedValue({ data, error });
+  return chain;
+}
+
 describe("POST /api/payments/create", () => {
   const validBody = JSON.stringify({
     productId: "550e8400-e29b-41d4-a716-446655440000",
@@ -104,12 +110,6 @@ describe("POST /api/payments/create", () => {
 
   async function importCreate() {
     return import("@/app/api/payments/create/route").then((m) => m.POST);
-  }
-
-  function queryChain(data: unknown, error: unknown = null) {
-    const chain = mockFromChain(data, error);
-    chain.maybeSingle = vi.fn().mockResolvedValue({ data, error });
-    return chain;
   }
 
   function setupDefaultMocks() {
@@ -243,9 +243,29 @@ describe("POST /api/payments/verify", () => {
     return import("@/app/api/payments/verify/route").then((m) => m.POST);
   }
 
+  function setupAuthUser() {
+    const user = { id: "buyer-1", email: "buyer@test.com" };
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user },
+      error: null,
+    });
+    const prevImpl = mockSupabase.from.getMockImplementation();
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === "users") return mockFromChain({ id: user.id, email: user.email, role: "buyer", full_name: "Test Buyer" });
+      if (table === "payments") return queryChain({ merchant_reference: "mr-1", order: [{ buyer_id: user.id, buyer_email: user.email }] });
+      if (prevImpl) return (prevImpl as (table: string) => unknown)(table);
+      return rateLimitChain;
+    });
+  }
+
+  function authRequest(url: string, body: string) {
+    return makeRequest(url, { body, headers: { authorization: "Bearer test-token" } });
+  }
+
   it("verifies payment successfully", async () => {
+    setupAuthUser();
     const POST = await importVerify();
-    const res = await POST(makeRequest("/api/payments/verify", { body: validBody }));
+    const res = await POST(authRequest("/api/payments/verify", validBody));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
@@ -259,23 +279,26 @@ describe("POST /api/payments/verify", () => {
   });
 
   it("returns 404 when payment not found", async () => {
+    setupAuthUser();
     mockVerifyPesapalPayment.mockResolvedValue({ ok: false, error: "Payment not found", raw: {} });
     const POST = await importVerify();
-    const res = await POST(makeRequest("/api/payments/verify", { body: validBody }));
+    const res = await POST(authRequest("/api/payments/verify", validBody));
     expect(res.status).toBe(404);
   });
 
   it("returns 402 when payment not completed", async () => {
+    setupAuthUser();
     mockVerifyPesapalPayment.mockResolvedValue({ ok: false, error: "Payment is not completed", raw: {} });
     const POST = await importVerify();
-    const res = await POST(makeRequest("/api/payments/verify", { body: validBody }));
+    const res = await POST(authRequest("/api/payments/verify", validBody));
     expect(res.status).toBe(402);
   });
 
   it("returns 409 on other verification errors", async () => {
+    setupAuthUser();
     mockVerifyPesapalPayment.mockResolvedValue({ ok: false, error: "Pesapal amount mismatch", raw: {} });
     const POST = await importVerify();
-    const res = await POST(makeRequest("/api/payments/verify", { body: validBody }));
+    const res = await POST(authRequest("/api/payments/verify", validBody));
     expect(res.status).toBe(409);
   });
 });

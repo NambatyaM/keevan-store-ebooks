@@ -1,15 +1,17 @@
 import { NextRequest } from "next/server";
-import { apiError, json, readJson, withErrorHandling } from "@/lib/api";
+import { apiError, json, readJson, withErrorHandling, checkCSRF } from "@/lib/api";
 import { refundRequestSchema } from "@/lib/schemas";
 import { getSupabaseAdminClient } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
+  checkCSRF(request);
   const input = await readJson(request, refundRequestSchema);
   const supabase = getSupabaseAdminClient();
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .select("id, buyer_email, buyer_name, status, payments!inner(id,status)")
+    .select("id, buyer_email, buyer_name, status, buyer_id, payments!inner(id,status)")
     .eq("id", input.orderId)
     .maybeSingle();
 
@@ -23,6 +25,23 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   if (order.status !== "paid") {
     return apiError("Only completed orders can be refunded", 400);
+  }
+
+  // Verify authenticated user owns this order (if buyer is logged in)
+  const cookieClient = createServerSupabaseClient(request);
+  const { data: sessionData } = await cookieClient.auth.getSession();
+  const sessionUser = sessionData.session?.user;
+
+  if (sessionUser) {
+    const { data: buyerRecord } = await supabase
+      .from("buyers")
+      .select("id")
+      .eq("user_id", sessionUser.id)
+      .maybeSingle();
+
+    if (buyerRecord && order.buyer_id && order.buyer_id !== buyerRecord.id) {
+      return apiError("Access denied: you do not own this order", 403);
+    }
   }
 
   const payment = Array.isArray(order.payments) ? order.payments[0] : order.payments;
@@ -53,7 +72,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     .single();
 
   if (insertError) {
-    return apiError("Failed to submit refund request", 500);
+    return apiError(insertError.message || "Failed to submit refund request", 500);
   }
 
   return json({ refund, message: "Refund request submitted. An admin will review it shortly." }, { status: 201 });

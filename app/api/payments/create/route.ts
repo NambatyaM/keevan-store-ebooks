@@ -115,11 +115,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   if (orderError || !order) return apiError(orderError?.message ?? "Unable to create order", 400);
 
-  // Increment discount use count
-  if (discountId) {
-    await supabase.rpc("increment_discount_use", { discount_id: discountId });
-  }
-
   const merchantReference = randomUUID();
   const { error: paymentError } = await supabase
     .from("payments")
@@ -146,6 +141,11 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       description: product.title,
       callbackUrl: `${callbackBase}/order/success?order_id=${order.id}`
     });
+
+    // Increment discount use count only after Pesapal order succeeds
+    if (discountId) {
+      await supabase.rpc("increment_discount_use", { discount_id: discountId });
+    }
 
     return json({ orderId: order.id, merchantReference, redirectUrl: pesapal.redirect_url });
   } catch {

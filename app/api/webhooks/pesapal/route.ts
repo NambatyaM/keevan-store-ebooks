@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { json, withErrorHandling } from "@/lib/api";
+import { json, withOptionalCsrf } from "@/lib/api";
 import { normalizePesapalStatus, verifyPesapalPayment } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
-export const POST = withErrorHandling(async (request: NextRequest) => {
+export const POST = withOptionalCsrf(async (request: NextRequest) => {
   const rawBody = await request.text();
   const rawPayload = JSON.parse(rawBody);
   const normalized = normalizePesapalStatus(rawPayload);

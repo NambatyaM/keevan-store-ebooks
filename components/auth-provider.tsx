@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/me");
       if (response.ok) {
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       if (currentSession?.user) {
-        await fetchProfile(currentSession.user.id);
+        await fetchProfile();
       } else {
         setProfile(null);
       }
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         if (currentSession?.user) {
-          fetchProfile(currentSession.user.id).finally(() => setLoading(false));
+          fetchProfile().finally(() => setLoading(false));
         } else {
           setLoading(false);
         }
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         if (currentSession?.user) {
-          fetchProfile(currentSession.user.id);
+          fetchProfile();
         } else {
           setProfile(null);
         }

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+const UG_PHONE_REGEX = /^(\+256|0)[0-9]{9}$/;
+
 type CheckoutFormProps = {
   productId: string;
 };
@@ -11,10 +13,23 @@ export function CheckoutForm({ productId }: CheckoutFormProps) {
   const [buyerEmail, setBuyerEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  function validatePhone(val: string): string | null {
+    if (!val.trim()) return "Phone number is required";
+    if (!UG_PHONE_REGEX.test(val.trim())) return "Enter a valid MTN or Airtel number (e.g. 0772XXXXXX)";
+    return null;
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const phoneErr = validatePhone(phone);
+    if (phoneErr) {
+      setPhoneError(phoneErr);
+      return;
+    }
+    setPhoneError(null);
     setSubmitting(true);
     setError(null);
 
@@ -26,7 +41,7 @@ export function CheckoutForm({ productId }: CheckoutFormProps) {
           productId,
           buyerName,
           buyerEmail,
-          phone: phone || undefined
+          phone
         })
       });
 
@@ -79,9 +94,20 @@ export function CheckoutForm({ productId }: CheckoutFormProps) {
           className="focus-ring rounded-md border border-neutral-300 px-4 py-3"
           type="tel"
           value={phone}
-          onChange={(event) => setPhone(event.target.value)}
+          onChange={(event) => {
+            setPhone(event.target.value);
+            if (phoneError) setPhoneError(null);
+          }}
           autoComplete="tel"
+          required
+          aria-invalid={!!phoneError}
+          aria-describedby={phoneError ? "phone-error" : undefined}
         />
+        {phoneError && (
+          <p id="phone-error" className="text-xs text-red-600" role="alert">
+            {phoneError}
+          </p>
+        )}
       </label>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       <button

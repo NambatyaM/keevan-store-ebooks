@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { json, requireAdmin, withErrorHandling } from "@/lib/api";
+import { json, requireAdmin, withOptionalCsrf } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
-export const GET = withErrorHandling(async (request: NextRequest) => {
+export const GET = withOptionalCsrf(async (request: NextRequest) => {
   await requireAdmin(request);
 
   console.log("[register-ipn] Starting IPN registration...");

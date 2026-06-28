@@ -65,6 +65,35 @@ export function withErrorHandling(handler: (request: NextRequest, context?: unkn
     try {
       const limited = await rateLimit(request);
       if (limited) return limited;
+
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        checkCSRF(request);
+      }
+
+      return await handler(request, context);
+    } catch (error) {
+      const err = error as Error & { status?: number; details?: unknown };
+      console.error(
+        JSON.stringify({
+          level: "error",
+          timestamp: new Date().toISOString(),
+          path: request.nextUrl?.pathname ?? "unknown",
+          method: request.method,
+          message: err.message,
+          status: err.status ?? 500,
+          ...(process.env.NODE_ENV === "development" ? { details: err.details, stack: err.stack } : {})
+        })
+      );
+      return apiError(err.status === 500 ? "Unexpected server error" : err.message, err.status ?? 500, err.details);
+    }
+  };
+}
+
+export function withOptionalCsrf(handler: (request: NextRequest, context?: unknown) => Promise<Response>) {
+  return async (request: NextRequest, context?: unknown) => {
+    try {
+      const limited = await rateLimit(request);
+      if (limited) return limited;
       return await handler(request, context);
     } catch (error) {
       const err = error as Error & { status?: number; details?: unknown };
@@ -145,6 +174,9 @@ export async function requireUser(request: NextRequest) {
   }
 
   const supabase = getSupabaseAdminClient();
+
+  try { await supabase.rpc("set_app_api_key"); } catch {}
+
   const { data: profile, error: profileError } = await supabase.from("users").select("*").eq("id", user.id).single();
 
   if (profileError || !profile) {
