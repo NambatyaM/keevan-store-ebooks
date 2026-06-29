@@ -1,7 +1,8 @@
 -- 016_multi_currency.sql
 -- Multi-currency support: Add currency columns to all monetary tables.
 
--- 1. Stores — operating currency (already has a currency column from initial schema, ensure constraint)
+-- 1. Stores — operating currency (add column then constraint)
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS currency text NOT NULL DEFAULT 'UGX';
 ALTER TABLE stores DROP CONSTRAINT IF EXISTS valid_store_currency;
 ALTER TABLE stores ADD CONSTRAINT valid_store_currency
   CHECK (currency IN ('UGX', 'KES', 'TZS', 'RWF', 'USD'));
