@@ -41,18 +41,36 @@ export function Pagination({
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            className="rounded-lg border border-border p-2 text-muted transition hover:bg-neutral-50 disabled:opacity-40"
+            className="rounded-lg border border-border p-2 text-muted transition hover:border-brand-green/30 hover:bg-brand-mist hover:text-brand-green disabled:opacity-40 disabled:hover:border-border disabled:hover:bg-transparent disabled:hover:text-muted"
             aria-label="Previous page"
           >
             <ChevronLeft size={16} />
           </button>
-          <span className="min-w-[3rem] text-center text-sm font-medium text-muted">
-            {page} / {totalPages}
-          </span>
+          <div className="flex items-center gap-0.5">
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+              .map((p, idx, arr) => (
+                <span key={p} className="flex items-center">
+                  {idx > 0 && arr[idx - 1] !== p - 1 && (
+                    <span className="px-1 text-xs text-muted">...</span>
+                  )}
+                  <button
+                    onClick={() => onPageChange(p)}
+                    className={`min-w-[2rem] rounded-lg px-2 py-1.5 text-sm font-semibold transition ${
+                      p === page
+                        ? "bg-brand-green text-white shadow-sm"
+                        : "text-muted hover:bg-brand-mist hover:text-brand-green"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                </span>
+              ))}
+          </div>
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
-            className="rounded-lg border border-border p-2 text-muted transition hover:bg-neutral-50 disabled:opacity-40"
+            className="rounded-lg border border-border p-2 text-muted transition hover:border-brand-green/30 hover:bg-brand-mist hover:text-brand-green disabled:opacity-40 disabled:hover:border-border disabled:hover:bg-transparent disabled:hover:text-muted"
             aria-label="Next page"
           >
             <ChevronRight size={16} />

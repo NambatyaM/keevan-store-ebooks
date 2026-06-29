@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     if (!product) return {};
 
     return {
-      title: `${product.title} — Buy Digital E-book Online | Keevan Store`,
+      title: `${product.title} — Buy Digital E-book Online`,
       description: product.description,
       alternates: { canonical: `${site.url}/product/${slug}` },
       openGraph: {

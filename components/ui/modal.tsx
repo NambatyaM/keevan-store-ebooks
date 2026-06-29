@@ -46,13 +46,13 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
-      <div className={cn("w-full rounded-xl bg-surface-card p-6 shadow-warm animate-fade-in", widths[size])}>
+      <div className={cn("w-full rounded-xl bg-surface-card p-6 shadow-warm animate-scale-check", widths[size])}>
         {title && (
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-brand-black">{title}</h2>

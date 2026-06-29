@@ -4,7 +4,8 @@ export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).regex(/[a-z]/, "Password must contain a lowercase letter").regex(/[A-Z]/, "Password must contain an uppercase letter").regex(/[0-9]/, "Password must contain a number"),
   fullName: z.string().min(2),
-  storeHandle: z.string().regex(/^[a-z0-9-]{3,64}$/)
+  storeHandle: z.string().regex(/^[a-z0-9-]{3,64}$/),
+  currency: z.enum(["UGX", "KES", "TZS", "RWF", "USD"]).default("UGX")
 });
 
 export const loginSchema = z.object({

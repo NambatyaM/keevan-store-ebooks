@@ -17,9 +17,9 @@ export function EmptyState({
   onAction?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface-card p-12 text-center shadow-sm">
-      <div className="mb-4 text-muted">
-        {icon ?? <Package size={48} strokeWidth={1.2} />}
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface-card p-12 text-center shadow-sm transition hover:border-brand-green/30">
+      <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-brand-mist text-brand-green">
+        {icon ?? <Package size={32} strokeWidth={1.2} />}
       </div>
       <h3 className="text-xl font-bold text-brand-black">{title}</h3>
       {description && (

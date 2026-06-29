@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { apiError, json, readJson, withOptionalCsrf } from "@/lib/api";
+import { apiError, json, readJson, withErrorHandling } from "@/lib/api";
 import { resetPasswordSchema } from "@/lib/schemas";
 
-export const POST = withOptionalCsrf(async (request: NextRequest) => {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   const input = await readJson(request, resetPasswordSchema);
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

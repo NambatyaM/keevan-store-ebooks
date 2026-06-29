@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
     if (!store) return {};
 
     return {
-      title: `${store.creatorName} — Digital Store on Keevan Store | Buy E-books Online`,
+      title: `${store.creatorName} — Digital Store | Buy E-books Online`,
       description: store.description ?? `Browse digital products by ${store.creatorName}. Buy e-books, guides, and templates securely via Pesapal with instant download.`,
       alternates: { canonical: `${site.url}/store/${handle}` },
       openGraph: {

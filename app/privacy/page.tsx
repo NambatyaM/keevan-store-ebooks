@@ -3,7 +3,7 @@ import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Keevan Store",
+  title: "Privacy Policy",
   description: "Keevan Store privacy policy explains what personal data we collect from creators and buyers, how we use it, and your rights under data protection laws.",
   robots: { index: true, follow: false }
 };

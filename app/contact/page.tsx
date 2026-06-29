@@ -4,7 +4,7 @@ import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Contact Keevan Store Support | WhatsApp Support for Creators and Buyers",
+  title: "Contact Support — WhatsApp for Creators and Buyers",
   description: "Contact Keevan Store support via WhatsApp. Get help with store setup, product uploads, payments, withdrawals, and buyer issues. Serving Uganda, Kenya, Tanzania, Rwanda.",
   openGraph: {
     title: "Contact Keevan Store — Support for East African Creators",

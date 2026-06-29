@@ -3,7 +3,7 @@ import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "About Keevan Store — East African Creator Commerce Platform",
+  title: "About — East African Creator Commerce Platform",
   description: "Keevan Store is a creator commerce platform built for East African authors, educators, coaches, and digital creators. Sell e-books, guides, templates, and digital products. No monthly fees. Pesapal payments. Serving Uganda, Kenya, Tanzania, Rwanda.",
   openGraph: {
     title: "About Keevan Store — Creator Commerce for East Africa",

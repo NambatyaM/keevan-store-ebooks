@@ -4,7 +4,7 @@ import { SimplePage } from "@/components/simple-page";
 import { formatUgx, site } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Pricing — Sell Digital Products with Zero Monthly Fees | Keevan Store",
+  title: "Pricing — Sell Digital Products with Zero Monthly Fees",
   description: "Keevan Store is free to join. No monthly subscriptions. Pay only 10% commission when you make a sale. Compare with Shopify, Gumroad, and self-hosted solutions. East African creators keep 90%.",
   openGraph: {
     title: "Keevan Store Pricing — No Monthly Fees, Pay Only When You Sell",

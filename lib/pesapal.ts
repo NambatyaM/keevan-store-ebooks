@@ -233,7 +233,7 @@ export async function verifyPesapalPayment(
     return { ok: false, error: "Payment is not completed", raw: transactionStatus.raw };
   }
 
-  const { data: finalizedRows, error: finalizeError } = await supabase.rpc("finalize_pesapal_payment", {
+  const { data: finalized, error: finalizeError } = await supabase.rpc("finalize_pesapal_payment", {
     payment_reference: merchantReference,
     pesapal_tracking_id: transactionStatus.trackingId,
     status_payload: transactionStatus.raw
@@ -241,16 +241,22 @@ export async function verifyPesapalPayment(
 
   if (finalizeError) return { ok: false, error: finalizeError.message, raw: {} };
 
-  const finalized = finalizedRows?.[0];
-  if (!finalized?.download_token) return { ok: false, error: "Unable to issue download token", raw: {} };
+  const result = finalized as {
+    ok: boolean;
+    already_processed: boolean;
+    order_id?: string;
+    download_token?: string;
+    error?: string;
+  } | null;
 
-  if (!finalized.already_processed && finalized.product_id) {
+  if (!result?.ok) return { ok: false, error: result?.error ?? "Unable to issue download token", raw: {} };
+
+  if (!result.already_processed && result.order_id) {
     await supabase.from("analytics_events").insert({
-      product_id: finalized.product_id,
       event_type: "purchase",
-      metadata: { order_id: finalized.order_id }
+      metadata: { order_id: result.order_id }
     });
   }
 
-  return { ok: true, downloadToken: finalized.download_token, alreadyVerified: finalized.already_processed };
+  return { ok: true, downloadToken: result.download_token ?? "", alreadyVerified: result.already_processed };
 }

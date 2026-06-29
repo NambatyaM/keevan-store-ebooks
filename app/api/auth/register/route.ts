@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { apiError, json, readJson, withOptionalCsrf } from "@/lib/api";
+import { apiError, json, readJson, withErrorHandling } from "@/lib/api";
 import { registerSchema } from "@/lib/schemas";
 
-export const POST = withOptionalCsrf(async (request: NextRequest) => {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   const input = await readJson(request, registerSchema);
   const supabase = getSupabaseAdminClient();
 
@@ -39,7 +39,8 @@ export const POST = withOptionalCsrf(async (request: NextRequest) => {
   const { error: storeError } = await supabase.from("stores").insert({
     creator_id: creator.id,
     slug: input.storeHandle,
-    name: `${input.fullName}'s Store`
+    name: `${input.fullName}'s Store`,
+    currency: input.currency
   });
 
   if (storeError) {

@@ -27,7 +27,7 @@ export function PasswordInput({
   return (
     <div className="relative">
       <input
-        className="focus-ring w-full rounded-md border border-neutral-300 px-4 py-3 pr-11"
+        className="w-full rounded-lg border border-neutral-300 px-4 py-2.5 pr-11 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20"
         type={show ? "text" : "password"}
         value={value}
         onChange={onChange}

@@ -67,7 +67,18 @@ function LoginFormInner() {
 
 export default function LoginForm() {
   return (
-    <Suspense>
+    <Suspense fallback={
+      <div className="mx-auto max-w-4xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="space-y-6">
+          <div className="h-4 w-32 animate-pulse rounded bg-neutral-200" />
+          <div className="h-10 w-64 animate-pulse rounded bg-neutral-200" />
+          <div className="h-4 w-96 animate-pulse rounded bg-neutral-200" />
+          <div className="h-12 w-full animate-pulse rounded bg-neutral-200" />
+          <div className="h-12 w-full animate-pulse rounded bg-neutral-200" />
+          <div className="h-12 w-36 animate-pulse rounded bg-neutral-200" />
+        </div>
+      </div>
+    }>
       <LoginFormInner />
     </Suspense>
   );

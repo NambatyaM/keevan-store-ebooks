@@ -4,7 +4,7 @@ import { site } from "@/lib/constants";
 import { Store, Banknote, Download, BarChart3, ShieldCheck, LockKeyhole, Users, BookOpen, Globe, Smartphone, RefreshCcw, Search } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Features — Sell Digital Products in East Africa | Keevan Store",
+  title: "Features — Sell Digital Products in East Africa",
   description: "Explore all features of Keevan Store: branded storefronts, Pesapal payments, instant file delivery, analytics dashboard, secure storage, and more. Everything East African creators need to sell online.",
   openGraph: {
     title: "Keevan Store Features — Everything You Need to Sell Digital Products",

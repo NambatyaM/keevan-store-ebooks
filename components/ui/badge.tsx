@@ -1,5 +1,13 @@
 import { cn } from "@/lib/utils";
 
+const dotColors: Record<string, string> = {
+  completed: "bg-green-500", paid: "bg-green-500", published: "bg-green-500", active: "bg-green-500", sent: "bg-green-500", approved: "bg-blue-500",
+  pending: "bg-amber-500", draft: "bg-neutral-400", retrying: "bg-amber-500",
+  disabled: "bg-red-500", suspended: "bg-red-500", rejected: "bg-red-500", refunded: "bg-red-500", failed: "bg-red-500",
+  queued: "bg-neutral-400", "mark-paid": "bg-green-500",
+  neutral: "bg-neutral-400", default: "bg-neutral-400",
+};
+
 const variants = {
   completed: "bg-green-50 text-green-700 border-green-200",
   paid: "bg-green-50 text-green-700 border-green-200",
@@ -33,14 +41,17 @@ export function Badge({
   className?: string;
 }) {
   const v = variants[variant] || variants.default;
+  const dotColor = dotColors[variant] || dotColors.default;
+
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold",
         v,
         className,
       )}
     >
+      <span className={cn("h-1.5 w-1.5 rounded-full", dotColor)} aria-hidden />
       {children}
     </span>
   );

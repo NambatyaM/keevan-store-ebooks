@@ -3,6 +3,7 @@ import "./globals.css";
 import { site } from "@/lib/constants";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { AuthProvider } from "@/components/auth-provider";
+import { ToastProvider } from "@/components/ui/toast";
 import { Analytics } from "@vercel/analytics/react";
 
 const titleTemplate = "%s | Keevan Store";
@@ -43,10 +44,10 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, "max-video-preview": -1, "max-image-preview": "large", "max-snippet": -1 }
   },
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? "",
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
   },
   other: {
-    "google-site-verification": process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? "",
+    ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? { "google-site-verification": process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } : {}),
   }
 };
 
@@ -96,7 +97,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="apple-touch-icon" href="https://i.ibb.co/v6h94WVG/keevan-favicon.jpg" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#00854a" />
-        <meta name="google-site-verification" content={process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? ""} />
+        {process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && (
+          <meta name="google-site-verification" content={process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION} />
+        )}
         <link rel="alternate" hrefLang="en-UG" href={site.url} />
         <link rel="alternate" hrefLang="en-KE" href={site.url} />
         <link rel="alternate" hrefLang="en-TZ" href={site.url} />
@@ -120,11 +123,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body>
-        <AuthProvider>
-          {children}
-          <WhatsAppButton />
-          <Analytics />
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            {children}
+            <WhatsAppButton />
+            <Analytics />
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );

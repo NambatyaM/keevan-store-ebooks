@@ -1,10 +1,8 @@
 import { NextRequest } from "next/server";
-import { json, rateLimit, withErrorHandling } from "@/lib/api";
-import { getSupabaseAdminClient } from "@/lib/supabase";
+import { json, apiError, requireUser, withErrorHandling } from "@/lib/api";
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
-  const limited = await rateLimit(request, 5, 60);
-  if (limited) return limited;
+  const { supabase, authUser } = await requireUser(request);
 
   const url = new URL(request.url);
   const email = url.searchParams.get("email");
@@ -13,11 +11,16 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     return json({ orders: [] });
   }
 
-  const supabase = getSupabaseAdminClient();
+  const normalizedEmail = email.toLowerCase();
+
+  if (authUser.email?.toLowerCase() !== normalizedEmail) {
+    return apiError("Access denied", 403);
+  }
+
   const { data } = await supabase
     .from("orders")
-    .select("id,amount,created_at,status,buyer_id,products!inner(title,slug)")
-    .eq("buyer_email", email.toLowerCase())
+    .select("id,amount,created_at,status,products!inner(title,slug)")
+    .eq("buyer_email", normalizedEmail)
     .order("created_at", { ascending: false })
     .limit(10);
 

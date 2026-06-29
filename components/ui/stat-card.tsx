@@ -67,19 +67,22 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl border p-5 shadow-card transition hover:shadow-soft",
+        "relative overflow-hidden rounded-xl border p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lift",
         green
           ? "border-brand-green bg-brand-green text-white"
-          : "border-border bg-surface-card text-brand-black",
+          : "border-border bg-surface-card text-brand-black hover:border-brand-green/30",
         className,
       )}
     >
+      {green && (
+        <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" aria-hidden />
+      )}
       <div className="flex items-start justify-between">
         <div className="min-w-0">
-          <p className={cn("text-sm font-medium", green ? "text-white/80" : "text-muted")}>
+          <p className={cn("text-xs font-semibold uppercase tracking-wider", green ? "text-white/80" : "text-muted")}>
             {label}
           </p>
-          <p className={cn("mt-1 text-2xl font-bold tracking-tight", green ? "text-white" : "text-brand-black")}>
+          <p className={cn("mt-1.5 text-2xl font-bold tracking-tight", green ? "text-white" : "text-brand-black")}>
             {formattedDisplay}
           </p>
           {sublabel && (
@@ -89,7 +92,7 @@ export function StatCard({
           )}
         </div>
         {icon && (
-          <div className={cn("shrink-0", green ? "text-white/60" : "text-brand-green")}>
+          <div className={cn("shrink-0", green ? "text-white/60" : "text-brand-green/70")}>
             {icon}
           </div>
         )}

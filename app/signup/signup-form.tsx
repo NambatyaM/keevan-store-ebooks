@@ -30,7 +30,7 @@ export default function SignupForm() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || data.message || "Registration failed");
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : data.error?.message || data.message || "Registration failed");
 
       const { user, session } = await login(email, password);
       if (user && session) {

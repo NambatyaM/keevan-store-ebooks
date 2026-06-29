@@ -19,7 +19,7 @@ export function orderConfirmationHtml(input: {
   <p style="font-size:18px;font-weight:bold;">Amount Paid: UGX ${input.amount.toLocaleString()}</p>
   <p>Click the button below to download your file:</p>
   <a href="${downloadUrl}" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;font-size:16px;">Download Now</a>
-  <p style="margin-top:24px;font-size:14px;color:#666;">This link expires in 72 hours. If you didn't make this purchase, please contact support.</p>
+  <p style="margin-top:24px;font-size:14px;color:#666;">This link expires in 7 days. If you didn't make this purchase, please contact support.</p>
   <hr style="margin-top:32px;">
   <p style="font-size:12px;color:#999;">${site.name} &mdash; ${site.url}</p>
 </body>

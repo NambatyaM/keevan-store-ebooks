@@ -3,7 +3,7 @@ import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "FAQ — Selling and Buying Digital Products in East Africa | Keevan Store",
+  title: "FAQ — Selling and Buying Digital Products in East Africa",
   description: "Answers to common questions about selling e-books and digital products on Keevan Store. Learn about pricing, payments, withdrawals, file formats, refunds, and more. Serving Uganda, Kenya, Tanzania, Rwanda.",
   openGraph: {
     title: "Keevan Store FAQ — Frequently Asked Questions",

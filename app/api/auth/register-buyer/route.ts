@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { apiError, json, readJson, withOptionalCsrf } from "@/lib/api";
+import { apiError, json, readJson, withErrorHandling } from "@/lib/api";
 import { z } from "zod";
 
 const registerBuyerSchema = z.object({
@@ -10,7 +10,7 @@ const registerBuyerSchema = z.object({
   phone: z.string().optional()
 });
 
-export const POST = withOptionalCsrf(async (request: NextRequest) => {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   const input = await readJson(request, registerBuyerSchema);
   const supabase = getSupabaseAdminClient();
 

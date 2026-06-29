@@ -3,7 +3,7 @@ import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Refund Policy | Keevan Store",
+  title: "Refund Policy",
   description: "Keevan Store refund policy for digital products. Learn when refunds may be issued for duplicate payments, failed delivery, or billing errors.",
   robots: { index: true, follow: false }
 };

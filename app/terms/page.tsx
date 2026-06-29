@@ -3,7 +3,7 @@ import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Keevan Store",
+  title: "Terms of Service",
   description: "Terms of Service for using Keevan Store creator commerce platform. Covers creator responsibilities, intellectual property, payments, withdrawals, and platform rules.",
   robots: { index: true, follow: false }
 };

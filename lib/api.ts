@@ -113,7 +113,7 @@ export function withOptionalCsrf(handler: (request: NextRequest, context?: unkno
   };
 }
 
-export async function rateLimit(request: NextRequest, maxRequests = 120, windowSeconds = 60) {
+export async function rateLimit(request: NextRequest, maxRequests = 60, windowSeconds = 60) {
   const forwardedFor = request.headers.get("x-forwarded-for");
   const realIp = request.headers.get("x-real-ip");
   const ip = forwardedFor?.split(",")[0]?.trim() || realIp || "local";
@@ -139,6 +139,7 @@ export async function rateLimit(request: NextRequest, maxRequests = 120, windowS
       return apiError("Too many requests. Please try again shortly.", 429);
     }
   } catch {
+    console.warn("[RateLimit] DB call failed — allowing request");
     return null;
   }
 

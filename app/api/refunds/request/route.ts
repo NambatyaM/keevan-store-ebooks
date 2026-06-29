@@ -1,11 +1,10 @@
 import { NextRequest } from "next/server";
-import { apiError, json, readJson, withErrorHandling, checkCSRF } from "@/lib/api";
+import { apiError, json, readJson, withErrorHandling } from "@/lib/api";
 import { refundRequestSchema } from "@/lib/schemas";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
-  checkCSRF(request);
   const input = await readJson(request, refundRequestSchema);
   const supabase = getSupabaseAdminClient();
 
