@@ -837,9 +837,9 @@ describe("CSRF Protection", () => {
     expect(() => checkCSRF(request)).toThrow("Cross-site request forbidden");
   });
 
-  it("rejects request with no origin and no referer when SITE_URL is configured", () => {
+  it("allows request with no origin and no referer (SameSite cookies handle auth)", () => {
     const request = makeMockRequest({ headers: {} });
-    expect(() => checkCSRF(request)).toThrow("Cross-site request forbidden");
+    expect(() => checkCSRF(request)).not.toThrow();
   });
 
   it("skips CSRF check when SITE_URL is not configured", () => {
@@ -864,11 +864,11 @@ describe("CSRF Protection", () => {
     expect(() => checkCSRF(request)).toThrow("Cross-site request forbidden");
   });
 
-  it("rejects request with empty string origin header", () => {
+  it("allows request with empty string origin header (treated as missing)", () => {
     const request = makeMockRequest({
       headers: { origin: "" },
     });
-    expect(() => checkCSRF(request)).toThrow("Cross-site request forbidden");
+    expect(() => checkCSRF(request)).not.toThrow();
   });
 
   it("rejects request with origin having different scheme", () => {

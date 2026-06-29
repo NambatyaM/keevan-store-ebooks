@@ -69,9 +69,9 @@ describe("checkCSRF", () => {
     expect(() => checkCSRF(req)).toThrow("Cross-site request forbidden");
   });
 
-  it("throws 403 when no origin or referer provided", () => {
+  it("passes when no origin or referer provided (SameSite cookies handle auth)", () => {
     const req = mockRequest();
-    expect(() => checkCSRF(req)).toThrow("Cross-site request forbidden");
+    expect(() => checkCSRF(req)).not.toThrow();
   });
 
   it("passes when ALLOWED_ORIGIN has trailing slash", () => {

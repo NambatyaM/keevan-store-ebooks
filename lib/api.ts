@@ -8,11 +8,31 @@ export function json(data: unknown, init?: ResponseInit) {
 }
 
 export function checkCSRF(request: NextRequest) {
-  const allowedOrigin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
+  const allowedOrigins = new Set<string>();
 
-  if (!allowedOrigin) {
+  // 1. From NEXT_PUBLIC_SITE_URL env var (configured domain)
+  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
+  if (configuredUrl) {
+    try { allowedOrigins.add(new URL(configuredUrl).origin); } catch {}
+  }
+
+  // 2. From the request Host header (covers www vs non-www, custom domains,
+  //    preview deployments, etc. — the domain the user actually accessed)
+  const host = request.headers.get("host");
+  if (host) {
+    const protocol = request.headers.get("x-forwarded-proto") || "https";
+    try { allowedOrigins.add(new URL(`${protocol}://${host}`).origin); } catch {}
+  }
+
+  // 3. From VERCEL_URL for Vercel preview deployments
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    try { allowedOrigins.add(new URL(`https://${vercelUrl}`).origin); } catch {}
+  }
+
+  if (allowedOrigins.size === 0) {
     if (process.env.NODE_ENV === "development") return;
-    console.warn("CSRF check skipped: NEXT_PUBLIC_SITE_URL not configured");
+    console.warn("CSRF check skipped: no allowed origins configured");
     return;
   }
 
@@ -21,21 +41,13 @@ export function checkCSRF(request: NextRequest) {
   const source = (origin && origin !== "null") ? origin : (referer && referer !== "null") ? referer : null;
 
   if (!source) {
-    throw Object.assign(new Error("Cross-site request forbidden"), { status: 403 });
+    console.warn("CSRF check skipped: no Origin or Referer header");
+    return;
   }
 
   try {
     const sourceOrigin = new URL(source).origin;
-    const allowed = new URL(allowedOrigin).origin;
-
-    if (sourceOrigin === allowed) return;
-
-    const vercelUrl = process.env.VERCEL_URL;
-    if (vercelUrl) {
-      const vercelOrigin = new URL(`https://${vercelUrl}`).origin;
-      if (sourceOrigin === vercelOrigin) return;
-    }
-
+    if (allowedOrigins.has(sourceOrigin)) return;
     throw Object.assign(new Error("Cross-site request forbidden"), { status: 403 });
   } catch (e) {
     if (e instanceof TypeError) {

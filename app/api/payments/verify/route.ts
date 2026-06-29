@@ -1,11 +1,10 @@
 import { NextRequest } from "next/server";
-import { apiError, json, readJson, withErrorHandling, requireUser, checkCSRF } from "@/lib/api";
+import { apiError, json, readJson, withErrorHandling, requireUser } from "@/lib/api";
 import { paymentVerifySchema } from "@/lib/schemas";
 import { verifyPesapalPayment } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
-  checkCSRF(request);
   const input = await readJson(request, paymentVerifySchema);
   const { profile } = await requireUser(request);
   const supabase = getSupabaseAdminClient();

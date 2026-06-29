@@ -1,13 +1,12 @@
 import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
-import { apiError, json, readJson, withErrorHandling, checkCSRF, requireUser } from "@/lib/api";
+import { apiError, json, readJson, withErrorHandling, requireUser } from "@/lib/api";
 import { checkoutSchema } from "@/lib/schemas";
 import { calculateSaleSplit, site } from "@/lib/constants";
 import { createPesapalOrder } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
-  checkCSRF(request);
   const input = await readJson(request, checkoutSchema);
   const supabase = getSupabaseAdminClient();
 

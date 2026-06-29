@@ -1,7 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, hostname } = request.nextUrl;
+
+  if (hostname === "www.keevanstore.in") {
+    const url = new URL(request.url);
+    url.hostname = "keevanstore.in";
+    return NextResponse.redirect(url, 308);
+  }
 
   if (!pathname.startsWith("/creator") && !pathname.startsWith("/admin") && !pathname.startsWith("/buyer")) {
     return NextResponse.next();
@@ -25,5 +31,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/creator/:path*", "/admin/:path*", "/buyer/:path*"]
+  matcher: ["/((?!_next|monitoring|favicon.ico).*)", "/creator/:path*", "/admin/:path*", "/buyer/:path*"]
 };
