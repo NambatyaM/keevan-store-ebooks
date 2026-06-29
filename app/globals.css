@@ -85,6 +85,11 @@ button, input, textarea, select {
   animation: scale-check 0.4s ease-out forwards;
 }
 
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 500px;
+}
+
 .skeleton {
   background: linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%);
   background-size: 200% 100%;

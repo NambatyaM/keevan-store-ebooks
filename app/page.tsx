@@ -92,12 +92,13 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="relative min-h-[520px] overflow-hidden rounded-lg bg-neutral-950 text-white">
+            <div className="relative min-h-[400px] overflow-hidden rounded-lg bg-neutral-950 text-white sm:min-h-[520px]">
               <Image
                 src="/hero.webp"
                 alt="African author reading an e-book on a laptop surrounded by books in a library"
                 fill
                 priority
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
               />
               <div className="absolute inset-x-6 bottom-6 rounded-lg bg-white p-5 text-brand-black shadow-soft">
@@ -123,7 +124,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-y border-neutral-200 bg-neutral-50">
+        <section className="content-visibility-auto border-y border-neutral-200 bg-neutral-50">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <div className="max-w-2xl">
               <h2 className="text-3xl font-bold text-brand-black">What you get when you sell on Keevan Store</h2>
@@ -150,7 +151,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <section className="content-visibility-auto mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-brand-black">How selling on Keevan Store works</h2>
           <p className="mt-3 text-neutral-600">From upload to payout in four steps.</p>
           <div className="mt-8 grid gap-6 md:grid-cols-4">
@@ -179,7 +180,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-t border-neutral-200 bg-neutral-50">
+        <section className="content-visibility-auto border-t border-neutral-200 bg-neutral-50">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-brand-black">Frequently asked questions about selling e-books online</h2>
             <p className="mt-3 text-neutral-600">Honest answers about how Keevan Store works for creators.</p>
