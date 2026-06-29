@@ -36,7 +36,7 @@ export default function PricingPage() {
     "@type": "FAQPage",
     mainEntity: [
       { "@type": "Question", name: "Does Keevan Store charge monthly fees?", acceptedAnswer: { "@type": "Answer", text: "No. Keevan Store has no monthly subscription fee. You only pay a 10% commission when you make a sale." } },
-      { "@type": "Question", name: "What is the minimum withdrawal amount?", acceptedAnswer: { "@type": "Answer", text: "Creators can request withdrawals once their available balance reaches the minimum threshold for their store's currency." } },
+      { "@type": "Question", name: "What is the minimum withdrawal amount?", acceptedAnswer: { "@type": "Answer", text: "Creators can request withdrawals once their available balance reaches the minimum threshold for their store's currency: 50,000 UGX, 1,500 KES, 30,000 TZS, 20,000 RWF, or 20 USD." } },
       { "@type": "Question", name: "Are there fees for withdrawing earnings?", acceptedAnswer: { "@type": "Answer", text: "Withdrawal requests are processed by platform administrators. There are no additional platform fees for withdrawals." } }
     ]
   };

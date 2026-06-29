@@ -31,7 +31,7 @@ export default function AboutPage() {
         Keevan Store is a creator commerce platform built for East African authors, educators, coaches, and independent digital creators. Our purpose is simple: give creators the tools to sell knowledge products directly to their audience without paying monthly fees, hiring developers, or setting up complex e-commerce infrastructure.
       </p>
       <p>
-        The platform was designed around a specific set of constraints that matter to African creators. Pricing in Ugandan shillings. Payment processing through Pesapal, East Africa&apos;s leading payment gateway. WhatsApp-based customer support. Dashboards that focus on revenue instead of complexity. File delivery that works on mobile connections.
+        The platform was designed around a specific set of constraints that matter to African creators. Multi-currency pricing in UGX, KES, TZS, RWF, or USD. Payment processing through Pesapal, East Africa&apos;s leading payment gateway. WhatsApp-based customer support. Dashboards that focus on revenue instead of complexity. File delivery that works on mobile connections.
       </p>
       <p>
         Our first audience is creators in Uganda and across East Africa — Kenya, Tanzania, and Rwanda. These are writers publishing e-books, educators selling course materials, coaches offering worksheets and guides, and template designers distributing digital resources. Each of them needed a way to sell that did not require a technical background, a monthly budget, or a foreign payment account.

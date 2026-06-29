@@ -29,8 +29,8 @@ const faqSchema = {
   mainEntity: [
     { "@type": "Question", name: "How much does Keevan Store cost?", acceptedAnswer: { "@type": "Answer", text: "Keevan Store charges no monthly fees. Creators pay a 10% platform commission only when a product sells. If you do not make a sale, you pay nothing." } },
     { "@type": "Question", name: "Who can sell on Keevan Store?", acceptedAnswer: { "@type": "Answer", text: "Any East African author, educator, coach, or digital creator who owns the rights to their content can sell on Keevan Store. Currently serving Uganda, Kenya, Tanzania, and Rwanda." } },
-    { "@type": "Question", name: "What payment methods does Keevan Store support?", acceptedAnswer: { "@type": "Answer", text: "Keevan Store uses Pesapal, the leading East African payment gateway. Buyers pay via mobile money (MTN, Airtel), card, or bank transfer in UGX." } },
-    { "@type": "Question", name: "How do creators receive their earnings?", acceptedAnswer: { "@type": "Answer", text: "Earnings accumulate in your creator dashboard. Once your balance reaches the minimum withdrawal amount, you can request a manual payout." } },
+    { "@type": "Question", name: "What payment methods does Keevan Store support?", acceptedAnswer: { "@type": "Answer", text: "Keevan Store uses Pesapal, the leading East African payment gateway. Buyers pay via mobile money (MTN, Airtel), card, or bank transfer in UGX, KES, TZS, RWF, or USD." } },
+    { "@type": "Question", name: "How do creators receive their earnings?", acceptedAnswer: { "@type": "Answer", text: "Earnings accumulate in your creator dashboard. Once your balance reaches the minimum withdrawal amount for your currency, you can request a manual payout. Minimums are 50,000 UGX, 1,500 KES, 30,000 TZS, 20,000 RWF, or 20 USD." } },
     { "@type": "Question", name: "Do buyers need an account to purchase?", acceptedAnswer: { "@type": "Answer", text: "No. Buyers pay through Pesapal and receive a signed download link instantly — no account creation required." } }
   ]
 };
@@ -133,7 +133,7 @@ export default function Home() {
               {[
                 { icon: Store, title: "Your own branded store", text: "Every author gets a personalized store URL and shareable product links. No website builder required." },
                 { icon: Users, title: "No buyer accounts needed", text: "Customers pay through Pesapal and download instantly. No sign-up friction means more sales." },
-                { icon: Banknote, title: "Pesapal payments in UGX", text: "Buyers pay with mobile money, card, or bank transfer. Keevan Store verifies every transaction server-side." },
+                { icon: Banknote, title: "Pesapal payments in your currency", text: "Buyers pay with mobile money, card, or bank transfer in UGX, KES, TZS, RWF, or USD. Keevan Store verifies every transaction server-side." },
                 { icon: Download, title: "Instant file delivery", text: "After payment verification, customers get a signed download link. Files arrive seconds after purchase." },
                 { icon: BarChart3, title: "Sales and revenue analytics", text: "Track views, purchases, download counts, and earnings in your dashboard. Know exactly what sells." },
                 { icon: BookOpen, title: "Multiple file formats", text: "Upload PDF, EPUB, MOBI, or ZIP files up to 4 MB. Customers download in their preferred format." },
@@ -156,7 +156,7 @@ export default function Home() {
           <div className="mt-8 grid gap-6 md:grid-cols-4">
             {[
               ["Sign up free", "Create your creator account. No credit card. No monthly fee."],
-              ["Upload your product", "Add a PDF, EPUB, MOBI, or ZIP file. Set your price in UGX."],
+              ["Upload your product", "Add a PDF, EPUB, MOBI, or ZIP file. Set your price in UGX, KES, TZS, RWF, or USD."],
               ["Share your store", "Your branded store link goes live immediately. Share it anywhere."],
               ["Get paid", "Keevan Store collects payments. You keep 90%. Request withdrawal anytime."]
             ].map(([step, detail], index) => (
@@ -188,8 +188,8 @@ export default function Home() {
                 ["How much does Keevan Store cost?", "Keevan Store charges zero monthly fees. The only cost is a 10% platform commission deducted when a product sells. If you do not make a sale, you pay nothing. Withdrawals to your mobile money or bank account are free."],
                 ["Who can sell on Keevan Store?", "Any East African creator who owns the rights to their digital content. Authors, educators, coaches, template designers, and course creators all use Keevan Store. We currently serve Uganda, Kenya, Tanzania, and Rwanda."],
                 ["What file formats can I upload?", "You can upload PDF, EPUB, MOBI, and ZIP files up to 4 MB. These cover e-books, guides, templates, worksheets, and bundled resources."],
-                ["How do payments work?", "Keevan Store uses Pesapal, East Africa's leading payment gateway. Buyers pay via mobile money (MTN, Airtel), debit or credit card, or bank transfer. All transactions are in UGX."],
-                ["When and how do I get paid?", "Earnings accumulate in your creator dashboard. Once your balance reaches the minimum withdrawal amount, you can request a payout. Platform administrators review and process payouts manually."],
+                ["How do payments work?", "Keevan Store uses Pesapal, East Africa's leading payment gateway. Buyers pay via mobile money (MTN, Airtel), debit or credit card, or bank transfer in the store's currency (UGX, KES, TZS, RWF, or USD)."],
+                ["When and how do I get paid?", "Earnings accumulate in your creator dashboard. Once your balance reaches the minimum withdrawal threshold for your currency, you can request a payout. Minimums are 50,000 UGX, 1,500 KES, 30,000 TZS, 20,000 RWF, or 20 USD. Platform administrators review and process payouts manually."],
                 ["Do I need technical skills to set up my store?", "No. Sign up, upload your product, and your store is live. There is no coding, no design work, and no hosting setup required."],
                 ["Can I edit my product after publishing?", "Yes. Your creator dashboard lets you update product titles, descriptions, prices, and files anytime."],
                 ["What if someone buys my product and wants a refund?", "Because digital products are delivered instantly, refunds are handled case by case. Contact support if there is an issue with delivery or payment."]

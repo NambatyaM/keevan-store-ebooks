@@ -45,6 +45,6 @@
 - Fees: 10% commission per sale (no monthly fees)
 - Payment gateway: Pesapal (mobile money, card, bank transfer)
 - File formats: PDF, EPUB, MOBI, ZIP (up to 4 MB)
-- Min withdrawal: 50,000 UGX (varies by currency)
+- Min withdrawal: 50,000 UGX (1,500 KES / 30,000 TZS / 20,000 RWF / 20 USD)
 - Founded: 2025
 - Tech stack: Next.js, Supabase, Pesapal, Vercel

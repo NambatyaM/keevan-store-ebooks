@@ -61,8 +61,8 @@ const featureList = [
   },
   {
     icon: Globe,
-    title: "East Africa focused",
-    desc: "UGX pricing, Pesapal payments, WhatsApp support, and terms that reflect how East African creators sell and get paid."
+    title: "Multi-currency, East Africa focused",
+    desc: "Stores operate in UGX, KES, TZS, RWF, or USD. Pesapal payments, WhatsApp support, and terms that reflect how East African creators sell and get paid."
   },
   {
     icon: Search,

@@ -42,10 +42,10 @@ export const site = {
 /** Per-currency minimum withdrawal amounts in the currency's smallest unit. */
 export const minimumWithdrawalByCurrency: Record<Currency, number> = {
   UGX: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL_UGX || "50000"),
-  KES: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL_KES || "1000"),
-  TZS: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL_TZS || "10000"),
-  RWF: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL_RWF || "10000"),
-  USD: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL_USD || "10"),
+  KES: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL_KES || "1500"),
+  TZS: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL_TZS || "30000"),
+  RWF: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL_RWF || "20000"),
+  USD: Number(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL_USD || "20"),
 };
 
 export const ebookUpload = {
