@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ButtonLink } from "@/components/button";
 import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
 import { Store, Banknote, Download, BarChart3, ShieldCheck, LockKeyhole, Users, BookOpen, Globe, Smartphone, RefreshCcw, Search } from "lucide-react";
@@ -62,7 +63,7 @@ const featureList = [
   {
     icon: Globe,
     title: "Multi-currency, East Africa focused",
-    desc: "Stores operate in UGX, KES, TZS, RWF, or USD. Pesapal payments, WhatsApp support, and terms that reflect how East African creators sell and get paid."
+    desc: "Buyers pay in UGX, KES, TZS, RWF, or USD. Your store currency is locked after your first sale. All payouts are processed in your chosen currency."
   },
   {
     icon: Search,
@@ -71,8 +72,8 @@ const featureList = [
   },
   {
     icon: ShieldCheck,
-    title: "Admin moderation tools",
-    desc: "Platform administrators can review products, manage creator accounts, suspend stores, approve or reject withdrawal requests, and view audit logs of all actions."
+    title: "Withdrawal to mobile money",
+    desc: "Request payouts directly to your MTN or Airtel Money account. Minimums: 50,000 UGX, 1,500 KES, 30,000 TZS, 20,000 RWF, or 20 USD."
   }
 ];
 
@@ -82,6 +83,9 @@ export default function FeaturesPage() {
       <p>
         Keevan Store gives East African creators everything required to publish, sell, and deliver digital products without managing hosting, payments, or file storage. Every feature is designed for the way African creators actually work.
       </p>
+      <div className="mt-6">
+        <ButtonLink href="/signup" icon>Create Your Free Store</ButtonLink>
+      </div>
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {featureList.map(({ icon: Icon, title, desc }) => (
           <div key={title} className="rounded-lg border border-neutral-200 p-4">
@@ -90,6 +94,9 @@ export default function FeaturesPage() {
             <p className="mt-2 text-sm leading-6 text-neutral-600">{desc}</p>
           </div>
         ))}
+      </div>
+      <div className="mt-10 text-center">
+        <ButtonLink href="/signup" icon>Create Your Free Store</ButtonLink>
       </div>
     </SimplePage>
   );

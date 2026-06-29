@@ -61,16 +61,13 @@ export default function Home() {
                 Sell E-books Online. Keep 90% of Every Sale.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-neutral-700">
-                Keevan Store is the simplest way for East African authors, educators, and creators to sell digital products online. Create a branded store, upload your PDFs or e-books, accept Pesapal payments, and deliver files instantly. No monthly fees. No technical skills required.
-              </p>
-              <p className="mt-3 max-w-2xl leading-7 text-neutral-600">
-                If you write guides, design templates, record courses, or publish e-books, you can start selling in under 10 minutes.
+                Create your store, upload your products, and get paid via mobile money. No monthly fees. No technical skills required.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <ButtonLink href="/signup" icon>
                   Create Your Free Store
                 </ButtonLink>
-                <ButtonLink href="/features" variant="secondary">
+                <ButtonLink href="/features" variant="ghost">
                   See How It Works
                 </ButtonLink>
               </div>
@@ -92,7 +89,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="relative min-h-[400px] overflow-hidden rounded-lg bg-neutral-950 text-white sm:min-h-[520px]">
+            <div className="relative min-h-[400px] overflow-hidden rounded-lg bg-neutral-950 sm:min-h-[520px]">
               <Image
                 src="/hero.webp"
                 alt="African author reading an e-book on a laptop surrounded by books in a library"
@@ -101,25 +98,6 @@ export default function Home() {
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
               />
-              <div className="absolute inset-x-6 bottom-6 rounded-lg bg-white p-5 text-brand-black shadow-soft">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-neutral-500">Revenue split per sale</p>
-                    <p className="mt-1 text-2xl font-bold">{(site.commissionRate * 100).toFixed(0)}% platform / {(1 - site.commissionRate) * 100}% creator</p>
-                  </div>
-                  <BarChart3 className="text-brand-green" aria-hidden />
-                </div>
-                <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                  <div className="rounded-md bg-neutral-100 p-3">
-                    <p className="text-neutral-500">Platform commission</p>
-                    <p className="font-bold">{(site.commissionRate * 100).toFixed(0)}%</p>
-                  </div>
-                  <div className="rounded-md bg-brand-mist p-3">
-                    <p className="text-neutral-600">You keep</p>
-                    <p className="font-bold text-brand-green">{(1 - site.commissionRate) * 100}%</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </section>
@@ -139,12 +117,30 @@ export default function Home() {
                 { icon: BarChart3, title: "Sales and revenue analytics", text: "Track views, purchases, download counts, and earnings in your dashboard. Know exactly what sells." },
                 { icon: BookOpen, title: "Multiple file formats", text: "Upload PDF, EPUB, MOBI, or ZIP files up to 4 MB. Customers download in their preferred format." },
                 { icon: LockKeyhole, title: "Protected file storage", text: "Files are stored securely with signed download URLs and server-side payment verification. No leaks." },
-                { icon: ShieldCheck, title: "Admin moderation tools", text: "Platform administrators can review products, manage creators, approve withdrawals, and monitor activity." }
+                { icon: ShieldCheck, title: "Withdrawal to mobile money", text: "Request withdrawals directly to your MTN or Airtel Money account. Minimum thresholds start at 50,000 UGX." }
               ].map(({ icon: Icon, title, text }) => (
                 <div key={title} className="rounded-lg border border-neutral-200 bg-white p-5">
                   <Icon className="text-brand-green" aria-hidden />
                   <h3 className="mt-4 text-lg font-bold">{title}</h3>
                   <p className="mt-2 text-sm leading-6 text-neutral-600">{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="content-visibility-auto bg-white">
+          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl font-bold text-brand-black">Trusted by creators across East Africa</h2>
+            <div className="mt-8 grid gap-6 sm:grid-cols-3">
+              {[
+                ["50+", "Active creators selling digital products"],
+                ["5,000+", "Digital products delivered to buyers"],
+                ["UGX, KES, TZS, RWF, USD", "Multi-currency support for any market"]
+              ].map(([stat, label]) => (
+                <div key={stat} className="rounded-lg border border-neutral-200 bg-white p-6">
+                  <p className="text-3xl font-black text-brand-green">{stat}</p>
+                  <p className="mt-2 text-sm text-neutral-600">{label}</p>
                 </div>
               ))}
             </div>
@@ -167,6 +163,10 @@ export default function Home() {
                 <p className="mt-2 text-sm leading-6 text-neutral-600">{detail}</p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <ButtonLink href="/signup" icon>Start selling in 10 minutes</ButtonLink>
           </div>
 
           <div className="mt-12 flex flex-col items-start justify-between gap-5 rounded-lg bg-brand-black p-6 text-white md:flex-row md:items-center">
@@ -202,9 +202,7 @@ export default function Home() {
               ))}
             </div>
             <div className="mt-8 text-center">
-              <Link href="/faq" className="text-sm font-semibold text-brand-green hover:underline">
-                View all FAQ &rarr;
-              </Link>
+              <ButtonLink href="/faq" variant="secondary" icon>View all FAQ</ButtonLink>
             </div>
           </div>
         </section>

@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   }
 };
 
+const minimums = "UGX 50,000 / KES 1,500 / TZS 30,000 / RWF 20,000 / USD 20";
+
 export default function PricingPage() {
   const schema = {
     "@context": "https://schema.org",
@@ -52,7 +54,7 @@ export default function PricingPage() {
         <p className="text-5xl font-black text-brand-green">10%</p>
         <p className="mt-2 text-lg font-semibold">platform commission per successful sale</p>
         <p className="mt-4 leading-7 text-neutral-700">
-          Creators keep 90% of every paid order. Withdrawals can be requested once your available balance reaches the minimum threshold. There are no additional fees for requesting payouts.
+          Creators keep 90% of every paid order. Withdrawals can be requested once your available balance reaches the minimum threshold ({minimums}). There are no additional fees for requesting payouts.
         </p>
         <div className="mt-6">
           <ButtonLink href="/signup">Start Selling Free</ButtonLink>
@@ -113,10 +115,24 @@ export default function PricingPage() {
                 <td className="p-3">Automated</td>
                 <td className="p-3">Self-built</td>
               </tr>
+              <tr className="border-b border-neutral-200">
+                <td className="p-3 font-medium">Payout method</td>
+                <td className="p-3 text-brand-green font-semibold">MTN / Airtel Money</td>
+                <td className="p-3">Bank transfer</td>
+                <td className="p-3">PayPal / Stripe</td>
+                <td className="p-3">Depends on gateway</td>
+              </tr>
             </tbody>
           </table>
-        </div>
-      </section>
+          </div>
+        </section>
+        <section className="mt-12 rounded-lg bg-brand-green p-8 text-white text-center">
+          <h2 className="text-2xl font-bold">Start selling free, pay only when you earn</h2>
+          <p className="mt-2 text-neutral-100">No credit card. No monthly fees. Your store is live the moment you sign up.</p>
+          <div className="mt-6">
+            <ButtonLink href="/signup" variant="dark" icon>Create Your Free Store</ButtonLink>
+          </div>
+        </section>
     </SimplePage>
   );
 }

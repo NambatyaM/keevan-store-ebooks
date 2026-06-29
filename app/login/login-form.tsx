@@ -35,7 +35,7 @@ function LoginFormInner() {
   }
 
   return (
-    <SimplePage title="Creator Login" eyebrow="Welcome back">
+    <SimplePage title="Creator Login" eyebrow="Welcome back" minimalFooter>
       <p>
         Log in to manage your products, track sales, and access your earnings dashboard.
       </p>

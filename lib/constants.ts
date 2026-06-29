@@ -63,6 +63,7 @@ export function formatCurrency(amount: number, currency: Currency = "UGX"): stri
   const fmt = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
+    currencyDisplay: currency === "USD" ? "symbol" : "code",
     minimumFractionDigits: currency === "USD" ? 2 : 0,
     maximumFractionDigits: currency === "USD" ? 2 : 0,
   });

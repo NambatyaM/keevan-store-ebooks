@@ -1,17 +1,11 @@
-import type { Metadata } from "next";
-import { SimplePage } from "@/components/simple-page";
-import { site } from "@/lib/constants";
-import { FAQContent } from "./faq-content";
+"use client";
 
-export const metadata: Metadata = {
-  title: "FAQ — Selling and Buying Digital Products in East Africa",
-  description: "Answers to common questions about selling e-books and digital products on Keevan Store. Learn about pricing, payments, withdrawals, file formats, refunds, and more. Serving Uganda, Kenya, Tanzania, Rwanda.",
-  openGraph: {
-    title: "Keevan Store FAQ — Frequently Asked Questions",
-    description: "Find answers about selling digital products in East Africa: pricing, Pesapal payments, withdrawals, file formats, refunds, and account management.",
-    images: [{ url: `${site.url}/og-image.png`, width: 1200, height: 630, alt: "Keevan Store FAQ" }]
-  }
-};
+import { useState, useMemo } from "react";
+import { Search } from "lucide-react";
+import { ButtonLink } from "@/components/button";
+import { site } from "@/lib/constants";
+
+type FAQItem = { q: string; a: string };
 
 const faqs = [
   { q: "What is Keevan Store?", a: "Keevan Store is a creator commerce platform for East African authors, educators, coaches, and digital creators to sell e-books, guides, templates, and digital products directly to customers through branded storefronts." },
@@ -36,21 +30,70 @@ const faqs = [
   { q: "How long does withdrawal processing take?", a: "Withdrawal requests are typically processed within 1–3 business days after submission. You will be notified once the payout is completed." }
 ];
 
-const schema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqs.map(({ q, a }) => ({
-    "@type": "Question",
-    name: q,
-    acceptedAnswer: { "@type": "Answer", text: a }
-  }))
-};
+const sections = [
+  { title: "General questions", slice: [0, 5] as [number, number] },
+  { title: "Selling on Keevan Store", slice: [5, 13] as [number, number] },
+  { title: "Payments and withdrawals", slice: [13, 17] as [number, number] },
+  { title: "Account and platform questions", slice: [17, 20] as [number, number] },
+];
 
-export default function FAQPage() {
+export function FAQContent() {
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return null;
+    const q = query.toLowerCase();
+    return faqs.filter((f) => f.q.toLowerCase().includes(q) || f.a.toLowerCase().includes(q));
+  }, [query]);
+
   return (
-    <SimplePage title="Frequently Asked Questions" eyebrow="Answers">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
-      <FAQContent />
-    </SimplePage>
+    <>
+      <p>
+        Answers to the most common questions about selling and buying digital products on Keevan Store. If you do not find what you are looking for, reach out via WhatsApp.
+      </p>
+      <div className="relative mt-6">
+        <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+        <input
+          type="text"
+          placeholder="Search FAQ..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full rounded-lg border border-neutral-300 py-2.5 pl-10 pr-4 text-sm focus:border-brand-green focus:outline-none"
+        />
+      </div>
+      {filtered ? (
+        <div className="mt-6 grid gap-4">
+          <p className="text-sm text-neutral-500">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</p>
+          {filtered.map(({ q, a }) => (
+            <section key={q} className="rounded-lg border border-neutral-200 p-5">
+              <h3 className="text-xl font-bold text-brand-black">{q}</h3>
+              <p className="mt-2">{a}</p>
+            </section>
+          ))}
+        </div>
+      ) : (
+        sections.map((section) => (
+          <section key={section.title} className="mt-8">
+            <h2 className="text-2xl font-bold text-brand-black">{section.title}</h2>
+            <div className="mt-4 grid gap-4">
+              {faqs.slice(section.slice[0], section.slice[1]).map(({ q, a }) => (
+                <section key={q} className="rounded-lg border border-neutral-200 p-5">
+                  <h3 className="text-xl font-bold text-brand-black">{q}</h3>
+                  <p className="mt-2">{a}</p>
+                </section>
+              ))}
+            </div>
+          </section>
+        ))
+      )}
+      <section className="mt-12 rounded-lg bg-brand-green p-8 text-white text-center">
+        <h2 className="text-2xl font-bold">Still have questions?</h2>
+        <p className="mt-2 text-neutral-100">Our support team is ready to help you get started.</p>
+        <div className="mt-6 flex justify-center gap-4">
+          <ButtonLink href={site.supportWhatsApp} variant="dark">Chat on WhatsApp</ButtonLink>
+          <ButtonLink href="/signup" variant="dark" icon>Create Your Free Store</ButtonLink>
+        </div>
+      </section>
+    </>
   );
 }

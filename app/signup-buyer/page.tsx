@@ -45,7 +45,7 @@ export default function BuyerSignupPage() {
   }
 
   return (
-    <SimplePage title="Create Your Buyer Account" eyebrow="Welcome">
+    <SimplePage title="Create Your Buyer Account" eyebrow="Welcome" minimalFooter>
       <form className="grid gap-4 rounded-lg border border-neutral-200 p-5" onSubmit={handleSubmit}>
         <label className="grid gap-2 text-sm font-medium text-neutral-700">
           Full name

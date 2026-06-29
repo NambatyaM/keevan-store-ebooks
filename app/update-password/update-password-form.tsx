@@ -52,7 +52,7 @@ export default function UpdatePasswordForm() {
   }
 
   return (
-    <SimplePage title="Set New Password" eyebrow="Account">
+    <SimplePage title="Set New Password" eyebrow="Account" minimalFooter>
       {success ? (
         <div className="rounded-lg border border-green-200 bg-green-50 p-5">
           <p className="font-semibold text-green-800">Password updated successfully</p>

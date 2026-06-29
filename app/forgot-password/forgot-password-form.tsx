@@ -31,7 +31,7 @@ export default function ForgotPasswordForm() {
   }
 
   return (
-    <SimplePage title="Reset Your Password" eyebrow="Account">
+    <SimplePage title="Reset Your Password" eyebrow="Account" minimalFooter>
       {sent ? (
         <div className="rounded-lg border border-green-200 bg-green-50 p-5">
           <p className="font-semibold text-green-800">Check your email</p>

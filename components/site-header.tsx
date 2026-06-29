@@ -12,7 +12,8 @@ const nav = [
   { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
   { href: "/faq", label: "FAQ" },
-  { href: "/contact", label: "Contact" }
+  { href: "/contact", label: "Contact" },
+  { href: "/login", label: "Log in" }
 ];
 
 export function SiteHeader() {

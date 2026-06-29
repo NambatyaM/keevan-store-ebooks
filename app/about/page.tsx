@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ButtonLink } from "@/components/button";
 import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
 
@@ -51,8 +52,15 @@ export default function AboutPage() {
           Most e-commerce platforms are built for physical goods, Western markets, and monthly subscription models. They do not fit how African creators sell digital products. Keevan Store was built specifically for the East African digital creator economy — no foreign payment accounts, no complex tax setup, no monthly fees that eat into irregular income.
         </p>
         <p>
-          According to industry data, the African creator economy is growing rapidly, yet most global platforms do not support local payment methods like mobile money. Keevan Store bridges this gap by integrating directly with Pesapal, which processes payments in UGX through MTN Mobile Money, Airtel Money, card payments, and bank transfers.
+          The African creator economy is growing rapidly, yet most global platforms do not support local payment methods like mobile money. Keevan Store bridges this gap by integrating directly with Pesapal, which processes payments through MTN Mobile Money, Airtel Money, card payments, and bank transfers.
         </p>
+      </section>
+      <section className="mt-12 rounded-lg bg-brand-green p-8 text-white text-center">
+        <h2 className="text-2xl font-bold">Ready to start selling?</h2>
+        <p className="mt-2 text-neutral-100">Free to join. Pay only 10% when you sell. Your store is live in minutes.</p>
+        <div className="mt-6">
+          <ButtonLink href="/signup" variant="dark" icon>Create Your Free Store</ButtonLink>
+        </div>
       </section>
     </SimplePage>
   );
