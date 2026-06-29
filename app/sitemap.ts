@@ -1,71 +1,53 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/lib/constants";
-
-const staticPages: { path: string; priority: number; changeFreq: "weekly" | "monthly" }[] = [
-  { path: "", priority: 1, changeFreq: "weekly" },
-  { path: "/about", priority: 0.8, changeFreq: "monthly" },
-  { path: "/features", priority: 0.8, changeFreq: "monthly" },
-  { path: "/pricing", priority: 0.8, changeFreq: "monthly" },
-  { path: "/faq", priority: 0.8, changeFreq: "monthly" },
-  { path: "/contact", priority: 0.6, changeFreq: "monthly" },
-  { path: "/terms", priority: 0.4, changeFreq: "monthly" },
-  { path: "/privacy", priority: 0.4, changeFreq: "monthly" },
-  { path: "/refund-policy", priority: 0.4, changeFreq: "monthly" },
-  { path: "/request-refund", priority: 0.4, changeFreq: "monthly" },
-  { path: "/login", priority: 0.3, changeFreq: "monthly" },
-  { path: "/signup", priority: 0.5, changeFreq: "monthly" },
-  { path: "/forgot-password", priority: 0.2, changeFreq: "monthly" }
-];
+import { getOptionalSupabaseAdminClient } from "@/lib/supabase";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return staticPages.map((p) => ({
-      url: `${site.url}${p.path}`,
-      lastModified: new Date(),
-      changeFrequency: p.changeFreq,
-      priority: p.priority
-    }));
-  }
+  const staticPages: MetadataRoute.Sitemap = [
+    { url: site.url, priority: 1.0, changeFrequency: "weekly" },
+    { url: `${site.url}/about`, priority: 0.8, changeFrequency: "monthly" },
+    { url: `${site.url}/features`, priority: 0.8, changeFrequency: "monthly" },
+    { url: `${site.url}/pricing`, priority: 0.8, changeFrequency: "monthly" },
+    { url: `${site.url}/faq`, priority: 0.8, changeFrequency: "monthly" },
+    { url: `${site.url}/contact`, priority: 0.6, changeFrequency: "monthly" },
+    { url: `${site.url}/terms`, priority: 0.4, changeFrequency: "monthly" },
+    { url: `${site.url}/privacy`, priority: 0.4, changeFrequency: "monthly" },
+    { url: `${site.url}/refund-policy`, priority: 0.4, changeFrequency: "monthly" },
+    { url: `${site.url}/request-refund`, priority: 0.4, changeFrequency: "monthly" },
+    { url: `${site.url}/signup`, priority: 0.5, changeFrequency: "monthly" },
+    { url: `${site.url}/login`, priority: 0.3, changeFrequency: "monthly" },
+    { url: `${site.url}/forgot-password`, priority: 0.2, changeFrequency: "monthly" },
+  ];
 
   try {
-    const { getSupabaseAdminClient } = await import("@/lib/supabase");
-    const supabase = getSupabaseAdminClient();
+    const supabase = getOptionalSupabaseAdminClient();
+    if (!supabase) throw new Error("No admin client");
 
-    const [{ data: products }, { data: stores }] = await Promise.all([
-      supabase.from("products").select("slug,updated_at").eq("status", "published"),
-      supabase.from("stores").select("slug,updated_at")
-    ]);
+    const { data: products } = await supabase
+      .from("products")
+      .select("slug, updated_at")
+      .eq("status", "published");
 
-    const productPages = (products ?? []).map((p) => ({
+    const productPages: MetadataRoute.Sitemap = (products ?? []).map((p) => ({
       url: `${site.url}/product/${p.slug}`,
-      lastModified: new Date(p.updated_at),
+      priority: 0.9,
       changeFrequency: "weekly" as const,
-      priority: 0.9
+      lastModified: p.updated_at ? new Date(p.updated_at) : undefined,
     }));
 
-    const storePages = (stores ?? []).map((s) => ({
-      url: `${site.url}/store/${s.slug}`,
-      lastModified: new Date(s.updated_at),
+    const { data: stores } = await supabase
+      .from("stores")
+      .select("handle, updated_at");
+
+    const storePages: MetadataRoute.Sitemap = (stores ?? []).map((s) => ({
+      url: `${site.url}/store/${s.handle}`,
+      priority: 0.7,
       changeFrequency: "weekly" as const,
-      priority: 0.7
+      lastModified: s.updated_at ? new Date(s.updated_at) : undefined,
     }));
 
-    return [
-      ...staticPages.map((p) => ({
-        url: `${site.url}${p.path}`,
-        lastModified: new Date(),
-        changeFrequency: p.changeFreq,
-        priority: p.priority
-      })),
-      ...productPages,
-      ...storePages
-    ];
+    return [...staticPages, ...productPages, ...storePages];
   } catch {
-    return staticPages.map((p) => ({
-      url: `${site.url}${p.path}`,
-      lastModified: new Date(),
-      changeFrequency: p.changeFreq,
-      priority: p.priority
-    }));
+    return staticPages;
   }
 }

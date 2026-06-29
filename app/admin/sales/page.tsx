@@ -3,31 +3,42 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { StatCard } from "@/components/stat-card";
-import { adminNav } from "@/app/admin/nav";
+import { StatCard } from "@/components/ui/stat-card";
+import { Badge, getBadgeVariant } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { TableSkeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 import { formatUgx } from "@/lib/constants";
+import { Search, TrendingUp, DollarSign, ArrowRight, ShoppingCart } from "lucide-react";
 
 type Order = {
   id: string;
   amount: number;
   platform_fee: number;
+  creator_earnings: number;
   status: string;
   created_at: string;
+  paid_at: string | null;
   buyer_email: string;
   buyer_name: string;
   products: { title: string; slug: string } | null;
   creators: { display_name: string } | null;
 };
 
+const PAGE_SIZE = 25;
+
 export default function AdminSalesPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateRange, setDateRange] = useState("all");
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
     fetch("/api/admin/orders?limit=500")
       .then((r) => r.json())
       .then((d) => setOrders(d.orders ?? []))
@@ -66,55 +77,75 @@ export default function AdminSalesPage() {
   const failed = filtered.filter((o) => o.status === "failed");
   const totalRevenue = paid.reduce((s, o) => s + o.amount, 0);
   const platformEarnings = paid.reduce((s, o) => s + o.platform_fee, 0);
+  const creatorEarnings = paid.reduce((s, o) => s + (o.creator_earnings ?? 0), 0);
 
-  const statusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      paid: "bg-green-100 text-green-800",
-      pending: "bg-yellow-100 text-yellow-800",
-      failed: "bg-red-100 text-red-800",
-    };
-    return (
-      <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${colors[status] ?? "bg-neutral-100 text-neutral-800"}`}>
-        {status}
-      </span>
-    );
-  };
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <DashboardShell title="Sales" subtitle="Review verified transactions, gross revenue, platform earnings, and creator earnings." nav={adminNav}>
+    <DashboardShell
+      title="Sales"
+      subtitle="Review verified transactions, gross revenue, and platform earnings"
+      role="admin"
+    >
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Orders" value={String(filtered.length)} />
-        <StatCard label="Paid" value={String(paid.length)} />
-        <StatCard label="Pending" value={String(pending.length)} />
-        <StatCard label="Failed" value={String(failed.length)} />
+      {/* Summary cards */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Total Orders"
+          value={String(filtered.length)}
+          sublabel={formatUgx(totalRevenue)}
+          icon={<ShoppingCart size={20} />}
+        />
+        <StatCard
+          label="Platform Revenue"
+          value={formatUgx(platformEarnings)}
+          sublabel={`${((platformEarnings / (totalRevenue || 1)) * 100).toFixed(1)}% effective fee`}
+          icon={<DollarSign size={20} />}
+          green
+        />
+        <StatCard
+          label="Creator Earnings"
+          value={formatUgx(creatorEarnings)}
+          sublabel={formatUgx(pending.reduce((s, o) => s + (o.creator_earnings ?? 0), 0)) + " pending"}
+          icon={<TrendingUp size={20} />}
+        />
+        <StatCard
+          label="Pending / Failed"
+          value={`${pending.length} / ${failed.length}`}
+          sublabel={formatUgx(pending.reduce((s, o) => s + o.amount, 0))}
+          icon={<ShoppingCart size={20} />}
+        />
       </div>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <input
-          type="text"
-          placeholder="Search by order ID, product, creator, buyer email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green sm:w-80"
-        />
+      {/* Search + filters */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Search by order ID, product, creator, buyer..."
+            className="w-full rounded-lg border border-border py-2.5 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+          />
+        </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          className="rounded-lg border border-border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
         >
           <option value="all">All Statuses</option>
-          <option value="pending">Pending</option>
           <option value="paid">Paid</option>
+          <option value="pending">Pending</option>
           <option value="failed">Failed</option>
         </select>
         <select
           value={dateRange}
-          onChange={(e) => setDateRange(e.target.value)}
-          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+          onChange={(e) => { setDateRange(e.target.value); setPage(1); }}
+          className="rounded-lg border border-border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
         >
           <option value="all">All Time</option>
           <option value="7d">Last 7 Days</option>
@@ -122,69 +153,75 @@ export default function AdminSalesPage() {
         </select>
       </div>
 
-      <div className="mt-6">
-        <h2 className="mb-3 text-xl font-bold">Orders</h2>
-        {loading ? (
-          <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-8 text-center text-neutral-600">Loading...</div>
-        ) : filtered.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-8 text-center text-neutral-600">No orders match your filters.</div>
-        ) : (
-          <>
-            <div className="hidden overflow-x-auto rounded-lg border border-neutral-200 bg-white sm:block">
-              <table className="w-full text-sm">
-                <thead className="border-b border-neutral-200 bg-neutral-50 text-left">
-                  <tr>
-                    <th className="p-3 font-semibold">Product</th>
-                    <th className="p-3 font-semibold">Creator</th>
-                    <th className="p-3 font-semibold">Buyer</th>
-                    <th className="p-3 font-semibold">Amount</th>
-                    <th className="p-3 font-semibold">Fee</th>
-                    <th className="p-3 font-semibold">Status</th>
-                    <th className="p-3 font-semibold">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((o) => (
-                    <tr key={o.id} className="cursor-pointer border-b border-neutral-100 transition hover:bg-neutral-50" onClick={() => window.location.href = `/admin/orders/${o.id}`}>
-                      <td className="p-3 font-medium">{o.products?.title ?? "—"}</td>
-                      <td className="p-3 text-neutral-600">{o.creators?.display_name ?? "—"}</td>
-                      <td className="p-3 text-neutral-600">
-                        <div>{o.buyer_name}</div>
-                        <div className="text-xs text-neutral-400">{o.buyer_email}</div>
-                      </td>
-                      <td className="p-3">{formatUgx(o.amount)}</td>
-                      <td className="p-3">{formatUgx(o.platform_fee)}</td>
-                      <td className="p-3">{statusBadge(o.status)}</td>
-                      <td className="p-3 text-neutral-500">{new Date(o.created_at).toLocaleDateString("en-UG")}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      {/* Loading */}
+      {loading && <TableSkeleton rows={8} />}
 
-            <div className="block space-y-3 sm:hidden">
-              {filtered.map((o) => (
-                <Link
-                  key={o.id}
-                  href={`/admin/orders/${o.id}`}
-                  className="block rounded-lg border border-neutral-200 bg-white p-4 transition hover:border-brand-green"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold">{o.products?.title ?? "—"}</p>
-                    {statusBadge(o.status)}
-                  </div>
-                  <div className="mt-2 text-sm text-neutral-600">
-                    <p>Creator: {o.creators?.display_name ?? "—"}</p>
-                    <p>Buyer: {o.buyer_name} ({o.buyer_email})</p>
-                    <p>Amount: {formatUgx(o.amount)}</p>
-                    <p className="text-xs text-neutral-400">{new Date(o.created_at).toLocaleDateString("en-UG")}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+      {/* Empty */}
+      {!loading && filtered.length === 0 && (
+        <EmptyState
+          icon={<ShoppingCart size={48} strokeWidth={1.2} />}
+          title="No orders match your filters"
+        />
+      )}
+
+      {/* Orders table */}
+      {!loading && filtered.length > 0 && (
+        <div className="overflow-hidden rounded-xl border border-border bg-surface-card shadow-card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-surface">
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Product</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Creator</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Buyer</th>
+                  <th className="px-4 py-3 text-right font-semibold text-muted">Amount</th>
+                  <th className="px-4 py-3 text-right font-semibold text-muted">Fee</th>
+                  <th className="px-4 py-3 text-center font-semibold text-muted">Status</th>
+                  <th className="px-4 py-3 text-right font-semibold text-muted">Date</th>
+                  <th className="px-4 py-3 text-right font-semibold text-muted" />
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.map((o) => (
+                  <tr key={o.id} className="border-b border-border transition hover:bg-surface">
+                    <td className="px-4 py-3 font-medium">{o.products?.title ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted">{o.creators?.display_name ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="font-semibold text-brand-black">{o.buyer_name}</p>
+                        <p className="text-xs text-muted">{o.buyer_email}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold">{formatUgx(o.amount)}</td>
+                    <td className="px-4 py-3 text-right text-muted">{formatUgx(o.platform_fee)}</td>
+                    <td className="px-4 py-3 text-center">
+                      <Badge variant={getBadgeVariant(o.status)}>{o.status}</Badge>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right text-muted">
+                      {new Date(o.created_at).toLocaleDateString("en-UG")}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/admin/orders/${o.id}`}
+                        className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold text-brand-green hover:bg-brand-mist"
+                      >
+                        Details <ArrowRight size={12} />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && filtered.length > PAGE_SIZE && (
+        <div className="mt-6">
+          <Pagination page={page} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        </div>
+      )}
     </DashboardShell>
   );
 }

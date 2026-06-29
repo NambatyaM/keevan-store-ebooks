@@ -102,7 +102,7 @@ export default function NewProductPage() {
   };
 
   return (
-      <DashboardShell title="New Product" subtitle="Upload files, set pricing, and publish your digital product." nav={creatorNav}>
+      <DashboardShell title="New Product" subtitle="Upload files, set pricing, and publish your digital product." role="creator">
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>
       )}

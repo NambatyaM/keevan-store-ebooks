@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { adminNav } from "@/app/admin/nav";
+import { Badge, getBadgeVariant } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { TableSkeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
+import { ClipboardList, ShieldAlert } from "lucide-react";
 
 type LogEntry = {
   id: string;
@@ -25,15 +29,18 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 const ACTION_FILTERS = ["", ...Object.keys(ACTION_LABELS)];
+const PAGE_SIZE = 50;
 
 export default function AdminAuditLogPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterAction, setFilterAction] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     const params = new URLSearchParams({ limit: "200" });
     if (filterAction) params.set("action", filterAction);
 
@@ -44,17 +51,28 @@ export default function AdminAuditLogPage() {
       .finally(() => setLoading(false));
   }, [filterAction]);
 
+  useEffect(() => { setPage(1); }, [filterAction]);
+
+  const totalPages = Math.ceil(logs.length / PAGE_SIZE);
+  const paginated = logs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
-    <DashboardShell title="Audit Log" subtitle="Immutable record of every administrative action on the platform." nav={adminNav}>
+    <DashboardShell
+      title="Audit Log"
+      subtitle="Immutable record of every administrative action on the platform"
+      role="admin"
+    >
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>
       )}
+
+      {/* Filter */}
       <div className="mb-4 flex items-center gap-3">
-        <label className="text-sm font-semibold text-neutral-700">Filter by action:</label>
+        <label className="text-sm font-semibold text-muted">Filter by action:</label>
         <select
           value={filterAction}
           onChange={(e) => setFilterAction(e.target.value)}
-          className="focus-ring rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
         >
           <option value="">All actions</option>
           {ACTION_FILTERS.filter(Boolean).map((a) => (
@@ -63,41 +81,64 @@ export default function AdminAuditLogPage() {
         </select>
       </div>
 
-      {loading ? (
-        <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-8 text-center text-neutral-600">Loading...</div>
-      ) : logs.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-8 text-center text-neutral-600">No audit log entries found.</div>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
-          <table className="w-full text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-left">
-              <tr>
-                <th className="p-3 font-semibold">Timestamp</th>
-                <th className="p-3 font-semibold">Admin</th>
-                <th className="p-3 font-semibold">Action</th>
-                <th className="p-3 font-semibold">Target</th>
-                <th className="p-3 font-semibold">Target ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((entry) => {
-                const admin = entry.users;
-                return (
-                  <tr key={entry.id} className="border-b border-neutral-100">
-                    <td className="p-3 text-neutral-500 whitespace-nowrap">{new Date(entry.created_at).toLocaleString("en-UG")}</td>
-                    <td className="p-3 font-medium">{admin?.full_name ?? admin?.email ?? "—"}</td>
-                    <td className="p-3">
-                      <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs font-semibold text-neutral-700">
-                        {ACTION_LABELS[entry.action] ?? entry.action}
-                      </span>
-                    </td>
-                    <td className="p-3 text-neutral-600">{entry.target_table}</td>
-                    <td className="p-3 font-mono text-xs text-neutral-500">{entry.target_id ? entry.target_id.slice(0, 8) + "…" : "—"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Loading */}
+      {loading && <TableSkeleton rows={6} />}
+
+      {/* Empty */}
+      {!loading && logs.length === 0 && (
+        <EmptyState
+          icon={<ClipboardList size={48} strokeWidth={1.2} />}
+          title="No audit log entries found"
+        />
+      )}
+
+      {/* Audit log table */}
+      {!loading && logs.length > 0 && (
+        <div className="overflow-hidden rounded-xl border border-border bg-surface-card shadow-card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-surface">
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Timestamp</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Admin</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Action</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Target</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Target ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.map((entry) => {
+                  const admin = entry.users;
+                  return (
+                    <tr key={entry.id} className="border-b border-border transition hover:bg-surface">
+                      <td className="whitespace-nowrap px-4 py-3 text-muted">
+                        {new Date(entry.created_at).toLocaleString("en-UG")}
+                      </td>
+                      <td className="px-4 py-3 font-semibold">
+                        {admin?.full_name ?? admin?.email ?? "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant="neutral">
+                          {ACTION_LABELS[entry.action] ?? entry.action}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-muted">{entry.target_table}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted">
+                        {entry.target_id ? entry.target_id.slice(0, 8) + "…" : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && logs.length > PAGE_SIZE && (
+        <div className="mt-6">
+          <Pagination page={page} totalPages={totalPages} totalItems={logs.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
         </div>
       )}
     </DashboardShell>

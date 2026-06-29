@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { adminNav } from "@/app/admin/nav";
 import { formatUgx } from "@/lib/constants";
 
 type Payment = {
@@ -56,7 +55,7 @@ export default function AdminOrderDetailPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { if (orderId) load(); }, [orderId]);
+  useEffect(() => { if (orderId) load(); }, [orderId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMarkPaid = async () => {
     setMarking(true);
@@ -95,7 +94,7 @@ export default function AdminOrderDetailPage() {
   const payment = order?.payments?.[0] ?? null;
 
   return (
-    <DashboardShell title="Order Details" subtitle={`Order ID: ${orderId}`} nav={adminNav}>
+      <DashboardShell title="Order Details" subtitle={`Order ID: ${orderId}`} role="admin">
       {loading && (
         <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-8 text-center text-neutral-600">Loading...</div>
       )}

@@ -1,11 +1,27 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BarChart3, Banknote, Download, LockKeyhole, ShieldCheck, Store, Users, BookOpen, ArrowRight } from "lucide-react";
+import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { formatUgx, site } from "@/lib/constants";
 
+export const metadata: Metadata = {
+  title: "Sell E-books Online in East Africa — Keep 90% of Every Sale | Keevan Store",
+  description: "Sell e-books, PDFs, guides, and digital products online in Uganda, Kenya, Tanzania, and Rwanda. Free to join. Pesapal payments. Instant file delivery. Pay only 10% when you sell.",
+  openGraph: {
+    title: "Sell E-books Online in East Africa — Keep 90% of Every Sale | Keevan Store",
+    description: "Free platform for East African creators to sell digital products. Pesapal payments, instant delivery, no monthly fees.",
+    type: "website",
+    images: [{ url: `${site.url}/og-image.png`, width: 1200, height: 630, alt: "Keevan Store — Sell E-books Online" }]
+  },
+  twitter: {
+    title: "Sell E-books Online in East Africa — Keep 90% of Every Sale | Keevan Store",
+    description: "Free platform for East African creators to sell digital products. Pesapal payments, instant delivery, no monthly fees.",
+    card: "summary_large_image"
+  }
+};
 
 const faqSchema = {
   "@context": "https://schema.org",
@@ -13,9 +29,9 @@ const faqSchema = {
   mainEntity: [
     { "@type": "Question", name: "How much does Keevan Store cost?", acceptedAnswer: { "@type": "Answer", text: "Keevan Store charges no monthly fees. Creators pay a 10% platform commission only when a product sells. If you do not make a sale, you pay nothing." } },
     { "@type": "Question", name: "Who can sell on Keevan Store?", acceptedAnswer: { "@type": "Answer", text: "Any East African author, educator, coach, or digital creator who owns the rights to their content can sell on Keevan Store. Currently serving Uganda, Kenya, Tanzania, and Rwanda." } },
-    { "@type": "Question", name: "What payment methods does Keevan Store support?", acceptedAnswer: { "@type": "Answer", text: "Keevan Store uses Pesapal, the leading East African payment gateway. Buyers pay via mobile money, card, or bank transfer in UGX." } },
-    { "@type": "Question", name: "How do creators receive their earnings?", acceptedAnswer: { "@type": "Answer", text: "Earnings accumulate in your creator dashboard. Once your balance reaches 50,000 UGX, you can request a manual withdrawal." } },
-    { "@type": "Question", name: "Do buyers need an account to purchase?", acceptedAnswer: { "@type": "Answer", text: "No. Buyers pay through Pesapal and receive a signed download link without creating an account." } }
+    { "@type": "Question", name: "What payment methods does Keevan Store support?", acceptedAnswer: { "@type": "Answer", text: "Keevan Store uses Pesapal, the leading East African payment gateway. Buyers pay via mobile money (MTN, Airtel), card, or bank transfer in UGX." } },
+    { "@type": "Question", name: "How do creators receive their earnings?", acceptedAnswer: { "@type": "Answer", text: "Earnings accumulate in your creator dashboard. Once your balance reaches the minimum withdrawal amount, you can request a manual payout." } },
+    { "@type": "Question", name: "Do buyers need an account to purchase?", acceptedAnswer: { "@type": "Answer", text: "No. Buyers pay through Pesapal and receive a signed download link instantly — no account creation required." } }
   ]
 };
 
@@ -24,6 +40,7 @@ const statsSchema = {
   "@type": "Product",
   name: "Keevan Store Platform",
   applicationCategory: "EcommercePlatform",
+  description: "East African creator commerce platform for selling digital products. Zero monthly fees, 10% per-sale commission.",
   offers: { "@type": "AggregateOffer", priceCurrency: "UGX", lowPrice: "0", offerCount: "1", availability: "https://schema.org/InStock" },
   areaServed: ["Uganda", "Kenya", "Tanzania", "Rwanda"]
 };
@@ -172,7 +189,7 @@ export default function Home() {
                 ["Who can sell on Keevan Store?", "Any East African creator who owns the rights to their digital content. Authors, educators, coaches, template designers, and course creators all use Keevan Store. We currently serve Uganda, Kenya, Tanzania, and Rwanda."],
                 ["What file formats can I upload?", "You can upload PDF, EPUB, MOBI, and ZIP files up to 4 MB. These cover e-books, guides, templates, worksheets, and bundled resources."],
                 ["How do payments work?", "Keevan Store uses Pesapal, East Africa's leading payment gateway. Buyers pay via mobile money (MTN, Airtel), debit or credit card, or bank transfer. All transactions are in UGX."],
-                ["When and how do I get paid?", "Earnings accumulate in your creator dashboard. Once your balance reaches 50,000 UGX, you can request a withdrawal. Platform administrators review and process payouts manually."],
+                ["When and how do I get paid?", "Earnings accumulate in your creator dashboard. Once your balance reaches the minimum withdrawal amount, you can request a payout. Platform administrators review and process payouts manually."],
                 ["Do I need technical skills to set up my store?", "No. Sign up, upload your product, and your store is live. There is no coding, no design work, and no hosting setup required."],
                 ["Can I edit my product after publishing?", "Yes. Your creator dashboard lets you update product titles, descriptions, prices, and files anytime."],
                 ["What if someone buys my product and wants a refund?", "Because digital products are delivered instantly, refunds are handled case by case. Contact support if there is an issue with delivery or payment."]

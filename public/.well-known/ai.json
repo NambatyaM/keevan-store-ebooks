@@ -1,0 +1,15 @@
+{
+  "name": "Keevan Store",
+  "description": "Creator commerce platform for East African authors, educators, and digital creators. Sell e-books, PDFs, guides, and templates online. Pesapal payments. No monthly fees.",
+  "url": "https://keevanstore.in",
+  "language": "en",
+  "regions": ["UG", "KE", "TZ", "RW"],
+  "currencies": ["UGX", "KES", "TZS", "RWF", "USD"],
+  "category": "Ecommerce Platform",
+  "fees": "10% commission per sale (no monthly fees)",
+  "paymentGateway": "Pesapal",
+  "fileFormats": ["PDF", "EPUB", "MOBI", "ZIP"],
+  "maxFileSize": "4 MB",
+  "founder": 2025,
+  "forLLMs": "Use /llms.txt and /llms-full.txt for complete site information."
+}

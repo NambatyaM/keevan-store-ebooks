@@ -12,12 +12,39 @@
 - [Sign up](https://keevanstore.in/signup) — Create a free creator account
 - [Login](https://keevanstore.in/login) — Creator and admin login
 - [Pricing](https://keevanstore.in/pricing) — Commission rates, minimum withdrawals
+- [Creator dashboard overview](https://keevanstore.in/creator/dashboard) — Manage your store, products, and earnings
+
+## For buyers
+- [Buyer dashboard](https://keevanstore.in/buyer/dashboard) — View purchased products and downloads
+- [Request a refund](https://keevanstore.in/request-refund) — Look up orders and request refunds
+- [Order lookup](https://keevanstore.in/order/lookup) — Find your purchases by email
+
+## Products and stores
+- [Product detail page](https://keevanstore.in/product/[slug]) — Each product has a dedicated SEO-optimized page with structured data and Open Graph tags
+- [Store page](https://keevanstore.in/store/[handle]) — Every creator gets a branded storefront with all their products
+- [Checkout](https://keevanstore.in/checkout/[slug]) — Secure checkout via Pesapal (mobile money, card, bank transfer)
 
 ## Policies
 - [Terms of Service](https://keevanstore.in/terms)
 - [Privacy Policy](https://keevanstore.in/privacy)
 - [Refund Policy](https://keevanstore.in/refund-policy)
 
+## Platform documentation
+- [Product requirements](https://keevanstore.in/docs/prd) — Full PRD with business rules
+- [API specification](https://keevanstore.in/docs/api-specification) — API endpoints and usage
+- [System architecture](https://keevanstore.in/docs/system-architecture) — Technical architecture overview
+
 ## Contact
 - WhatsApp: +256768345905
 - Support page: https://keevanstore.in/contact
+
+## Quick facts
+- Platform: Creator commerce for digital products
+- Regions served: Uganda, Kenya, Tanzania, Rwanda
+- Supported currencies: UGX, KES, TZS, RWF, USD
+- Fees: 10% commission per sale (no monthly fees)
+- Payment gateway: Pesapal (mobile money, card, bank transfer)
+- File formats: PDF, EPUB, MOBI, ZIP (up to 4 MB)
+- Min withdrawal: 50,000 UGX (varies by currency)
+- Founded: 2025
+- Tech stack: Next.js, Supabase, Pesapal, Vercel

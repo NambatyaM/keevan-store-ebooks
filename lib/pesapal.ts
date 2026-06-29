@@ -97,6 +97,7 @@ export async function getPesapalToken(): Promise<PesapalToken> {
 export async function createPesapalOrder(input: {
   id: string;
   amount: number;
+  currency?: string;
   email: string;
   phone?: string;
   firstName: string;
@@ -119,7 +120,7 @@ export async function createPesapalOrder(input: {
     },
     body: JSON.stringify({
       id: input.id,
-      currency: "UGX",
+      currency: input.currency ?? "UGX",
       amount: input.amount,
       description: input.description,
       callback_url: input.callbackUrl,

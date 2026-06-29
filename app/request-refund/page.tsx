@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { SimplePage } from "@/components/simple-page";
-import { site } from "@/lib/constants";
+import Link from "next/link";
+import { ArrowLeft, Search, MessageSquare, CheckCircle } from "lucide-react";
+import { site, formatUgx } from "@/lib/constants";
 
 export default function RequestRefundPage() {
   const [step, setStep] = useState<"lookup" | "request" | "done">("lookup");
@@ -45,7 +46,7 @@ export default function RequestRefundPage() {
       const res = await fetch("/api/refunds/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: selectedOrderId, buyerEmail: email, reason })
+        body: JSON.stringify({ orderId: selectedOrderId, buyerEmail: email, reason }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -62,104 +63,168 @@ export default function RequestRefundPage() {
   };
 
   return (
-    <SimplePage title="Request a Refund" eyebrow="Customer support">
-      {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>
-      )}
-      {message && (
-        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-semibold text-green-700">{message}</div>
-      )}
-
-      {step === "lookup" && (
-        <div className="rounded-lg border border-neutral-200 bg-white p-6">
-          <h2 className="text-xl font-bold">Find Your Orders</h2>
-          <p className="mt-2 text-neutral-600">Enter the email address you used during checkout.</p>
-          <input
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-4 w-full max-w-sm rounded border border-neutral-300 px-3 py-2 text-sm"
-          />
-          <button
-            onClick={lookupOrders}
-            disabled={!email || lookupLoading}
-            className="mt-3 inline-block rounded bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-          >
-            {lookupLoading ? "Searching..." : "Find My Orders"}
-          </button>
-          <p className="mt-4 text-xs text-neutral-500">
-            Need help? <a href={site.supportWhatsApp} className="text-brand-green hover:underline">Contact us on WhatsApp</a>
-          </p>
-        </div>
-      )}
-
-      {step === "request" && (
-        <div className="rounded-lg border border-neutral-200 bg-white p-6">
-          <h2 className="text-xl font-bold">Select an Order to Refund</h2>
-          <div className="mt-4 grid gap-3">
-            {orders.map((o) => (
-              <label
-                key={o.id}
-                className={`flex cursor-pointer items-center gap-3 rounded border p-3 text-sm ${
-                  selectedOrderId === o.id ? "border-brand-green bg-green-50" : "border-neutral-200"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="order"
-                  checked={selectedOrderId === o.id}
-                  onChange={() => setSelectedOrderId(o.id)}
-                  className="accent-brand-green"
-                />
-                <div>
-                  <span className="font-semibold">{o.products?.title ?? "Product"}</span>
-                  <span className="ml-2 text-neutral-500">
-                    {new Intl.NumberFormat("en-UG", { style: "currency", currency: "UGX", maximumFractionDigits: 0 }).format(o.amount)}
-                  </span>
-                  <span className="ml-2 text-xs text-neutral-400">{new Date(o.created_at).toLocaleDateString("en-UG")}</span>
-                </div>
-              </label>
-            ))}
+    <div className="min-h-screen bg-brand-bg">
+      <header className="border-b border-border bg-surface-card">
+        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Customer Support</p>
+            <h1 className="text-2xl font-black text-brand-black">Request a Refund</h1>
           </div>
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-muted transition hover:bg-surface"
+          >
+            <ArrowLeft size={16} />
+            Home
+          </Link>
+        </div>
+      </header>
 
-          {selectedOrderId && (
-            <div className="mt-4">
-              <label className="block text-sm font-semibold">Reason for refund</label>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Describe why you are requesting a refund (minimum 10 characters)"
-                rows={4}
-                className="mt-2 w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-              />
-              <p className="mt-1 text-xs text-neutral-400">{reason.length}/2000 characters</p>
+      <main className="mx-auto max-w-2xl px-4 py-8">
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>
+        )}
+        {message && (
+          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-semibold text-green-700">{message}</div>
+        )}
+
+        {step === "lookup" && (
+          <div className="rounded-xl border border-border bg-surface-card p-6 shadow-card">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-mist">
+                <Search size={18} className="text-brand-green" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">Find Your Orders</h2>
+                <p className="text-sm text-muted">
+                  Enter the email address you used during checkout.
+                </p>
+              </div>
+            </div>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+              onKeyDown={(e) => { if (e.key === "Enter") lookupOrders(); }}
+            />
+            <div className="mt-3 flex items-center gap-3">
               <button
-                onClick={submitRefund}
-                disabled={reason.length < 10 || submitLoading}
-                className="mt-3 inline-block rounded bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                onClick={lookupOrders}
+                disabled={!email || lookupLoading}
+                className="rounded-lg bg-brand-green px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-green-deep disabled:opacity-50"
               >
-                {submitLoading ? "Submitting..." : "Submit Refund Request"}
+                {lookupLoading ? "Searching..." : "Find My Orders"}
               </button>
             </div>
-          )}
-          <button onClick={() => setStep("lookup")} className="mt-4 block text-sm text-neutral-500 hover:underline">
-            &larr; Start over
-          </button>
-        </div>
-      )}
+            <p className="mt-4 text-xs text-muted">
+              Need help?{" "}
+              <a href={site.supportWhatsApp} className="font-semibold text-brand-green hover:underline">
+                Contact us on WhatsApp
+              </a>
+            </p>
+          </div>
+        )}
 
-      {step === "done" && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-6">
-          <h2 className="text-xl font-bold text-green-800">Refund Request Submitted</h2>
-          <p className="mt-2 text-green-700">
-            Your refund request has been received. A platform administrator will review it and respond within a reasonable timeframe.
-          </p>
-          <p className="mt-3 text-sm text-green-600">
-            You will be contacted via email at <strong>{email}</strong> with the outcome.
-          </p>
-        </div>
-      )}
-    </SimplePage>
+        {step === "request" && (
+          <div className="rounded-xl border border-border bg-surface-card p-6 shadow-card">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-mist">
+                <MessageSquare size={18} className="text-brand-green" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">Select an Order to Refund</h2>
+                <p className="text-sm text-muted">
+                  Choose which order you&rsquo;d like a refund for and explain why.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              {orders.map((o) => (
+                <label
+                  key={o.id}
+                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 text-sm transition ${
+                    selectedOrderId === o.id
+                      ? "border-brand-green bg-brand-mist"
+                      : "border-border hover:border-brand-green/30"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="order"
+                    checked={selectedOrderId === o.id}
+                    onChange={() => setSelectedOrderId(o.id)}
+                    className="h-4 w-4 accent-brand-green"
+                  />
+                  <div className="flex-1">
+                    <span className="font-semibold">{o.products?.title ?? "Product"}</span>
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-muted">
+                      <span>{formatUgx(o.amount)}</span>
+                      <span>&middot;</span>
+                      <span>{new Date(o.created_at).toLocaleDateString("en-UG")}</span>
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            {selectedOrderId && (
+              <div className="mt-6">
+                <label className="block text-sm font-semibold">Reason for refund</label>
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Describe why you are requesting a refund (minimum 10 characters)"
+                  rows={4}
+                  className="mt-2 w-full rounded-lg border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+                />
+                <div className="mt-1 flex items-center justify-between">
+                  <p className="text-xs text-muted">{reason.length}/2000 characters</p>
+                  {reason.length > 0 && reason.length < 10 && (
+                    <p className="text-xs text-error">Minimum 10 characters</p>
+                  )}
+                </div>
+                <button
+                  onClick={submitRefund}
+                  disabled={reason.length < 10 || submitLoading}
+                  className="mt-4 rounded-lg bg-brand-green px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-green-deep disabled:opacity-50"
+                >
+                  {submitLoading ? "Submitting..." : "Submit Refund Request"}
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => setStep("lookup")}
+              className="mt-4 block text-sm text-muted transition hover:text-brand-green"
+            >
+              &larr; Start over
+            </button>
+          </div>
+        )}
+
+        {step === "done" && (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-8 text-center shadow-card">
+            <CheckCircle size={48} className="mx-auto text-success" strokeWidth={1.5} />
+            <h2 className="mt-4 text-xl font-bold text-green-800">Refund Request Submitted</h2>
+            <p className="mt-2 text-sm text-green-700">
+              Your refund request has been received. A platform administrator will review it and respond
+              within a reasonable timeframe.
+            </p>
+            <p className="mt-3 text-sm font-semibold text-green-700">
+              You will be contacted via email at <span className="underline">{email}</span> with the outcome.
+            </p>
+            <Link
+              href="/"
+              className="mt-6 inline-block rounded-lg bg-brand-green px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-green-deep"
+            >
+              Back to Home
+            </Link>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }

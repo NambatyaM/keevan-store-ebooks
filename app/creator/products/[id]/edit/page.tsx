@@ -121,14 +121,14 @@ export default function EditProductPage() {
 
   if (loading) {
     return (
-      <DashboardShell title="Edit Product" subtitle="" nav={creatorNav}>
+      <DashboardShell title="Edit Product" subtitle="" role="creator">
         <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-8 text-center text-neutral-600">Loading...</div>
       </DashboardShell>
     );
   }
 
   return (
-    <DashboardShell title="Edit Product" subtitle="Update product details, pricing, status, or replace files." nav={creatorNav}>
+    <DashboardShell title="Edit Product" subtitle="Update product details, pricing, status, or replace files." role="creator">
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>
       )}

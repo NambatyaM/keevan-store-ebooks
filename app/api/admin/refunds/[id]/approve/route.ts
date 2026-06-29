@@ -12,7 +12,7 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
 
   const { data: refund } = await supabase
     .from("refunds")
-    .select("*,orders!inner(amount,creator_id),payments!inner(tracking_id,merchant_reference)")
+    .select("*,orders!inner(amount,creator_id,currency),payments!inner(tracking_id,merchant_reference)")
     .eq("id", id)
     .single();
 
@@ -24,6 +24,8 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
   const payment = Array.isArray(refund.payments) ? refund.payments[0] : refund.payments;
   const order = Array.isArray(refund.orders) ? refund.orders[0] : refund.orders;
 
+  const orderCurrency = (order.currency as string) ?? "UGX";
+
   if (payment?.tracking_id) {
     try {
       const statusData = await getPesapalTransactionStatus(payment.tracking_id);
@@ -34,7 +36,7 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
           confirmationCode,
           amount: order.amount,
           username: authUser.email ?? authUser.id,
-          remarks: input.notes ?? "Refund approved by admin"
+          remarks: `Refund approved by admin. Original currency: ${orderCurrency}. ${input.notes ?? ""}`
         });
 
         if (result.ok) {

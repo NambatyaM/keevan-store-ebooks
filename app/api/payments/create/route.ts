@@ -13,13 +13,13 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("id,slug,title,price,creator_id,status,store_id")
+    .select("id,slug,title,price,currency,creator_id,status,store_id")
     .eq("id", input.productId)
     .single();
 
   if (productError || !product || product.status !== "published") return apiError("Product is not available for purchase", 404);
 
-  const { data: store } = await supabase.from("stores").select("status").eq("id", product.store_id).single();
+  const { data: store } = await supabase.from("stores").select("status,currency").eq("id", product.store_id).single();
   if (!store || store.status !== "active") return apiError("Product is not available for purchase", 404);
 
   const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
@@ -93,6 +93,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
   } catch {}
 
+  const storeCurrency = (store.currency as string) ?? "UGX";
   const split = calculateSaleSplit(discountPrice);
   const orderInsert: Record<string, unknown> = {
     product_id: product.id,
@@ -101,7 +102,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     buyer_name: input.buyerName,
     amount: split.grossAmount,
     platform_fee: split.platformFee,
-    creator_earnings: split.creatorEarnings
+    creator_earnings: split.creatorEarnings,
+    currency: storeCurrency,
   };
 
   if (buyerId) orderInsert.buyer_id = buyerId;
@@ -134,6 +136,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     const pesapal = await createPesapalOrder({
       id: merchantReference,
       amount: split.grossAmount,
+      currency: storeCurrency,
       email: input.buyerEmail,
       phone: input.phone,
       firstName: input.buyerName.split(" ")[0] || input.buyerName,

@@ -628,9 +628,9 @@ describe("Payment Security", () => {
     expect(result.error).toBe("Pesapal tracking id mismatch");
   });
 
-  it("withdrawalSchema rejects amounts lower than minimum", () => {
+  it("withdrawalSchema rejects zero amount", () => {
     const result = withdrawalSchema.safeParse({
-      amount: 49999,
+      amount: 0,
       payoutMethod: "mobile_money",
     });
     expect(result.success).toBe(false);

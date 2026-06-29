@@ -1,17 +1,29 @@
+import type { Metadata } from "next";
 import { SimplePage } from "@/components/simple-page";
+import { site } from "@/lib/constants";
+
+export const metadata: Metadata = {
+  title: "FAQ — Selling and Buying Digital Products in East Africa | Keevan Store",
+  description: "Answers to common questions about selling e-books and digital products on Keevan Store. Learn about pricing, payments, withdrawals, file formats, refunds, and more. Serving Uganda, Kenya, Tanzania, Rwanda.",
+  openGraph: {
+    title: "Keevan Store FAQ — Frequently Asked Questions",
+    description: "Find answers about selling digital products in East Africa: pricing, Pesapal payments, withdrawals, file formats, refunds, and account management.",
+    images: [{ url: `${site.url}/og-image.png`, width: 1200, height: 630, alt: "Keevan Store FAQ" }]
+  }
+};
 
 const faqs = [
   { q: "What is Keevan Store?", a: "Keevan Store is a creator commerce platform for East African authors, educators, coaches, and digital creators to sell e-books, guides, templates, and digital products directly to customers through branded storefronts." },
   { q: "Do buyers need an account to purchase?", a: "No. Buyers can pay securely through Pesapal using mobile money, card, or bank transfer and download their file instantly — no account creation required." },
   { q: "How do creators get paid?", a: "Keevan Store collects payments from buyers, records earnings in your creator dashboard, and processes manual withdrawal requests once your balance reaches the minimum threshold." },
-  { q: "What is the minimum withdrawal amount?", a: "The minimum withdrawal request is 50,000 UGX. You can request a payout anytime your available balance meets or exceeds this amount." },
+  { q: "What is the minimum withdrawal amount?", a: "The minimum withdrawal for UGX stores is 50,000 UGX. Minimums for KES, TZS, RWF, and USD stores vary. You can request a payout anytime your available balance meets the threshold." },
   { q: "How much does it cost to sell on Keevan Store?", a: "Keevan Store has no monthly fees. Creators pay a 10% platform commission on each successful sale. If you do not sell anything, you pay nothing." },
   { q: "What is the platform commission used for?", a: "The 10% commission covers payment processing, secure file storage and delivery, analytics and dashboards, customer support, and platform administration." },
   { q: "Which file formats are supported?", a: "Keevan Store supports PDF, EPUB, MOBI, and ZIP files up to 4 MB per upload. These formats cover e-books, guides, worksheets, templates, and bundled resources." },
   { q: "Can I update my product after publishing?", a: "Yes. Your creator dashboard lets you edit product titles, descriptions, prices, and uploaded files at any time." },
   { q: "How are files delivered to customers?", a: "After Pesapal confirms payment, Keevan Store generates a signed, time-limited download URL that the customer can access immediately. No manual delivery required." },
   { q: "How does payment verification work?", a: "Keevan Store uses server-side verification that cross-checks the payment reference with Pesapal's transaction status API. The file is only unlocked when payment is confirmed." },
-  { q: "What payment methods do buyers use?", a: "Buyers pay through Pesapal, which supports mobile money (MTN, Airtel), debit and credit cards, and bank transfers — all in UGX." },
+  { q: "What payment methods do buyers use?", a: "Buyers pay through Pesapal, which supports mobile money (MTN, Airtel), debit and credit cards, and bank transfers." },
   { q: "Is my content protected?", a: "Yes. Files are stored securely in cloud storage with signed, expiring download URLs. Only verified purchasers can access the download link. Payment verification happens server-side before any file access." },
   { q: "Can I see how many people viewed my products?", a: "Yes. The analytics dashboard shows product and store page views, purchase counts, download numbers, and conversion rates." },
   { q: "Who can sell on Keevan Store?", a: "Any East African creator who owns the rights to their content. Authors, educators, course creators, template designers, and digital artists. Currently serving Uganda, Kenya, Tanzania, and Rwanda." },

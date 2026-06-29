@@ -1,6 +1,17 @@
+import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button";
 import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
+
+export const metadata: Metadata = {
+  title: "Contact Keevan Store Support | WhatsApp Support for Creators and Buyers",
+  description: "Contact Keevan Store support via WhatsApp. Get help with store setup, product uploads, payments, withdrawals, and buyer issues. Serving Uganda, Kenya, Tanzania, Rwanda.",
+  openGraph: {
+    title: "Contact Keevan Store — Support for East African Creators",
+    description: "Need help with your creator account, payments, or withdrawals? Contact Keevan Store support via WhatsApp.",
+    images: [{ url: `${site.url}/og-image.png`, width: 1200, height: 630, alt: "Contact Keevan Store" }]
+  }
+};
 
 export default function ContactPage() {
   const schema = {

@@ -1,5 +1,16 @@
+import type { Metadata } from "next";
 import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
+
+export const metadata: Metadata = {
+  title: "About Keevan Store — East African Creator Commerce Platform",
+  description: "Keevan Store is a creator commerce platform built for East African authors, educators, coaches, and digital creators. Sell e-books, guides, templates, and digital products. No monthly fees. Pesapal payments. Serving Uganda, Kenya, Tanzania, Rwanda.",
+  openGraph: {
+    title: "About Keevan Store — Creator Commerce for East Africa",
+    description: "Learn how Keevan Store helps East African authors, educators, and creators sell digital products online with zero monthly fees.",
+    images: [{ url: `${site.url}/og-image.png`, width: 1200, height: 630, alt: "About Keevan Store" }]
+  }
+};
 
 export default function AboutPage() {
   const schema = {
@@ -9,6 +20,7 @@ export default function AboutPage() {
     description: "Keevan Store is a creator commerce platform for East African authors, educators, coaches, and digital creators to sell e-books, guides, templates, and digital products directly to customers through branded storefronts with Pesapal payment processing.",
     url: site.url,
     areaServed: ["Uganda", "Kenya", "Tanzania", "Rwanda"],
+    foundingDate: "2025",
     founder: { "@type": "Person", name: "Keevan Store Team" }
   };
 
@@ -37,6 +49,9 @@ export default function AboutPage() {
         <h2 className="text-2xl font-bold text-brand-black">Why Keevan Store exists</h2>
         <p>
           Most e-commerce platforms are built for physical goods, Western markets, and monthly subscription models. They do not fit how African creators sell digital products. Keevan Store was built specifically for the East African digital creator economy — no foreign payment accounts, no complex tax setup, no monthly fees that eat into irregular income.
+        </p>
+        <p>
+          According to industry data, the African creator economy is growing rapidly, yet most global platforms do not support local payment methods like mobile money. Keevan Store bridges this gap by integrating directly with Pesapal, which processes payments in UGX through MTN Mobile Money, Airtel Money, card payments, and bank transfers.
         </p>
       </section>
     </SimplePage>

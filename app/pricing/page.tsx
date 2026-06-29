@@ -1,6 +1,17 @@
+import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button";
 import { SimplePage } from "@/components/simple-page";
 import { formatUgx, site } from "@/lib/constants";
+
+export const metadata: Metadata = {
+  title: "Pricing — Sell Digital Products with Zero Monthly Fees | Keevan Store",
+  description: "Keevan Store is free to join. No monthly subscriptions. Pay only 10% commission when you make a sale. Compare with Shopify, Gumroad, and self-hosted solutions. East African creators keep 90%.",
+  openGraph: {
+    title: "Keevan Store Pricing — No Monthly Fees, Pay Only When You Sell",
+    description: "Free to join. 10% commission per sale. No monthly fees, no listing fees, no hidden charges. Compare with alternatives.",
+    images: [{ url: `${site.url}/og-image.png`, width: 1200, height: 630, alt: "Keevan Store Pricing" }]
+  }
+};
 
 export default function PricingPage() {
   const schema = {
@@ -25,7 +36,7 @@ export default function PricingPage() {
     "@type": "FAQPage",
     mainEntity: [
       { "@type": "Question", name: "Does Keevan Store charge monthly fees?", acceptedAnswer: { "@type": "Answer", text: "No. Keevan Store has no monthly subscription fee. You only pay a 10% commission when you make a sale." } },
-      { "@type": "Question", name: "What is the minimum withdrawal amount?", acceptedAnswer: { "@type": "Answer", text: "Creators can request withdrawals once their available balance reaches 50,000 UGX." } },
+      { "@type": "Question", name: "What is the minimum withdrawal amount?", acceptedAnswer: { "@type": "Answer", text: "Creators can request withdrawals once their available balance reaches the minimum threshold for their store's currency." } },
       { "@type": "Question", name: "Are there fees for withdrawing earnings?", acceptedAnswer: { "@type": "Answer", text: "Withdrawal requests are processed by platform administrators. There are no additional platform fees for withdrawals." } }
     ]
   };
@@ -41,7 +52,7 @@ export default function PricingPage() {
         <p className="text-5xl font-black text-brand-green">10%</p>
         <p className="mt-2 text-lg font-semibold">platform commission per successful sale</p>
         <p className="mt-4 leading-7 text-neutral-700">
-          Creators keep 90% of every paid order. Withdrawals can be requested once your available balance reaches {formatUgx(site.minimumWithdrawal)}. There are no additional fees for requesting payouts.
+          Creators keep 90% of every paid order. Withdrawals can be requested once your available balance reaches the minimum threshold. There are no additional fees for requesting payouts.
         </p>
         <div className="mt-6">
           <ButtonLink href="/signup">Start Selling Free</ButtonLink>

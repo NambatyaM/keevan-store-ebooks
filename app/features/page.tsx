@@ -1,5 +1,17 @@
+import type { Metadata } from "next";
 import { SimplePage } from "@/components/simple-page";
+import { site } from "@/lib/constants";
 import { Store, Banknote, Download, BarChart3, ShieldCheck, LockKeyhole, Users, BookOpen, Globe, Smartphone, RefreshCcw, Search } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Features — Sell Digital Products in East Africa | Keevan Store",
+  description: "Explore all features of Keevan Store: branded storefronts, Pesapal payments, instant file delivery, analytics dashboard, secure storage, and more. Everything East African creators need to sell online.",
+  openGraph: {
+    title: "Keevan Store Features — Everything You Need to Sell Digital Products",
+    description: "Branded storefronts, Pesapal mobile money payments, instant file delivery, sales analytics, and more. No monthly fees.",
+    images: [{ url: `${site.url}/og-image.png`, width: 1200, height: 630, alt: "Keevan Store Features" }]
+  }
+};
 
 const featureList = [
   {
@@ -15,7 +27,7 @@ const featureList = [
   {
     icon: Banknote,
     title: "Pesapal payment processing",
-    desc: "Keevan Store integrates with Pesapal, East Africa's leading payment gateway. All transactions are in UGX. Server-side verification prevents fraud and confirms payment before delivery."
+    desc: "Keevan Store integrates with Pesapal, East Africa's leading payment gateway. All transactions use server-side verification to prevent fraud and confirm payment before delivery."
   },
   {
     icon: Download,

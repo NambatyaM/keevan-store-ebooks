@@ -19,7 +19,8 @@ export const resetPasswordSchema = z.object({
 export const storeSchema = z.object({
   name: z.string().min(2),
   slug: z.string().regex(/^[a-z0-9-]{3,64}$/),
-  description: z.string().max(500).optional()
+  description: z.string().max(500).optional(),
+  currency: z.enum(["UGX", "KES", "TZS", "RWF", "USD"]).default("UGX")
 });
 
 export const creatorSchema = z.object({
@@ -72,7 +73,7 @@ export const paymentVerifySchema = z.object({
 });
 
 export const withdrawalSchema = z.object({
-  amount: z.number().int().min(50000),
+  amount: z.number().int().min(1),
   payoutMethod: z.string().min(2),
   payoutDetails: z.record(z.unknown()).default({})
 });

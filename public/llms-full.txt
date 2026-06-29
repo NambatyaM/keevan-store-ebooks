@@ -1,0 +1,119 @@
+# Keevan Store — Complete Site Reference for LLMs and AI Systems
+
+> Keevan Store is a creator commerce platform for East African authors, educators, coaches, and digital creators to sell e-books, guides, templates, and digital products directly to customers through branded storefronts with Pesapal payment processing.
+
+## Platform Overview
+
+Keevan Store serves creators and buyers across four East African countries: **Uganda, Kenya, Tanzania, and Rwanda**. The platform supports five currencies: **UGX, KES, TZS, RWF, and USD**.
+
+### Pricing Model
+- **Free to join**: No monthly fees, no listing fees, no setup costs
+- **10% commission**: Platform fee deducted only on successful sales
+- **Creators keep 90%**: Of every verified transaction
+- **Free withdrawals**: No additional fees for requesting payouts
+
+### Minimum Withdrawal Amounts by Currency
+| Currency | Minimum Withdrawal |
+|----------|-------------------|
+| UGX | 50,000 |
+| KES | 1,500 |
+| TZS | 30,000 |
+| RWF | 20,000 |
+| USD | 20 |
+
+### Supported File Types
+- PDF (.pdf)
+- EPUB (.epub)
+- MOBI (.mobi)
+- ZIP (.zip)
+- Maximum file size: 4 MB
+- Cover images: JPEG, PNG, WebP (max 2 MB)
+
+### Payment Methods
+- Mobile money (MTN, Airtel)
+- Debit and credit cards
+- Bank transfers
+- Processor: Pesapal (East Africa's leading payment gateway)
+
+## Site Structure
+
+### Public Pages (SEO-indexed)
+- `/` — Homepage with feature grid, how-it-works steps, and FAQ
+- `/about` — Platform overview and mission
+- `/features` — Complete feature list (12 features)
+- `/pricing` — Pricing comparison table and fee breakdown
+- `/faq` — 20 frequently asked questions with detailed answers
+- `/contact` — WhatsApp support contact information
+- `/terms` — Terms of Service
+- `/privacy` — Privacy Policy
+- `/refund-policy` — Refund Policy
+- `/product/[slug]` — Individual product detail pages (SEO-optimized, dynamic)
+- `/store/[handle]` — Creator storefront pages (SEO-optimized, dynamic)
+
+### Restricted Pages (noindex)
+- `/signup` — Creator registration
+- `/login` — Creator login
+- `/forgot-password` — Password reset request
+- `/update-password` — New password form
+- `/checkout/[slug]` — Payment checkout
+- `/download/[slug]` — File download
+- `/creator/*` — Creator dashboard (auth required)
+- `/admin/*` — Admin dashboard (auth required)
+- `/buyer/dashboard` — Buyer purchase history (auth required)
+- `/order/*` — Order lookup and success pages
+
+## Key Features
+
+1. **Branded Storefronts**: Each creator gets a personalized store URL and product links
+2. **No Buyer Accounts**: Customers purchase without creating an account
+3. **Pesapal Integration**: East African payment gateway with server-side verification
+4. **Instant Delivery**: Signed, time-limited download URLs after payment confirmation
+5. **Sales Analytics**: Dashboard with views, purchases, downloads, and conversion rates
+6. **Product Management**: Add, edit, update, or unpublish products anytime
+7. **Secure Storage**: Files in Supabase cloud storage with signed URLs
+8. **Mobile-Friendly**: Storefronts work on all devices without an app
+9. **Multi-Currency**: Stores can operate in UGX, KES, TZS, RWF, or USD
+10. **SEO-Optimized**: Product pages have structured data, canonical URLs, and OG tags
+
+## Structured Data Implemented
+
+- **Organization** schema on all pages
+- **WebSite** schema on all pages
+- **FAQPage** schema on homepage (5 Q&A), pricing (3 Q&A), FAQ (20 Q&A), product pages (3 Q&A)
+- **Product** schema on homepage (platform stats), pricing (Creator Plan), product detail pages
+- **BreadcrumbList** schema on product pages (3 items), store pages (2 items), checkout (3 items)
+- **ContactPage** schema on contact page
+- **Article** schema on content pages where applicable
+
+## Creator Workflow
+
+1. Sign up for free at /signup (no credit card required)
+2. Choose store currency (UGX/KES/TZS/RWF/USD)
+3. Upload product file (PDF/EPUB/MOBI/ZIP, up to 4 MB)
+4. Set price, write description, add cover image
+5. Share store link or individual product links
+6. Receive payment via Pesapal (mobile money/card/bank)
+7. Customer downloads file automatically
+8. Track earnings in dashboard
+9. Request withdrawal when balance meets minimum
+
+## Technical Information
+
+- **Frontend**: Next.js 14 (React), TypeScript, Tailwind CSS
+- **Backend**: Next.js API routes
+- **Database**: Supabase (PostgreSQL)
+- **File Storage**: Supabase Storage
+- **Payment Gateway**: Pesapal API v3
+- **Hosting**: Vercel
+- **Analytics**: Vercel Analytics
+- **Monitoring**: Sentry
+- **Security**: CSRF protection, rate limiting, magic byte file validation, CSP headers, HSTS
+
+## Contact Information
+
+- WhatsApp Support: +256768345905
+- Website: https://keevanstore.in
+- Creator Signup: https://keevanstore.in/signup
+
+## Last Updated
+June 2026

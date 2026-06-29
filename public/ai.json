@@ -1,0 +1,20 @@
+{
+  "name": "Keevan Store",
+  "description": "Creator commerce platform for East African authors, educators, and digital creators. Sell e-books, PDFs, guides, and templates online.",
+  "url": "https://keevanstore.in",
+  "language": "en",
+  "regions": ["Uganda", "Kenya", "Tanzania", "Rwanda"],
+  "currencies": ["UGX", "KES", "TZS", "RWF", "USD"],
+  "category": "Ecommerce",
+  "commissionRate": "10%",
+  "paymentGateway": "Pesapal",
+  "chatSupport": "WhatsApp",
+  "contactPhone": "+256768345905",
+  "supportedFileFormats": ["PDF", "EPUB", "MOBI", "ZIP"],
+  "maxFileSizeMB": 4,
+  "llmResources": {
+    "summary": "/llms.txt",
+    "full": "/llms-full.txt",
+    "sitemap": "/sitemap.xml"
+  }
+}

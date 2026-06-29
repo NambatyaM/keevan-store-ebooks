@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
+
+export const metadata: Metadata = {
+  title: "Terms of Service | Keevan Store",
+  description: "Terms of Service for using Keevan Store creator commerce platform. Covers creator responsibilities, intellectual property, payments, withdrawals, and platform rules.",
+  robots: { index: true, follow: false }
+};
 
 export default function TermsPage() {
   return (
@@ -14,38 +21,31 @@ export default function TermsPage() {
           Creators are solely responsible for the content they upload, publish, and sell on Keevan Store. Each creator must:
         </p>
         <ul className="list-disc pl-6 leading-7">
-          <li>Own or have obtained all necessary rights and permissions for every digital product listed.</li>
-          <li>Ensure products do not infringe on any copyright, trademark, or other intellectual property right.</li>
-          <li>Provide accurate product descriptions, pricing, and file content.</li>
-          <li>Not upload content that is illegal, harmful, fraudulent, or violates any applicable law.</li>
-          <li>Comply with all applicable tax and legal obligations related to their sales.</li>
+          <li>Own the intellectual property rights or have obtained proper licenses for all uploaded content.</li>
+          <li>Ensure product descriptions are accurate and not misleading.</li>
+          <li>Comply with all applicable laws in their jurisdiction, including consumer protection and tax regulations.</li>
+          <li>Not upload content that infringes on third-party rights, contains malware, or violates platform policies.</li>
         </ul>
-        <p className="mt-4">
-          Keevan Store reserves the right to remove products, suspend stores, or terminate accounts that violate these terms, applicable law, or platform trust.
+        <p>
+          Keevan Store reserves the right to remove content, suspend stores, or terminate accounts that violate these terms.
         </p>
       </section>
       <section>
-        <h2 className="text-2xl font-bold text-brand-black">Payments and payouts</h2>
+        <h2 className="text-2xl font-bold text-brand-black">Intellectual property</h2>
         <p>
-          Payments are processed through the platform-owned Pesapal account. Buyers pay in UGX. Keevan Store deducts a 10% platform commission from each sale before recording creator earnings. Creators may request manual withdrawals once their available balance reaches {site.minimumWithdrawal.toLocaleString()} UGX. Withdrawals are processed by platform administrators. Keevan Store is not liable for delays caused by third-party payment processors or financial institutions.
+          Creators retain full ownership of their uploaded content. Keevan Store claims no intellectual property rights over creator content. By uploading content to the platform, creators grant Keevan Store a limited license to store, process, and deliver that content solely for the purpose of operating the platform.
         </p>
       </section>
       <section>
-        <h2 className="text-2xl font-bold text-brand-black">Buyer terms</h2>
+        <h2 className="text-2xl font-bold text-brand-black">Payments and fees</h2>
         <p>
-          Buyers do not need an account to purchase from Keevan Store. By making a purchase, buyers agree to provide accurate contact information for payment verification and file delivery. Digital products are delivered via signed download links after payment is confirmed. Because digital goods are delivered instantly, refunds are reviewed on a case-by-case basis for duplicate payments, failed delivery, or verified creator error.
+          Keevan Store charges a 10% platform commission on each verified sale. This commission is deducted automatically before crediting creator earnings. There are no monthly fees, listing fees, or hidden charges. Creators can request withdrawals once their available balance reaches the minimum threshold.
         </p>
       </section>
       <section>
-        <h2 className="text-2xl font-bold text-brand-black">Platform rights</h2>
+        <h2 className="text-2xl font-bold text-brand-black">Limitation of liability</h2>
         <p>
-          Keevan Store may update, modify, or discontinue features at any time. We will make reasonable efforts to notify creators of material changes. Keevan Store is not liable for indirect, incidental, or consequential damages arising from platform use. These terms are governed by the laws of Uganda.
-        </p>
-      </section>
-      <section>
-        <h2 className="text-2xl font-bold text-brand-black">Contact</h2>
-        <p>
-          For questions about these terms, contact us on WhatsApp at {site.supportPhone}.
+          Keevan Store provides the platform as-is. We are not liable for disputes between creators and buyers, losses from unauthorized account access, or interruptions to platform availability. Our total liability is limited to the fees paid by the creator in the 12 months preceding the claim.
         </p>
       </section>
     </SimplePage>

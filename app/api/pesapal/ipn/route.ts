@@ -147,6 +147,15 @@ function extractMerchantReference(payload: Record<string, unknown>): string | nu
   );
 }
 
+function extractCurrency(payload: Record<string, unknown>): string {
+  return (
+    (payload.currency as string) ??
+    (payload.Currency as string) ??
+    (payload.payment_currency as string) ??
+    "UGX"
+  );
+}
+
 async function handleCompleted(
   supabase: ReturnType<typeof getSupabaseAdminClient>,
   payment: { id: string; order_id: string; status: string },
@@ -159,16 +168,20 @@ async function handleCompleted(
     return;
   }
 
+  const currency = extractCurrency(transactionStatus);
+  console.log("[Pesapal IPN] Extracted currency:", currency);
+
   const { error: finalizeError } = await supabase.rpc("finalize_pesapal_payment", {
     payment_reference: merchantReference,
     pesapal_tracking_id: trackingId,
-    status_payload: transactionStatus
+    status_payload: transactionStatus,
+    payment_currency: currency,
   });
 
   if (finalizeError) {
     console.error("[Pesapal IPN] finalize_pesapal_payment RPC failed:", finalizeError);
   } else {
-    console.log("[Pesapal IPN] Payment finalized via RPC");
+    console.log("[Pesapal IPN] Payment finalized via RPC with currency:", currency);
   }
 }
 

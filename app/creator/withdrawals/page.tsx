@@ -78,7 +78,7 @@ export default function CreatorWithdrawalsPage() {
   };
 
   return (
-    <DashboardShell title="Withdrawals" subtitle="Request payouts once your available balance reaches the platform minimum." nav={creatorNav}>
+    <DashboardShell title="Withdrawals" subtitle="Request payouts once your available balance reaches the platform minimum." role="creator">
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>
       )}

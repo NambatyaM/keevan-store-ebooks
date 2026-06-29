@@ -300,12 +300,12 @@ describe("withdrawalSchema", () => {
     expect(() => withdrawalSchema.parse(valid)).not.toThrow();
   });
 
-  it("rejects amount below minimum (50000)", () => {
-    expect(() => withdrawalSchema.parse({ ...valid, amount: 49999 })).toThrow();
+  it("rejects zero amount", () => {
+    expect(() => withdrawalSchema.parse({ ...valid, amount: 0 })).toThrow();
   });
 
-  it("accepts amount at minimum boundary", () => {
-    expect(() => withdrawalSchema.parse({ ...valid, amount: 50000 })).not.toThrow();
+  it("accepts amount at minimum boundary (1)", () => {
+    expect(() => withdrawalSchema.parse({ ...valid, amount: 1 })).not.toThrow();
   });
 
   it("rejects amount with decimals", () => {

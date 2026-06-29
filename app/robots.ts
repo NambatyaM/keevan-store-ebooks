@@ -2,24 +2,132 @@ import type { MetadataRoute } from "next";
 import { site } from "@/lib/constants";
 
 export default function robots(): MetadataRoute.Robots {
+  const rules: MetadataRoute.Robots["rules"] = [
+    {
+      userAgent: "*",
+      allow: [
+        "/",
+        "/product/",
+        "/store/",
+        "/about",
+        "/features",
+        "/pricing",
+        "/faq",
+        "/contact",
+        "/terms",
+        "/privacy",
+        "/refund-policy",
+      ],
+      disallow: [
+        "/creator/",
+        "/admin/",
+        "/api/",
+        "/update-password",
+        "/checkout/",
+        "/download/",
+        "/buyer/",
+        "/order/",
+      ],
+    },
+    {
+      userAgent: "GPTBot",
+      allow: [
+        "/",
+        "/product/",
+        "/store/",
+        "/faq",
+        "/about",
+        "/pricing",
+        "/features",
+        "/contact",
+        "/terms",
+        "/privacy",
+        "/refund-policy",
+      ],
+      disallow: ["/creator/", "/admin/", "/api/"],
+    },
+    {
+      userAgent: "ChatGPT-User",
+      allow: [
+        "/",
+        "/product/",
+        "/store/",
+        "/faq",
+        "/about",
+        "/pricing",
+        "/features",
+        "/contact",
+        "/terms",
+        "/privacy",
+        "/refund-policy",
+      ],
+      disallow: ["/creator/", "/admin/", "/api/"],
+    },
+    {
+      userAgent: "Google-Extended",
+      allow: [
+        "/",
+        "/product/",
+        "/store/",
+        "/about",
+        "/features",
+        "/pricing",
+        "/faq",
+        "/contact",
+        "/terms",
+        "/privacy",
+        "/refund-policy",
+      ],
+      disallow: ["/creator/", "/admin/", "/api/"],
+    },
+    {
+      userAgent: "anthropic-ai",
+      allow: [
+        "/",
+        "/product/",
+        "/store/",
+        "/faq",
+        "/about",
+        "/pricing",
+        "/features",
+        "/contact",
+        "/terms",
+        "/privacy",
+        "/refund-policy",
+      ],
+      disallow: ["/creator/", "/admin/", "/api/"],
+    },
+    {
+      userAgent: "Claude-Web",
+      allow: [
+        "/",
+        "/product/",
+        "/store/",
+        "/faq",
+        "/about",
+        "/pricing",
+        "/features",
+        "/contact",
+      ],
+      disallow: ["/creator/", "/admin/", "/api/"],
+    },
+    {
+      userAgent: "PerplexityBot",
+      allow: [
+        "/",
+        "/product/",
+        "/store/",
+        "/faq",
+        "/about",
+        "/pricing",
+        "/features",
+      ],
+      disallow: ["/creator/", "/admin/", "/api/"],
+    },
+  ];
+
   return {
-    rules: [
-      {
-        userAgent: "*",
-        allow: ["/", "/product/", "/store/", "/checkout/", "/download/"],
-        disallow: ["/creator/", "/admin/", "/api/", "/update-password"]
-      },
-      {
-        userAgent: "GPTBot",
-        allow: ["/", "/product/", "/store/", "/faq", "/about", "/pricing", "/features"],
-        disallow: ["/creator/", "/admin/", "/api/"]
-      },
-      {
-        userAgent: "ChatGPT-User",
-        allow: ["/", "/product/", "/store/", "/faq", "/about", "/pricing", "/features"],
-        disallow: ["/creator/", "/admin/", "/api/"]
-      }
-    ],
-    sitemap: `${site.url}/sitemap.xml`
+    rules,
+    sitemap: `${site.url}/sitemap.xml`,
   };
 }

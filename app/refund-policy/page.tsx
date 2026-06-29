@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
+
+export const metadata: Metadata = {
+  title: "Refund Policy | Keevan Store",
+  description: "Keevan Store refund policy for digital products. Learn when refunds may be issued for duplicate payments, failed delivery, or billing errors.",
+  robots: { index: true, follow: false }
+};
 
 export default function RefundPolicyPage() {
   return (
@@ -13,32 +20,18 @@ export default function RefundPolicyPage() {
         <p>Refunds may be considered in the following situations:</p>
         <ul className="list-disc pl-6 leading-7">
           <li><strong>Duplicate payment</strong> — if a buyer was charged more than once for the same product due to a technical error.</li>
-          <li><strong>Failed delivery</strong> — if the signed download link cannot be generated or the file is corrupted after purchase.</li>
-          <li><strong>Verified creator error</strong> — if the product delivered is materially different from its description and the creator agrees to a refund.</li>
-        </ul>
-      </section>
-      <section>
-        <h2 className="text-2xl font-bold text-brand-black">When refunds are not issued</h2>
-        <p>Refunds are generally not issued for:</p>
-        <ul className="list-disc pl-6 leading-7">
-          <li>Change of mind after the file has been downloaded.</li>
-          <li>Incompatibility with the buyer&apos;s device or software (file formats are listed on each product page).</li>
-          <li>Disagreement with content that matches the product description.</li>
+          <li><strong>Failed delivery</strong> — if the download link does not work and support cannot resolve the issue.</li>
+          <li><strong>Unauthorized purchase</strong> — if a transaction was made without the buyer&apos;s consent.</li>
+          <li><strong>Technical error</strong> — if a platform bug caused incorrect pricing, file mismatch, or other verifiable issues.</li>
         </ul>
       </section>
       <section>
         <h2 className="text-2xl font-bold text-brand-black">How to request a refund</h2>
         <p>
-          You can submit a refund request directly through our <a href="/request-refund" className="text-brand-green hover:underline">in-app refund request page</a>. Enter the email you used during checkout, select the order, and provide a reason. An administrator will review your request.
+          Buyers can initiate a refund request at <a href="/request-refund" className="text-brand-green underline">/request-refund</a> by looking up their order using the email address used at checkout. After submitting a reason, the request is reviewed by platform administrators.
         </p>
-        <p className="mt-3">
-          Alternatively, contact support via WhatsApp at {site.supportPhone} with your order details, including the product name, payment reference, and reason for the request.
-        </p>
-      </section>
-      <section>
-        <h2 className="text-2xl font-bold text-brand-black">Dispute resolution</h2>
-        <p>
-          If a refund request cannot be resolved directly, Keevan Store will mediate between the buyer and creator to reach a fair outcome. Platform administrators reserve the right to issue refunds from platform funds in cases of verified platform error.
+        <p className="mt-4">
+          Once a refund is approved, the amount is reversed through the original payment method via Pesapal. Refunds typically process within 5–10 business days depending on the payment method.
         </p>
       </section>
     </SimplePage>
