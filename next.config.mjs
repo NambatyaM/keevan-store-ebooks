@@ -12,6 +12,16 @@ const nextConfig = {
       { protocol: "https", hostname: "i.ibb.co" }
     ]
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.keevanstore.in" }],
+        destination: "https://keevanstore.in/:path*",
+        permanent: true
+      }
+    ];
+  },
   async headers() {
     return [
       {
