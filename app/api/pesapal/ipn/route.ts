@@ -104,9 +104,21 @@ async function handleIpn(
   return ipnResponse(trackingId, resolvedRef, notificationType);
 }
 
+function verifyIpnId(request: NextRequest): boolean {
+  const expectedIpnId = process.env.PESAPAL_IPN_ID;
+  if (!expectedIpnId) return true;
+  const receivedIpnId = request.nextUrl.searchParams.get("ipn_id") ?? "";
+  return receivedIpnId === expectedIpnId;
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const limited = await rateLimit(request, 30, 60);
   if (limited) return limited;
+
+  if (!verifyIpnId(request)) {
+    console.warn("[Pesapal IPN] Rejected GET — ipn_id mismatch");
+    return NextResponse.json({ status: 401, error: "Unauthorized" }, { status: 401 });
+  }
 
   const searchParams = request.nextUrl.searchParams;
   const orderTrackingId = searchParams.get("OrderTrackingId") ?? "";
@@ -121,6 +133,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const limited = await rateLimit(request, 30, 60);
   if (limited) return limited;
+
+  if (!verifyIpnId(request)) {
+    console.warn("[Pesapal IPN] Rejected POST — ipn_id mismatch");
+    return NextResponse.json({ status: 401, error: "Unauthorized" }, { status: 401 });
+  }
 
   let body: Record<string, unknown>;
   try {
