@@ -10,6 +10,7 @@ import { ConfirmModal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { Pagination } from "@/components/ui/pagination";
 import { formatCurrency, Currency } from "@/lib/constants";
+import { getCoverUrl } from "@/lib/storefront";
 import {
   Search,
   SlidersHorizontal,
@@ -272,8 +273,8 @@ export default function CreatorProductsPage() {
               {/* Cover image */}
               <Link href={`/product/${product.slug}`} className="block">
                 <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-brand-green/20 to-brand-green/5">
-                  {product.cover_path ? (
-                    <div className="h-full w-full bg-cover bg-center" style={{ backgroundImage: `url(${product.cover_path})` }} />
+                  {getCoverUrl(product.cover_path ?? null) ? (
+                    <div className="h-full w-full bg-cover bg-center" style={{ backgroundImage: `url(${getCoverUrl(product.cover_path ?? null, 400) ?? ''})` }} />
                   ) : (
                     <div className="grid h-full place-items-center">
                       <FileText size={36} className="text-brand-green/40" />

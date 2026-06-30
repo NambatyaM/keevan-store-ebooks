@@ -58,8 +58,14 @@ export const imageUpload = {
   types: ["image/jpeg", "image/png", "image/webp"],
 };
 
+const validCurrencies = new Set(currencies);
+
 /** Format an amount in the given currency. Defaults to UGX. */
 export function formatCurrency(amount: number, currency: Currency = "UGX"): string {
+  if (!currency || !validCurrencies.has(currency)) {
+    console.warn("Invalid currency code:", currency, "— falling back to UGX");
+    currency = "UGX";
+  }
   const fmt = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,

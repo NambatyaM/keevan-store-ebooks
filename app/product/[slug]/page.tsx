@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         title: `${product.title} — Buy Digital E-book Online`,
         description: product.description,
         type: "product",
-        images: product.coverPath ? [{ url: product.coverPath }] : []
+        images: product.coverPath ? [{ url: getCoverUrl(product.coverPath) }] : []
       },
       twitter: {
         card: "summary_large_image",
@@ -102,7 +102,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       url: `${site.url}/product/${slug}`,
       priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
     },
-    ...(product.coverPath ? { image: product.coverPath } : {})
+    ...(product.coverPath ? { image: getCoverUrl(product.coverPath) } : {})
   };
 
   const breadcrumbSchema = {

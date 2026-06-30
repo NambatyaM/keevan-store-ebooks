@@ -29,9 +29,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   const ext = file.name.split(".").pop() ?? "bin";
   const storagePath = `${creator.id}/${randomUUID()}.${ext}`;
+  const bucket = kind === "image" ? "covers" : "products";
 
   const arrayBuffer = await file.arrayBuffer();
-  const { error: uploadError } = await supabase.storage.from("products").upload(storagePath, new Uint8Array(arrayBuffer), {
+  const { error: uploadError } = await supabase.storage.from(bucket).upload(storagePath, new Uint8Array(arrayBuffer), {
     contentType: validation.mime,
     upsert: false
   });
