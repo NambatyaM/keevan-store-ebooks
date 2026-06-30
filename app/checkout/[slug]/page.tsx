@@ -3,7 +3,7 @@ import Link from "next/link";
 import { WifiOff } from "lucide-react";
 import { CheckoutForm } from "@/components/checkout-form";
 import { SimplePage } from "@/components/simple-page";
-import { formatUgx, site } from "@/lib/constants";
+import { formatCurrency, site, type Currency } from "@/lib/constants";
 import { getPublishedProductBySlug } from "@/lib/storefront";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -61,7 +61,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ slug:
         <aside className="rounded-lg bg-neutral-100 p-5">
           <p className="font-bold">{product.title}</p>
           <p className="mt-2 text-sm text-neutral-600">{product.fileMime}</p>
-          <p className="mt-6 text-3xl font-black">{formatUgx(product.price)}</p>
+          <p className="mt-6 text-3xl font-black">{formatCurrency(product.price, product.currency as Currency)}</p>
           <ul className="mt-4 grid gap-2 text-sm text-neutral-600">
             <li>&check; Secure Pesapal checkout</li>
             <li>&check; No account required</li>

@@ -95,8 +95,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <head>
         <link rel="canonical" href={site.url} />
-        <link rel="icon" type="image/jpeg" href="https://i.ibb.co/v6h94WVG/keevan-favicon.jpg" />
-        <link rel="apple-touch-icon" href="https://i.ibb.co/v6h94WVG/keevan-favicon.jpg" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/favicon.svg" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#00854a" />
         {process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && (

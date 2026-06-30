@@ -9,7 +9,6 @@ import { useToast } from "@/components/ui/toast";
 import { formatCurrency } from "@/lib/constants";
 import {
   Users,
-  Store,
   Package,
   ShoppingCart,
   DollarSign,
@@ -17,7 +16,6 @@ import {
   AlertTriangle,
   Clock,
   ShieldAlert,
-  Mail,
   UserPlus,
   RefreshCw,
   TrendingUp,
@@ -39,8 +37,6 @@ import {
   Pie,
   Cell,
   Legend,
-  Area,
-  AreaChart,
 } from "recharts";
 import Link from "next/link";
 

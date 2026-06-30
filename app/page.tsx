@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { formatUgx, site } from "@/lib/constants";
+import { formatCurrency, site } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Sell E-books Online in East Africa — Keep 90% of Every Sale | Keevan Store",
@@ -31,7 +31,10 @@ const faqSchema = {
     { "@type": "Question", name: "Who can sell on Keevan Store?", acceptedAnswer: { "@type": "Answer", text: "Any East African author, educator, coach, or digital creator who owns the rights to their content can sell on Keevan Store. Currently serving Uganda, Kenya, Tanzania, and Rwanda." } },
     { "@type": "Question", name: "What payment methods does Keevan Store support?", acceptedAnswer: { "@type": "Answer", text: "Keevan Store uses Pesapal, the leading East African payment gateway. Buyers pay via mobile money (MTN, Airtel), card, or bank transfer in UGX, KES, TZS, RWF, or USD." } },
     { "@type": "Question", name: "How do creators receive their earnings?", acceptedAnswer: { "@type": "Answer", text: "Earnings accumulate in your creator dashboard. Once your balance reaches the minimum withdrawal amount for your currency, you can request a manual payout. Minimums are 50,000 UGX, 1,500 KES, 30,000 TZS, 20,000 RWF, or 20 USD." } },
-    { "@type": "Question", name: "Do buyers need an account to purchase?", acceptedAnswer: { "@type": "Answer", text: "No. Buyers pay through Pesapal and receive a signed download link instantly — no account creation required." } }
+    { "@type": "Question", name: "Do buyers need an account to purchase?", acceptedAnswer: { "@type": "Answer", text: "No. Buyers pay through Pesapal and receive a signed download link instantly — no account creation required." } },
+    { "@type": "Question", name: "What file formats can I upload?", acceptedAnswer: { "@type": "Answer", text: "You can upload PDF, EPUB, MOBI, and ZIP files up to 4 MB. These cover e-books, guides, templates, worksheets, and bundled resources." } },
+    { "@type": "Question", name: "Do I need technical skills to set up my store?", acceptedAnswer: { "@type": "Answer", text: "No. Sign up, upload your product, and your store is live. There is no coding, no design work, and no hosting setup required." } },
+    { "@type": "Question", name: "What if someone buys my product and wants a refund?", acceptedAnswer: { "@type": "Answer", text: "Because digital products are delivered instantly, refunds are handled case by case. Contact support if there is an issue with delivery or payment." } }
   ]
 };
 
@@ -80,7 +83,7 @@ export default function Home() {
                   <p className="text-neutral-600">Platform fee</p>
                 </div>
                 <div className="rounded-lg bg-neutral-100 p-4">
-                  <p className="font-bold">{formatUgx(50000)}</p>
+                  <p className="font-bold">{formatCurrency(50000)}</p>
                   <p className="text-neutral-600">Min withdrawal</p>
                 </div>
                 <div className="rounded-lg bg-neutral-100 p-4">

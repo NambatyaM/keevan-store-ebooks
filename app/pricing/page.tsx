@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button";
 import { SimplePage } from "@/components/simple-page";
-import { formatUgx, site } from "@/lib/constants";
+import { site } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Pricing — Sell Digital Products with Zero Monthly Fees",

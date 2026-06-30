@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/skeleton";
@@ -27,8 +27,9 @@ export default function AdminBuyersPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
-  const load = (q: string) => {
+  const load = useCallback((q: string) => {
     setLoading(true);
     setError(null);
     const params = q ? `?search=${encodeURIComponent(q)}` : "";
@@ -37,15 +38,22 @@ export default function AdminBuyersPage() {
       .then((d) => setBuyers(d.buyers ?? []))
       .catch((err) => { console.error("Failed to load buyers:", err); setError("Failed to load buyers."); })
       .finally(() => setLoading(false));
-  };
+  }, []);
 
-  useEffect(() => { load(search); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(search); }, [search, load]);
   useEffect(() => { setPage(1); }, [search]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     load(search);
   };
+
+  // Debounced auto-search as user types
+  // Debounced auto-search as user types
+  useEffect(() => {
+    const timer = setTimeout(() => load(search), 300);
+    return () => clearTimeout(timer);
+  }, [search, load]);
 
   const totalPages = Math.ceil(buyers.length / PAGE_SIZE);
   const paginated = buyers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -67,6 +75,7 @@ export default function AdminBuyersPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); load(search); } }}
             placeholder="Search by name or email..."
             className="w-full rounded-lg border border-border py-2.5 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
           />

@@ -8,12 +8,13 @@ import { TableSkeleton } from "@/components/ui/skeleton";
 import { Modal } from "@/components/ui/modal";
 import { Pagination } from "@/components/ui/pagination";
 import { useToast } from "@/components/ui/toast";
-import { formatUgx } from "@/lib/constants";
+import { formatUgx, formatCurrency, Currency } from "@/lib/constants";
 import { Search, ShoppingCart, X, Eye, Smartphone, CreditCard, Landmark } from "lucide-react";
 
 type Order = {
   id: string;
   amount: number;
+  currency?: Currency;
   platform_fee: number;
   status: string;
   created_at: string;
@@ -203,10 +204,10 @@ export default function CreatorOrdersPage() {
                         : "—"}
                     </td>
                     <td className="px-4 py-3 text-right font-semibold">
-                      {formatUgx(o.amount)}
+                      {formatCurrency(o.amount, o.currency)}
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-success">
-                      {formatUgx(o.amount - o.platform_fee)}
+                      {formatCurrency(o.amount - o.platform_fee, o.currency)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center" title={o.payment_method ?? "N/A"}>
@@ -305,16 +306,16 @@ export default function CreatorOrdersPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted">Gross Amount</p>
-                  <p className="mt-0.5 text-sm font-semibold">{formatUgx(selectedOrder.amount)}</p>
+                  <p className="mt-0.5 text-sm font-semibold">{formatCurrency(selectedOrder.amount, selectedOrder.currency)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted">Platform Fee (10%)</p>
-                  <p className="mt-0.5 text-sm text-muted">{formatUgx(selectedOrder.platform_fee)}</p>
+                  <p className="mt-0.5 text-sm text-muted">{formatCurrency(selectedOrder.platform_fee, selectedOrder.currency)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted">Your Earnings (90%)</p>
                   <p className="mt-0.5 text-lg font-bold text-success">
-                    {formatUgx(selectedOrder.amount - selectedOrder.platform_fee)}
+                    {formatCurrency(selectedOrder.amount - selectedOrder.platform_fee, selectedOrder.currency)}
                   </p>
                 </div>
               </div>

@@ -1268,7 +1268,7 @@ describe("Download Token Security", () => {
         insert: vi.fn().mockResolvedValue({ data: null, error: null }),
       })),
       rpc: vi.fn().mockResolvedValue({
-        data: [{ download_token: "secure-dl-token-abc123", already_processed: false, product_id: "prod-1", order_id: "order-1" }],
+        data: { ok: true, download_token: "secure-dl-token-abc123", already_processed: false, product_id: "prod-1", order_id: "order-1" },
         error: null,
       }),
     } as never;
@@ -1306,7 +1306,7 @@ describe("Download Token Security", () => {
         })),
       })),
       rpc: vi.fn().mockResolvedValue({
-        data: [{ download_token: "existing-token", already_processed: true, product_id: null, order_id: "order-1" }],
+        data: { ok: true, download_token: "existing-token", already_processed: true, product_id: null, order_id: "order-1" },
         error: null,
       }),
     } as never;

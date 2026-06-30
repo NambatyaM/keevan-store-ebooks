@@ -12,7 +12,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   // Verify the user owns this payment by checking the order's buyer_email or buyer_id
   const { data: payment } = await supabase
     .from("payments")
-    .select("merchant_reference, order:order_id(buyer_email, buyer_id)")
+    .select("merchant_reference, order:order_id(buyer_email, buyer:buyer_id(user_id))")
     .eq("merchant_reference", input.merchantReference)
     .maybeSingle();
 
@@ -22,16 +22,19 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   const order = Array.isArray(payment.order) ? payment.order[0] : payment.order;
   if (order) {
-    const orderBuyerId = order.buyer_id as string | null;
+    const orderBuyerArr = order.buyer as { user_id: string }[] | null;
+    const orderBuyer = Array.isArray(orderBuyerArr) && orderBuyerArr.length > 0 ? orderBuyerArr[0] : null;
     const orderBuyerEmail = order.buyer_email as string | null;
 
-    // Authenticated buyer must match the order buyer_id
-    if (orderBuyerId && profile.id !== orderBuyerId) {
-      return apiError("Access denied", 403);
-    }
-    // Guest buyers: verify by email match
-    if (!orderBuyerId && orderBuyerEmail?.toLowerCase() !== profile.email?.toLowerCase()) {
-      return apiError("Access denied", 403);
+    if (orderBuyer) {
+      const buyerUserId = orderBuyer.user_id;
+      if (profile.id !== buyerUserId) {
+        return apiError("Access denied", 403);
+      }
+    } else {
+      if (orderBuyerEmail?.toLowerCase() !== profile.email?.toLowerCase()) {
+        return apiError("Access denied", 403);
+      }
     }
   }
 

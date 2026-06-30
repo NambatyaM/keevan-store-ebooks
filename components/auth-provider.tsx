@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setLoading(false);
         }
-      });
+      }).catch((err) => { console.error("Failed to get session:", err); setLoading(false); });
 
       const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
         setSession(currentSession);

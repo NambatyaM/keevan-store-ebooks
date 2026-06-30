@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import { useToast } from "@/components/ui/toast";
-import { formatUgx } from "@/lib/constants";
+import { formatCurrency, Currency } from "@/lib/constants";
 import { Search, Package, Eye, Ban, RefreshCw } from "lucide-react";
 
 type Product = {
@@ -18,6 +18,7 @@ type Product = {
   title: string;
   slug: string;
   price: number;
+  currency?: Currency;
   status: string;
   created_at: string;
   stores: { name: string; slug: string } | null;
@@ -176,7 +177,7 @@ export default function AdminProductsPage() {
                         </Link>
                       ) : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold">{formatUgx(p.price)}</td>
+                    <td className="px-4 py-3 text-right font-bold">{formatCurrency(p.price, p.currency)}</td>
                     <td className="px-4 py-3 text-center">
                       <Badge variant={getBadgeVariant(p.status)}>
                         {p.status === "published" ? "Published" : p.status === "disabled" ? "Disabled" : p.status}

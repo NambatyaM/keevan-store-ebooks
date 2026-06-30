@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Download, Package, ArrowLeft, Loader2, ShoppingBag } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/skeleton";
-import { formatUgx } from "@/lib/constants";
+import { formatCurrency, type Currency } from "@/lib/constants";
 
 type Purchase = {
   id: string;
@@ -16,6 +16,7 @@ type Purchase = {
   creator_name: string;
   store_slug: string;
   amount: number;
+  currency: Currency;
   paid_at: string;
 };
 
@@ -104,7 +105,7 @@ export default function BuyerDashboardPage() {
                       </Link>
                     </p>
                     <p className="text-xs text-muted">
-                      {formatUgx(p.amount)} &middot; {new Date(p.paid_at).toLocaleDateString("en-UG")}
+                      {formatCurrency(p.amount, p.currency)} &middot; {new Date(p.paid_at).toLocaleDateString("en-UG")}
                     </p>
                   </div>
                 </div>

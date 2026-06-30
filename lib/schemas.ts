@@ -80,7 +80,8 @@ export const withdrawalSchema = z.object({
 });
 
 export const withdrawalDecisionSchema = z.object({
-  notes: z.string().max(1000).optional()
+  notes: z.string().max(1000).optional(),
+  paymentReference: z.string().max(500).optional()
 });
 
 export const refundRequestSchema = z.object({

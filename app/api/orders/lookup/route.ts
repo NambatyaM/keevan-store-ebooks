@@ -19,7 +19,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   const { data } = await supabase
     .from("orders")
-    .select("id,amount,created_at,status,products!inner(title,slug)")
+    .select("id,amount,created_at,status,currency,products!inner(title,slug)")
     .eq("buyer_email", normalizedEmail)
     .order("created_at", { ascending: false })
     .limit(10);

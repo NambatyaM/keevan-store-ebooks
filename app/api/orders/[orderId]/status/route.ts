@@ -11,7 +11,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const { data: order } = await supabase
     .from("orders")
     .select(`
-      id, status, buyer_email, buyer_id, amount,
+      id, status, buyer_email, buyer_id, creator_id, amount,
       product:product_id (title, slug, file_path),
       creator:creator_id (display_name)
     `)
@@ -24,16 +24,21 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const c = order.creator as unknown as { display_name: string } | undefined;
 
   const isBuyer = order.buyer_email === authUser.email;
-  const isCreator =
-    typeof order.creator === "object" &&
-    order.creator !== null &&
-    "display_name" in (order.creator as object);
+  const isCreator = order.creator_id
+    ? (await supabase.from("creators").select("id").eq("id", order.creator_id).eq("user_id", authUser.id).maybeSingle()).data !== null
+    : false;
 
   if (!isBuyer && !isCreator) {
     return apiError("Access denied", 403);
   }
 
   if (order.status === "paid") {
+    const { data: download } = await supabase
+      .from("downloads")
+      .select("token")
+      .eq("order_id", orderId)
+      .maybeSingle();
+
     return json({
       ok: true,
       status: "completed",
@@ -41,6 +46,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       productSlug: p?.slug ?? "",
       creatorName: c?.display_name ?? "",
       buyerId: isBuyer ? order.buyer_id : undefined,
+      downloadUrl: download?.token ? `/api/downloads/${download.token}` : undefined,
     });
   }
 

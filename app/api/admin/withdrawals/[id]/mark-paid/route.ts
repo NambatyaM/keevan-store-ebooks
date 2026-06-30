@@ -14,6 +14,15 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
   });
 
   if (error) return apiError(error.message, 400);
+
+  if (input.paymentReference) {
+    const { error: refError } = await supabase
+      .from("withdrawal_requests")
+      .update({ payment_reference: input.paymentReference })
+      .eq("id", id);
+    if (refError) return apiError(refError.message, 400);
+  }
+
   await logAdminAction({ adminUserId: authUser.id, action: "withdrawal.mark_paid", targetTable: "withdrawal_requests", targetId: id });
   return json({ withdrawal: Array.isArray(data) ? data[0] : data });
 });

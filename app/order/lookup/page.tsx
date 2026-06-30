@@ -4,11 +4,12 @@ import { useState, FormEvent } from "react";
 import { SimplePage } from "@/components/simple-page";
 import { Loader2, Search, CheckCircle, Clock, XCircle, Download } from "lucide-react";
 import Link from "next/link";
-import { formatUgx } from "@/lib/constants";
+import { formatCurrency, type Currency } from "@/lib/constants";
 
 type Order = {
   id: string;
   amount: number;
+  currency: Currency;
   created_at: string;
   status: string;
   buyer_id: string | null;
@@ -139,7 +140,7 @@ export default function OrderLookupPage() {
                         Failed
                       </span>
                     )}
-                    <span>{formatUgx(order.amount)}</span>
+                    <span>{formatCurrency(order.amount, order.currency)}</span>
                     <span>{new Date(order.created_at).toLocaleDateString("en-UG", { year: "numeric", month: "short", day: "numeric" })}</span>
                   </div>
                 </div>

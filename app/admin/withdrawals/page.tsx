@@ -9,13 +9,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import { useToast } from "@/components/ui/toast";
-import { formatUgx } from "@/lib/constants";
+import { formatUgx, formatCurrency, type Currency } from "@/lib/constants";
 import { DollarSign, AlertTriangle, CheckCircle, XCircle, Eye, Smartphone, Landmark, Wallet } from "lucide-react";
 import Link from "next/link";
 
 type Withdrawal = {
   id: string;
   amount: number;
+  currency: Currency;
   status: string;
   payout_method: string;
   payout_details: unknown;
@@ -166,7 +167,7 @@ export default function AdminWithdrawalsPage() {
             <div key={w.id} className="mt-3 flex items-center justify-between rounded-lg border border-amber-200 bg-white p-3">
               <div>
                 <p className="font-semibold text-brand-black">{w.creators?.display_name || "Unknown"}</p>
-                <p className="text-sm text-muted">{formatUgx(w.amount)} via {w.payout_method}</p>
+                <p className="text-sm text-muted">{formatCurrency(w.amount, w.currency)} via {w.payout_method}</p>
               </div>
               <div className="flex gap-2">
                 <button
@@ -239,7 +240,7 @@ export default function AdminWithdrawalsPage() {
                         <p className="text-xs text-muted">{w.creators?.email || "—"}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-bold">{formatUgx(w.amount)}</td>
+                    <td className="px-4 py-3 text-right font-bold">{formatCurrency(w.amount, w.currency)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {getPayoutIcon(w.payout_method)}
@@ -324,7 +325,7 @@ export default function AdminWithdrawalsPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase text-muted">Amount Requested</p>
-                <p className="mt-1 text-2xl font-bold">{formatUgx(selectedW.amount)}</p>
+                <p className="mt-1 text-2xl font-bold">{formatCurrency(selectedW.amount, selectedW.currency)}</p>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase text-muted">Payout Method</p>
@@ -362,7 +363,7 @@ export default function AdminWithdrawalsPage() {
         {actionTarget && (
           <div className="space-y-4">
             <p className="text-sm text-muted">
-              Are you sure you want to approve <strong>{formatUgx(actionTarget.amount)}</strong> to{' '}
+              Are you sure you want to approve <strong>{formatCurrency(actionTarget.amount, actionTarget.currency)}</strong> to{' '}
               <strong>{actionTarget.creators?.display_name || "Unknown"}</strong> via{' '}
               <strong className="capitalize">{actionTarget.payout_method}</strong>?
             </p>
@@ -394,7 +395,7 @@ export default function AdminWithdrawalsPage() {
         {actionTarget && (
           <div className="space-y-4">
             <p className="text-sm text-muted">
-              Reject <strong>{formatUgx(actionTarget.amount)}</strong> for{' '}
+              Reject <strong>{formatCurrency(actionTarget.amount, actionTarget.currency)}</strong> for{' '}
               <strong>{actionTarget.creators?.display_name || "Unknown"}</strong>?
             </p>
             <p className="text-xs text-muted">The creator will be notified with the reason below.</p>
@@ -428,7 +429,7 @@ export default function AdminWithdrawalsPage() {
         {actionTarget && (
           <div className="space-y-4">
             <p className="text-sm text-muted">
-              Mark <strong>{formatUgx(actionTarget.amount)}</strong> as paid to{' '}
+              Mark <strong>{formatCurrency(actionTarget.amount, actionTarget.currency)}</strong> as paid to{' '}
               <strong>{actionTarget.creators?.display_name || "Unknown"}</strong>?
             </p>
             <div>

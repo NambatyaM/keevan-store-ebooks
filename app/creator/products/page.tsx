@@ -9,7 +9,7 @@ import { TableSkeleton } from "@/components/ui/skeleton";
 import { ConfirmModal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { Pagination } from "@/components/ui/pagination";
-import { formatUgx } from "@/lib/constants";
+import { formatCurrency, Currency } from "@/lib/constants";
 import {
   Search,
   SlidersHorizontal,
@@ -34,6 +34,7 @@ type Product = {
   slug: string;
   description?: string;
   price: number;
+  currency?: Currency;
   status: string;
   file_mime?: string;
   file_size?: number;
@@ -293,7 +294,7 @@ export default function CreatorProductsPage() {
                 </Link>
 
                 <p className="mt-2 text-lg font-bold text-brand-green">
-                  {formatUgx(product.price)}
+                  {formatCurrency(product.price, product.currency)}
                 </p>
 
                 {/* Stats row */}
@@ -393,7 +394,7 @@ export default function CreatorProductsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 font-semibold">{formatUgx(product.price)}</td>
+                      <td className="px-4 py-3 font-semibold">{formatCurrency(product.price, product.currency)}</td>
                       <td className="px-4 py-3 text-center text-muted">{views}</td>
                       <td className="px-4 py-3 text-center font-semibold">{sales}</td>
                       <td className="px-4 py-3 text-center text-muted">{conv}%</td>

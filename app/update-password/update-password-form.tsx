@@ -21,7 +21,7 @@ export default function UpdatePasswordForm() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) setReady(true);
       else setError("Invalid or expired reset link. Please request a new password reset.");
-    });
+    }).catch(() => setError("Failed to verify reset link. Please try again."));
   }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

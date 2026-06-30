@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { creatorNav } from "@/app/creator/nav";
-import { formatUgx, site } from "@/lib/constants";
+import { formatUgx, site, formatCurrency, type Currency } from "@/lib/constants";
 
 type Withdrawal = {
   id: string;
   amount: number;
+  currency: Currency;
   status: string;
   payout_method: unknown;
   payout_details: unknown;
@@ -109,8 +110,9 @@ export default function CreatorWithdrawalsPage() {
                 className="focus-ring mt-1 w-full rounded-md border border-neutral-300 px-4 py-3"
               >
                 <option value="mobile_money">Mobile Money</option>
+                <option value="mtn">MTN Mobile Money</option>
+                <option value="airtel">Airtel Money</option>
                 <option value="bank">Bank Transfer</option>
-                <option value="airtel_money">Airtel Money</option>
               </select>
             </div>
 
@@ -151,7 +153,7 @@ export default function CreatorWithdrawalsPage() {
               {withdrawals.map((w) => (
                 <div key={w.id} className="rounded-lg border border-neutral-200 bg-white p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold">{formatUgx(w.amount)}</span>
+                    <span className="text-lg font-bold">{formatCurrency(w.amount, w.currency)}</span>
                     <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
                       w.status === "paid" ? "bg-green-100 text-green-800" :
                       w.status === "approved" ? "bg-blue-100 text-blue-800" :

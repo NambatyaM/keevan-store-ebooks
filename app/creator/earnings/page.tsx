@@ -9,7 +9,7 @@ import { Modal } from "@/components/ui/modal";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import { useToast } from "@/components/ui/toast";
-import { formatUgx, site } from "@/lib/constants";
+import { formatUgx, site, formatCurrency, type Currency } from "@/lib/constants";
 import { Wallet, TrendingUp, Send, Clock, Smartphone, Landmark, Banknote, ArrowRight } from "lucide-react";
 import {
   BarChart,
@@ -25,6 +25,7 @@ import {
 type Order = {
   id: string;
   amount: number;
+  currency: Currency;
   platform_fee: number;
   status: string;
   created_at: string;
@@ -34,6 +35,7 @@ type Order = {
 type Withdrawal = {
   id: string;
   amount: number;
+  currency: Currency;
   status: string;
   payout_method: string;
   payout_details: unknown;
@@ -266,7 +268,7 @@ export default function CreatorEarningsPage() {
                   {withdrawalsPaginated.map((w) => (
                     <tr key={w.id} className="border-b border-border transition hover:bg-surface">
                       <td className="px-4 py-3 font-mono text-xs text-muted">#{w.id.slice(0, 8)}</td>
-                      <td className="px-4 py-3 text-right font-bold">{formatUgx(w.amount)}</td>
+                      <td className="px-4 py-3 text-right font-bold">{formatCurrency(w.amount, w.currency)}</td>
                       <td className="px-4 py-3 text-muted capitalize">{w.payout_method?.replace("_", " ") || "—"}</td>
                       <td className="px-4 py-3 text-muted">{new Date(w.requested_at).toLocaleDateString("en-UG")}</td>
                       <td className="px-4 py-3 text-center">
@@ -328,10 +330,10 @@ export default function CreatorEarningsPage() {
                       <td className="px-4 py-3 text-muted">{new Date(o.created_at).toLocaleDateString("en-UG")}</td>
                       <td className="px-4 py-3 font-medium text-brand-black">{o.products?.title ?? "—"}</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted">#{o.id.slice(0, 8)}</td>
-                      <td className="px-4 py-3 text-right">{formatUgx(o.amount)}</td>
-                      <td className="px-4 py-3 text-right text-muted">{formatUgx(o.platform_fee)}</td>
+                      <td className="px-4 py-3 text-right">{formatCurrency(o.amount, o.currency)}</td>
+                      <td className="px-4 py-3 text-right text-muted">{formatCurrency(o.platform_fee, o.currency)}</td>
                       <td className="px-4 py-3 text-right font-bold text-success">
-                        {formatUgx(o.amount - o.platform_fee)}
+                        {formatCurrency(o.amount - o.platform_fee, o.currency)}
                       </td>
                     </tr>
                   ))}

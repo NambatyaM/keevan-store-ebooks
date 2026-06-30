@@ -9,7 +9,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TrackView } from "@/components/track-view";
 import Image from "next/image";
-import { formatUgx, site } from "@/lib/constants";
+import { formatCurrency, site, type Currency } from "@/lib/constants";
 import { getCoverUrl, getPublishedProductBySlug } from "@/lib/storefront";
 import { ProductReviews } from "@/components/product-reviews";
 
@@ -97,7 +97,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     offers: {
       "@type": "Offer",
       price: product.price,
-      priceCurrency: "UGX",
+      priceCurrency: product.currency,
       availability: "https://schema.org/InStock",
       url: `${site.url}/product/${slug}`,
       priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
@@ -174,12 +174,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <div className="flex items-center justify-between gap-5">
               <div>
                 <p className="text-sm text-neutral-500">Price</p>
-                <p className="text-3xl font-black">{formatUgx(product.price)}</p>
+                <p className="text-3xl font-black">{formatCurrency(product.price, product.currency as Currency)}</p>
               </div>
               <ShieldCheck className="text-brand-green" aria-hidden />
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <BuyNowModal productId={product.id} productSlug={product.slug} price={product.price} title={product.title} />
+              <BuyNowModal productId={product.id} productSlug={product.slug} price={product.price} currency={product.currency as Currency} title={product.title} />
               <ButtonLink href={`/store/${product.storeHandle}`} variant="secondary">
                 Visit Creator Store
               </ButtonLink>

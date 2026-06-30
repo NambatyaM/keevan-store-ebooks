@@ -281,7 +281,7 @@ describe("verifyPesapalPayment", () => {
 
     const supabase = makeMockSupabase(
       { id: "p1", merchant_reference: "mr-1", order_id: "o1", orders: [{ amount: 50000 }] },
-      { data: [{ download_token: "dt-1", product_id: "prod-1", order_id: "o1", already_processed: false }], error: null }
+      { data: { ok: true, download_token: "dt-1", product_id: "prod-1", order_id: "o1", already_processed: false }, error: null }
     );
     const { verifyPesapalPayment } = await import("@/lib/pesapal");
     const result = await verifyPesapalPayment(supabase, "mr-1", "trk-1");

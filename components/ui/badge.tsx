@@ -59,8 +59,8 @@ export function Badge({
 
 export function getBadgeVariant(status: string): BadgeVariant {
   const s = status?.toLowerCase() ?? "";
-  if (["completed", "paid", "published", "active", "sent", "approved"].includes(s)) return "sent";
   if (s === "approved") return "approved";
+  if (["completed", "paid", "published", "active", "sent"].includes(s)) return "sent";
   if (["pending", "draft"].includes(s)) return "pending";
   if (["disabled", "suspended", "rejected", "refunded", "failed"].includes(s)) return "disabled";
   return "default";

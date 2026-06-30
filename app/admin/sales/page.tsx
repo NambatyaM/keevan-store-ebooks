@@ -8,12 +8,13 @@ import { Badge, getBadgeVariant } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
-import { formatUgx } from "@/lib/constants";
+import { formatUgx, formatCurrency, Currency } from "@/lib/constants";
 import { Search, TrendingUp, DollarSign, ArrowRight, ShoppingCart } from "lucide-react";
 
 type Order = {
   id: string;
   amount: number;
+  currency?: Currency;
   platform_fee: number;
   creator_earnings: number;
   status: string;
@@ -192,8 +193,8 @@ export default function AdminSalesPage() {
                         <p className="text-xs text-muted">{o.buyer_email}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-bold">{formatUgx(o.amount)}</td>
-                    <td className="px-4 py-3 text-right text-muted">{formatUgx(o.platform_fee)}</td>
+                    <td className="px-4 py-3 text-right font-bold">{formatCurrency(o.amount, o.currency)}</td>
+                    <td className="px-4 py-3 text-right text-muted">{formatCurrency(o.platform_fee, o.currency)}</td>
                     <td className="px-4 py-3 text-center">
                       <Badge variant={getBadgeVariant(o.status)}>{o.status}</Badge>
                     </td>

@@ -74,6 +74,10 @@ export default function CreatorSettingsPage() {
 
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
 
+  // Social links
+  const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
+  const socialPlatforms = ["Instagram", "Twitter/X", "Facebook", "TikTok", "Website"];
+
   // Extract tab from URL hash
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");
@@ -109,6 +113,7 @@ export default function CreatorSettingsPage() {
           setNotifRefund(p.notif_refund ?? true);
           setNotifWeekly(p.notif_weekly ?? true);
           setNotifUpdates(p.notif_updates ?? false);
+          setSocialLinks(p.social_links ?? {});
         }
       })
       .catch(() => toast("error", "Failed to load settings"))
@@ -129,11 +134,12 @@ export default function CreatorSettingsPage() {
           tagline: storeTagline || undefined,
           description: storeDescription || undefined,
           category: storeCategory || undefined,
+          social_links: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
         }),
       });
       setAutoSaved(true);
     } catch {}
-  }, [storeName, storeSlug, storeTagline, storeDescription, storeCategory, profile]);
+  }, [storeName, storeSlug, storeTagline, storeDescription, storeCategory, socialLinks, profile]);
 
   useEffect(() => {
     if (activeTab !== "store") return;
@@ -354,13 +360,15 @@ export default function CreatorSettingsPage() {
             <div className="rounded-xl border border-border bg-surface-card p-5 shadow-card">
               <h3 className="font-bold text-brand-black">Social Links (Optional)</h3>
               <div className="mt-4 space-y-3">
-                {["Instagram", "Twitter/X", "Facebook", "TikTok", "Website"].map((platform) => (
+                {socialPlatforms.map((platform) => (
                   <div key={platform}>
                     <label className="block text-xs font-semibold text-muted mb-1">{platform}</label>
                     <input
                       type="url"
+                      value={socialLinks[platform] ?? ""}
+                      onChange={(e) => setSocialLinks((prev) => ({ ...prev, [platform]: e.target.value }))}
                       className="w-full rounded-lg border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
-                      placeholder={`https://${platform.toLowerCase().replace("/x", "")}.com/...`}
+                      placeholder={`https://${platform.toLowerCase().replace("/x", "").replace("/", "")}.com/...`}
                     />
                   </div>
                 ))}

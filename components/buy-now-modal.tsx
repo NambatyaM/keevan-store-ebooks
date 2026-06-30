@@ -3,19 +3,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { ArrowRight, X, Loader2, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatUgx } from "@/lib/constants";
+import { formatCurrency, type Currency } from "@/lib/constants";
 
 type BuyNowModalProps = {
   productId: string;
   productSlug: string;
   price: number;
+  currency: Currency;
   title: string;
   className?: string;
 };
 
 const UG_PHONE_REGEX = /^(\+256|0)[0-9]{9}$/;
 
-export function BuyNowModal({ productId, productSlug, price, title, className }: BuyNowModalProps) {
+export function BuyNowModal({ productId, productSlug, price, currency, title, className }: BuyNowModalProps) {
   const [open, setOpen] = useState(false);
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
@@ -177,14 +178,14 @@ export function BuyNowModal({ productId, productSlug, price, title, className }:
               <div className="mt-1 flex items-baseline gap-2">
                 {discountPercent ? (
                   <>
-                    <span className="text-lg font-bold text-brand-green">{formatUgx(discountedPrice)}</span>
-                    <span className="text-sm text-neutral-400 line-through">{formatUgx(price)}</span>
+                    <span className="text-lg font-bold text-brand-green">{formatCurrency(discountedPrice, currency)}</span>
+                    <span className="text-sm text-neutral-400 line-through">{formatCurrency(price, currency)}</span>
                     <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-700">
                       -{discountPercent}%
                     </span>
                   </>
                 ) : (
-                  <span className="text-lg font-bold">{formatUgx(price)}</span>
+                  <span className="text-lg font-bold">{formatCurrency(price, currency)}</span>
                 )}
               </div>
             </div>
@@ -261,7 +262,7 @@ export function BuyNowModal({ productId, productSlug, price, title, className }:
               <div className="flex items-center justify-between rounded-md bg-neutral-50 p-3 text-sm">
                 <span className="font-medium text-neutral-700">Total to pay</span>
                 <span className="text-base font-bold">
-                  {discountPercent ? formatUgx(discountedPrice) : formatUgx(price)}
+                  {discountPercent ? formatCurrency(discountedPrice, currency) : formatCurrency(price, currency)}
                 </span>
               </div>
 

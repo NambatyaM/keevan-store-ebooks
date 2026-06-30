@@ -180,7 +180,20 @@ export default function CreatorAnalyticsPage() {
             </button>
           ))}
         </div>
-        <button className="rounded-lg border border-border px-4 py-1.5 text-xs font-semibold text-muted transition hover:bg-surface">
+        <button
+          onClick={() => {
+            const summaryEntries = Object.entries(summary);
+            const rows = [["Metric", "Value"], ...summaryEntries.map(([k, v]) => [k, String(v)])];
+            const csv = rows.map((r) => r.join(",")).join("\n");
+            const blob = new Blob([csv], { type: "text/csv" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "analytics.csv";
+            a.click();
+            URL.revokeObjectURL(a.href);
+          }}
+          className="rounded-lg border border-border px-4 py-1.5 text-xs font-semibold text-muted transition hover:bg-surface"
+        >
           Export CSV
         </button>
       </div>

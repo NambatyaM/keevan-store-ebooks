@@ -22,11 +22,12 @@ import {
   ArrowRight,
   Package,
 } from "lucide-react";
-import { formatUgx } from "@/lib/constants";
+import { formatUgx, formatCurrency, type Currency } from "@/lib/constants";
 
 type Order = {
   id: string;
   amount: number;
+  currency: Currency;
   platform_fee: number;
   status: string;
   created_at: string;
@@ -95,6 +96,7 @@ export default function CreatorDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [period, setPeriod] = useState("30D");
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -284,14 +286,15 @@ export default function CreatorDashboardPage() {
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-display text-xl font-bold text-brand-black">Earnings Over Time</h3>
           <div className="flex gap-1 rounded-lg border border-border p-0.5">
-            {["7D", "30D", "90D", "All"].map((period) => (
+            {["7D", "30D", "90D", "All"].map((p) => (
               <button
-                key={period}
+                key={p}
+                onClick={() => setPeriod(p)}
                 className={`rounded-md px-3 py-1 text-xs font-semibold transition ${
-                  period === "30D" ? "bg-brand-green text-white" : "text-muted hover:text-brand-black"
+                  p === period ? "bg-brand-green text-white" : "text-muted hover:text-brand-black"
                 }`}
               >
-                {period}
+                {p}
               </button>
             ))}
           </div>
@@ -349,7 +352,7 @@ export default function CreatorDashboardPage() {
                           {o.buyer_email ? `${o.buyer_email.slice(0, 3)}***@${o.buyer_email.split("@")[1]}` : "—"}
                         </td>
                         <td className="px-4 py-3 text-right font-semibold">
-                          {formatUgx(o.amount)}
+                          {formatCurrency(o.amount, o.currency)}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <Badge variant={getBadgeVariant(o.status)}>

@@ -88,8 +88,13 @@ async function main() {
       console.log(`  → ${file} ...`);
 
       try {
+        // Strip BEGIN/COMMIT from the SQL if present, since we wrap in our own transaction
+        const cleanSql = sql
+          .replace(/^\s*BEGIN\s*;\s*$/gmi, "")
+          .replace(/^\s*COMMIT\s*;\s*$/gmi, "")
+          .trim();
         await client.query("BEGIN");
-        await client.query(sql);
+        await client.query(cleanSql);
         await client.query("INSERT INTO _migrations (name) VALUES ($1)", [file]);
         await client.query("COMMIT");
         console.log(`  ✓ ${file} (applied)`);

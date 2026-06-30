@@ -31,7 +31,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   const { data: orders } = await supabase
     .from("orders")
-    .select("id, amount, paid_at")
+    .select("id, amount, paid_at, currency")
     .in("id", orderIds);
 
   const orderMap = new Map((orders ?? []).map((o) => [o.id, o]));
@@ -50,6 +50,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       store_slug: s?.slug ?? "",
       amount: order?.amount ?? 0,
       paid_at: order?.paid_at ?? "",
+      currency: order?.currency ?? "UGX",
     };
   });
 

@@ -3,12 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Search, MessageSquare, CheckCircle } from "lucide-react";
-import { site, formatUgx } from "@/lib/constants";
+import { site, formatCurrency, type Currency } from "@/lib/constants";
 
 export default function RequestRefundPage() {
   const [step, setStep] = useState<"lookup" | "request" | "done">("lookup");
   const [email, setEmail] = useState("");
-  const [orders, setOrders] = useState<Array<{ id: string; amount: number; created_at: string; products: { title: string } | null }>>([]);
+  const [orders, setOrders] = useState<Array<{ id: string; amount: number; currency: Currency; created_at: string; products: { title: string } | null }>>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
@@ -161,7 +161,7 @@ export default function RequestRefundPage() {
                   <div className="flex-1">
                     <span className="font-semibold">{o.products?.title ?? "Product"}</span>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-muted">
-                      <span>{formatUgx(o.amount)}</span>
+                      <span>{formatCurrency(o.amount, o.currency)}</span>
                       <span>&middot;</span>
                       <span>{new Date(o.created_at).toLocaleDateString("en-UG")}</span>
                     </div>

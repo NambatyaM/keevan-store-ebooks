@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TrackView } from "@/components/track-view";
 import Image from "next/image";
-import { formatUgx, site } from "@/lib/constants";
+import { formatCurrency, site, type Currency } from "@/lib/constants";
 import { getCoverUrl, getPublishedStoreByHandle } from "@/lib/storefront";
 
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }) {
@@ -154,7 +154,7 @@ export default async function StorePage({ params }: { params: Promise<{ handle: 
                       <h3 className="text-lg font-bold text-brand-black group-hover:text-brand-green">{product.title}</h3>
                       <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-neutral-600">{product.description}</p>
                       <div className="mt-5 flex items-center justify-between gap-4 border-t border-neutral-100 pt-4">
-                        <p className="text-xl font-black text-brand-black">{formatUgx(product.price)}</p>
+                        <p className="text-xl font-black text-brand-black">{formatCurrency(product.price, product.currency as Currency)}</p>
                         <span className="rounded-md bg-brand-green/10 px-3 py-1.5 text-xs font-semibold text-brand-green">Buy now</span>
                       </div>
                     </div>

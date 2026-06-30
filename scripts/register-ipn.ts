@@ -35,7 +35,7 @@ async function main() {
   const baseUrl = (env.PESAPAL_BASE_URL || "https://pay.pesapal.com/v3").replace(/\/+$/, "");
   const consumerKey = env.PESAPAL_CONSUMER_KEY;
   const consumerSecret = env.PESAPAL_CONSUMER_SECRET;
-  const webhookUrl = "https://keevanstore.in/api/pesapal/ipn";
+  const webhookUrl = env.PESAPAL_IPN_URL || "https://keevanstore.in/api/pesapal/ipn";
 
   if (!consumerKey) {
     console.error("\n❌ PESAPAL_CONSUMER_KEY is not set in .env");
