@@ -15,13 +15,14 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   const { data } = await supabase
     .from("stores")
-    .select("*,creators(id,display_name,user_id),users!inner(full_name,email)")
+    .select("*,creators(id,display_name,user_id,users(full_name,email))")
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   const stores = (data ?? []).map((store) => {
     const creatorData = Array.isArray(store.creators) ? store.creators[0] : store.creators;
-    const userData = Array.isArray(store.users) ? store.users[0] : store.users;
+    const usersData = creatorData?.users;
+    const userData = Array.isArray(usersData) ? usersData[0] : usersData;
     return {
       id: store.id,
       creator_id: store.creator_id,
