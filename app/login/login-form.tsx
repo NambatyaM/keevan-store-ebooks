@@ -22,8 +22,16 @@ function LoginFormInner() {
     try {
       const { user, session } = await login(email, password);
       if (user && session) {
-        const redirect = searchParams.get("redirect") || "/creator/dashboard";
-        router.push(redirect);
+        const redirectParam = searchParams.get("redirect");
+        if (redirectParam) {
+          router.push(redirectParam);
+        } else {
+          const role = user.user_metadata?.role ?? "creator";
+          const dashboard = role === "admin" ? "/admin/dashboard"
+            : role === "buyer" ? "/buyer/dashboard"
+            : "/creator/dashboard";
+          router.push(dashboard);
+        }
       } else {
         throw new Error("Login failed");
       }

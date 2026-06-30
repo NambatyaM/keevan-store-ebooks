@@ -53,11 +53,20 @@ async function main() {
     email: adminEmail,
     password: adminPassword,
     email_confirm: true,
+    user_metadata: { role: "admin" },
   });
 
   if (createError) {
-    if (createError.message.includes("already exists")) {
+    if (createError.message.includes("already been registered") || createError.message.includes("already exists")) {
       console.log("  ✓ Admin user already exists in auth");
+      const { data: existingAuth } = await supabase.auth.admin.listUsers();
+      const existing = existingAuth.users.find((u) => u.email === adminEmail);
+      if (existing) {
+        await supabase.auth.admin.updateUserById(existing.id, {
+          user_metadata: { ...existing.user_metadata, role: "admin" },
+        });
+        console.log("  ✓ Admin role updated in user_metadata");
+      }
     } else {
       throw createError;
     }
