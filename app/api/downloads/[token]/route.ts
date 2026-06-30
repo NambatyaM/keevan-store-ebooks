@@ -16,7 +16,7 @@ export const GET = withErrorHandling(async (_request: NextRequest, context?: unk
   if (new Date(download.expires_at).getTime() < Date.now()) return apiError("Download link expired", 410);
 
   const product = Array.isArray(download.products) ? download.products[0] : download.products;
-  const { data, error: signedError } = await supabase.storage.from("products").createSignedUrl(product.file_path, 60);
+  const { data, error: signedError } = await supabase.storage.from("products").createSignedUrl(product.file_path, 300);
   if (signedError || !data?.signedUrl) return apiError("Unable to create signed download URL", 500);
 
   await supabase.from("downloads").update({ downloaded_at: new Date().toISOString() }).eq("id", download.id);

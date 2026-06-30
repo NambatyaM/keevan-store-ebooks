@@ -8,7 +8,7 @@ import { CheckCircle, Loader2, Download, XCircle } from "lucide-react";
 import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
 
-const POLLING_TIMEOUT_MS = 120000;
+const POLLING_TIMEOUT_MS = 300000;
 
 type OrderStatus = {
   ok: boolean;

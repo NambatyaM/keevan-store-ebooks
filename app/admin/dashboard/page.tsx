@@ -93,14 +93,21 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
+    const days = dateRange === "Today" ? 1 : dateRange === "Yesterday" ? 2 : dateRange === "7D" ? 7 : dateRange === "30D" ? 30 : 30;
+    const since = dateRange === "Yesterday"
+      ? new Date(Date.now() - 86400000).toISOString().split("T")[0]
+      : new Date(Date.now() - days * 86400000).toISOString();
+    const until = dateRange === "Yesterday" ? new Date(Date.now() - 86400000).toISOString().split("T")[0] : undefined;
+    const params = new URLSearchParams({ limit: "500", since });
+    if (until) params.set("until", until);
     Promise.all([
-      fetch("/api/admin/orders?limit=500").then((r) => r.json()).then((d) => setOrders(d.orders ?? [])),
-      fetch("/api/admin/creators").then((r) => r.json()).then((d) => setCreators(d.creators ?? [])),
+      fetch(`/api/admin/orders?${params}`).then((r) => r.json()).then((d) => setOrders(d.orders ?? [])),
+      fetch(`/api/admin/creators?${params}`).then((r) => r.json()).then((d) => setCreators(d.creators ?? [])),
       fetch("/api/admin/stats").then((r) => r.json()).then((d) => setStats(d.stats ?? {})),
     ])
       .catch((err) => { console.error("Admin dashboard error:", err); setError("Failed to load dashboard data."); })
       .finally(() => setLoading(false));
-  }, []);
+  }, [dateRange]);
 
   const paidOrders = orders.filter((o) => o.status === "paid" || o.status === "completed");
   const totalRevenue = paidOrders.reduce((s, o) => s + o.amount, 0);

@@ -32,7 +32,7 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
-          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://*.supabase.co https://i.ibb.co; font-src 'self'; connect-src 'self' https://*.supabase.co https://pay.pesapal.com https://*.sentry.io; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'" }
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://*.supabase.co https://i.ibb.co https://*.resend.com; font-src 'self'; connect-src 'self' https://*.supabase.co https://pay.pesapal.com https://*.sentry.io https://*.resend.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'" }
         ]
       }
     ];

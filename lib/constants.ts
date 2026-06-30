@@ -12,9 +12,17 @@ export const currencyLabels: Record<Currency, string> = {
 export const currencyFlags: Record<Currency, string> = {
   UGX: "\uD83C\uDDFA\uD83C\uDDEC",
   KES: "\uD83C\uDDF0\uD83C\uDDEA",
-  TZS: "\uD83C\uDDF9\uD83C\uDDFF",
+  TZS: "\uD83C\uDDF9\uD83C\uDFFF",
   RWF: "\uD83C\uDDF7\uD83C\uDDFC",
   USD: "\uD83C\uDDFA\uD83C\uDDF8",
+};
+
+export const currencyPhoneRegex: Record<Currency, RegExp> = {
+  UGX: /^(\+256|0)[0-9]{9}$/,
+  KES: /^(\+254|0)[0-9]{9}$/,
+  TZS: /^(\+255|0)[0-9]{9}$/,
+  RWF: /^(\+250|0)[0-9]{9}$/,
+  USD: /^\+?[0-9]{7,15}$/,
 };
 
 function requireEnv(key: string): string {

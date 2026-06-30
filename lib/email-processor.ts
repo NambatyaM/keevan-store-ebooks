@@ -1,6 +1,7 @@
 import { sendEmail } from "@/lib/email";
 import { orderConfirmationHtml, withdrawalStatusHtml, refundStatusHtml } from "@/lib/email-templates";
 import { getOptionalSupabaseAdminClient } from "@/lib/supabase";
+import type { Currency } from "@/lib/constants";
 
 export type QueueItem = {
   id: string;
@@ -42,6 +43,7 @@ export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { o
         productTitle: String(productTitle ?? "Product"),
         creatorName: String(creatorName ?? "Creator"),
         amount: Number(order.amount),
+        currency: (order.currency as Currency) ?? "UGX",
         downloadToken: download.token,
       });
 
@@ -64,6 +66,7 @@ export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { o
       const html = withdrawalStatusHtml({
         displayName: item.to_name ?? "Creator",
         amount: withdrawal.amount,
+        currency: (withdrawal.currency as Currency) ?? "UGX",
         status: withdrawal.status,
         adminNotes: withdrawal.admin_notes,
         payoutMethod: withdrawal.payout_method,
@@ -85,13 +88,14 @@ export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { o
     case "refund_status": {
       const { data: refund } = await supabase
         .from("refunds")
-        .select("*, orders!inner(product_id,products!inner(title))")
+        .select("*, orders!inner(product_id,products!inner(title),currency)")
         .eq("id", item.reference_id)
         .single();
 
       if (!refund) return { ok: false, error: "Refund not found" };
 
       const title = refund.orders?.products?.title ?? "Product";
+      const orderCurrency = refund.orders?.currency as Currency ?? "UGX";
 
       const html = refundStatusHtml({
         buyerName: item.to_name ?? "Customer",
@@ -99,6 +103,7 @@ export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { o
         status: refund.status,
         adminNotes: refund.admin_notes,
         reversedAmount: refund.reversed_amount,
+        currency: orderCurrency,
       });
 
       const label = refund.status === "approved" ? "Approved" : "Declined";

@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { apiError, json, requireUser, withErrorHandling } from "@/lib/api";
 
-export const GET = withErrorHandling(async (request: NextRequest) => {
-  const url = new URL(request.url);
-  const orderId = url.pathname.split("/").at(-2);
+export const GET = withErrorHandling(async (request: NextRequest, context?: unknown) => {
+  const { params } = context as { params: Promise<{ orderId: string }> };
+  const { orderId } = await params;
   if (!orderId) return apiError("Missing order ID", 400);
 
   const { supabase, authUser } = await requireUser(request);

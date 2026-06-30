@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Star, MessageSquare } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 type Review = {
   id: string;
@@ -16,6 +17,7 @@ type ProductReviewsProps = {
 };
 
 export function ProductReviews({ productId }: ProductReviewsProps) {
+  const { toast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
       setComment("");
       setShowForm(false);
-      alert("Review submitted! It will appear once approved.");
+      toast({ title: "Review submitted", description: "It will appear once approved." });
     } catch {
       setSubmitError("Unable to submit review.");
     } finally {

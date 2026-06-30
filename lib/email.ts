@@ -1,21 +1,9 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-function getTransporter() {
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT) || 587;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  if (!host || !user || !pass) {
-    return null;
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
+function getResend(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  return new Resend(apiKey);
 }
 
 export async function sendEmail(input: {
@@ -24,21 +12,25 @@ export async function sendEmail(input: {
   html: string;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const from = process.env.SMTP_FROM ?? "noreply@keevanstore.in";
-  const transporter = getTransporter();
+  const resend = getResend();
 
-  if (!transporter) {
-    return { ok: false, error: "SMTP is not configured" };
+  if (!resend) {
+    return { ok: false, error: "Resend API key is not configured" };
   }
 
   try {
-    const info = await transporter.sendMail({
+    const { data, error } = await resend.emails.send({
       from,
       to: input.to,
       subject: input.subject,
       html: input.html,
     });
 
-    return { ok: true, id: info.messageId };
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
+    return { ok: true, id: data?.id ?? "unknown" };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error sending email";
     return { ok: false, error: message };

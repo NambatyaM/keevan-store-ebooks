@@ -1,10 +1,11 @@
-import { site } from "@/lib/constants";
+import { site, formatCurrency, type Currency } from "@/lib/constants";
 
 export function orderConfirmationHtml(input: {
   buyerName: string;
   productTitle: string;
   creatorName: string;
   amount: number;
+  currency: Currency;
   downloadToken: string;
 }): string {
   const downloadUrl = `${site.url}/download/${input.downloadToken}`;
@@ -16,7 +17,7 @@ export function orderConfirmationHtml(input: {
   <h1 style="color:#111;font-size:24px;">Order Confirmed</h1>
   <p>Hi ${escapeHtml(input.buyerName)},</p>
   <p>Your purchase of <strong>${escapeHtml(input.productTitle)}</strong> by ${escapeHtml(input.creatorName)} is confirmed.</p>
-  <p style="font-size:18px;font-weight:bold;">Amount Paid: UGX ${input.amount.toLocaleString()}</p>
+  <p style="font-size:18px;font-weight:bold;">Amount Paid: ${formatCurrency(input.amount, input.currency)}</p>
   <p>Click the button below to download your file:</p>
   <a href="${downloadUrl}" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;font-size:16px;">Download Now</a>
   <p style="margin-top:24px;font-size:14px;color:#666;">This link expires in 7 days. If you didn't make this purchase, please contact support.</p>
@@ -29,6 +30,7 @@ export function orderConfirmationHtml(input: {
 export function withdrawalStatusHtml(input: {
   displayName: string;
   amount: number;
+  currency: Currency;
   status: string;
   adminNotes: string | null;
   payoutMethod: string;
@@ -58,7 +60,7 @@ export function withdrawalStatusHtml(input: {
 <body style="font-family:sans-serif;padding:24px;max-width:560px;margin:0 auto;">
   <h1 style="color:#111;font-size:24px;">Withdrawal Update</h1>
   <p>Hi ${escapeHtml(input.displayName)},</p>
-  <p>Your withdrawal request of <strong>UGX ${input.amount.toLocaleString()}</strong> via <strong>${escapeHtml(input.payoutMethod)}</strong> has been <span style="color:${color};font-weight:bold;">${label}</span>.</p>
+  <p>Your withdrawal request of <strong>${formatCurrency(input.amount, input.currency)}</strong> via <strong>${escapeHtml(input.payoutMethod)}</strong> has been <span style="color:${color};font-weight:bold;">${label}</span>.</p>
   ${notesHtml}
   <p style="font-size:14px;color:#666;">If you have questions, please contact support.</p>
   <hr style="margin-top:32px;">
@@ -73,6 +75,7 @@ export function refundStatusHtml(input: {
   status: string;
   adminNotes: string | null;
   reversedAmount: number | null;
+  currency: Currency;
 }): string {
   const label = input.status === "approved" ? "Approved" : "Declined";
   const color = input.status === "approved" ? "#16a34a" : "#dc2626";
@@ -81,7 +84,7 @@ export function refundStatusHtml(input: {
     : "Your refund request has been reviewed and was not approved at this time.";
 
   const amountHtml = input.reversedAmount
-    ? `<p style="font-size:18px;font-weight:bold;">Refund Amount: UGX ${input.reversedAmount.toLocaleString()}</p>`
+    ? `<p style="font-size:18px;font-weight:bold;">Refund Amount: ${formatCurrency(input.reversedAmount, input.currency)}</p>`
     : "";
 
   const notesHtml = input.adminNotes

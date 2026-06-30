@@ -164,7 +164,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <Check size={17} className="text-brand-green" aria-hidden /> Instant delivery after verification
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-brand-mist p-3 text-sm font-semibold">
-              <Check size={17} className="text-brand-green" aria-hidden /> UGX pricing, no hidden fees
+              <Check size={17} className="text-brand-green" aria-hidden /> Secure pricing, no hidden fees
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-brand-mist p-3 text-sm font-semibold">
               <Check size={17} className="text-brand-green" aria-hidden /> Protected signed download link

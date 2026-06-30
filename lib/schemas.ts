@@ -59,13 +59,11 @@ export const productUpdateSchema = z.object({
   coverMime: z.enum(["image/jpeg", "image/png", "image/webp"]).optional()
 });
 
-const UG_PHONE_REGEX = /^(\+256|0)[0-9]{9}$/;
-
 export const checkoutSchema = z.object({
   productId: z.string().uuid(),
   buyerEmail: z.string().email(),
   buyerName: z.string().min(2),
-  phone: z.string().regex(UG_PHONE_REGEX, "Enter a valid MTN or Airtel number (e.g. 0772XXXXXX)").optional()
+  phone: z.string().optional()
 });
 
 export const paymentVerifySchema = z.object({

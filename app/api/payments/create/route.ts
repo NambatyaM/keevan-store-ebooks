@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
 import { apiError, json, readJson, withErrorHandling, requireUser } from "@/lib/api";
 import { checkoutSchema } from "@/lib/schemas";
-import { calculateSaleSplit, site } from "@/lib/constants";
+import { calculateSaleSplit, site, currencyPhoneRegex, type Currency } from "@/lib/constants";
 import { createPesapalOrder } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
@@ -93,6 +93,14 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   } catch {}
 
   const storeCurrency = (store.currency as string) ?? "UGX";
+
+  if (input.phone) {
+    const phoneRegex = currencyPhoneRegex[storeCurrency] ?? currencyPhoneRegex.UGX;
+    if (!phoneRegex.test(input.phone)) {
+      return apiError("Enter a valid phone number for your region.", 422);
+    }
+  }
+
   const split = calculateSaleSplit(discountPrice);
   const orderInsert: Record<string, unknown> = {
     product_id: product.id,

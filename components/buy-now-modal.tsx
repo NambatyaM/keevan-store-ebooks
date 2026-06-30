@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ArrowRight, X, Loader2, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatCurrency, type Currency } from "@/lib/constants";
+import { formatCurrency, currencyPhoneRegex, type Currency } from "@/lib/constants";
 
 type BuyNowModalProps = {
   productId: string;
@@ -13,8 +13,6 @@ type BuyNowModalProps = {
   title: string;
   className?: string;
 };
-
-const UG_PHONE_REGEX = /^(\+256|0)[0-9]{9}$/;
 
 export function BuyNowModal({ productId, productSlug, price, currency, title, className }: BuyNowModalProps) {
   const [open, setOpen] = useState(false);
@@ -75,7 +73,8 @@ export function BuyNowModal({ productId, productSlug, price, currency, title, cl
 
   function validatePhone(val: string): string | null {
     if (!val.trim()) return "Phone number is required";
-    if (!UG_PHONE_REGEX.test(val.trim())) return "Enter a valid MTN or Airtel number (e.g. 0772XXXXXX)";
+    const regex = currencyPhoneRegex[currency] ?? currencyPhoneRegex.UGX;
+    if (!regex.test(val.trim())) return "Enter a valid phone number for your region (e.g. 0772XXXXXX)";
     return null;
   }
 
@@ -254,7 +253,7 @@ export function BuyNowModal({ productId, productSlug, price, currency, title, cl
                   </p>
                 )}
                 <p id="phone-helper" className="text-xs text-neutral-500">
-                  Enter MTN or Airtel number (e.g. 0772XXXXXX)
+                  Enter a valid mobile money number (e.g. 0772XXXXXX)
                 </p>
               </label>
 

@@ -9,10 +9,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  if (!pathname.startsWith("/creator") && !pathname.startsWith("/admin") && !pathname.startsWith("/buyer")) {
-    return NextResponse.next();
-  }
-
   if (pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
@@ -31,5 +27,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|monitoring|favicon.ico).*)", "/creator/:path*", "/admin/:path*", "/buyer/:path*"]
+  matcher: ["/creator/:path*", "/admin/:path*", "/buyer/:path*"]
 };
