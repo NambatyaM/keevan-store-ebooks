@@ -30,7 +30,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   if (!fileExists) return apiError("Uploaded file not found in storage. Please re-upload.", 400);
 
   if (input.coverPath) {
-    const { data: coverExists } = await supabase.storage.from("products").info(input.coverPath);
+    const { data: coverExists } = await supabase.storage.from("covers").info(input.coverPath);
     if (!coverExists) return apiError("Uploaded cover image not found in storage. Please re-upload.", 400);
   }
 

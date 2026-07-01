@@ -79,10 +79,11 @@ export const DELETE = withErrorHandling(async (request: NextRequest, context?: u
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) return apiError(error.message, 400);
 
-  const removePaths = [product.file_path].filter(Boolean);
-  if (product.cover_path) removePaths.push(product.cover_path);
-  if (removePaths.length > 0) {
-    await supabase.storage.from("products").remove(removePaths);
+  if (product.file_path) {
+    await supabase.storage.from("products").remove([product.file_path]);
+  }
+  if (product.cover_path) {
+    await supabase.storage.from("covers").remove([product.cover_path]);
   }
 
   return json({ ok: true });

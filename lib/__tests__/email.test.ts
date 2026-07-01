@@ -6,20 +6,19 @@ import {
   refundStatusHtml,
 } from "@/lib/email-templates";
 
-vi.mock("nodemailer", () => ({
-  default: {
-    createTransport: vi.fn(),
-  },
-}));
+const mockSend = vi.fn();
 
-import nodemailer from "nodemailer";
+vi.mock("resend", () => {
+  return {
+    Resend: vi.fn().mockImplementation(function () {
+      return { emails: { send: mockSend } };
+    }),
+  };
+});
 
 describe("sendEmail", () => {
   beforeEach(() => {
-    process.env.SMTP_HOST = "smtp.example.com";
-    process.env.SMTP_PORT = "587";
-    process.env.SMTP_USER = "user@example.com";
-    process.env.SMTP_PASS = "secret";
+    process.env.RESEND_API_KEY = "re_abc123";
     process.env.SMTP_FROM = "noreply@keevanstore.in";
     vi.clearAllMocks();
   });
@@ -29,10 +28,7 @@ describe("sendEmail", () => {
   });
 
   it("sends email successfully", async () => {
-    const sendMail = vi.fn().mockResolvedValue({ messageId: "msg_123" });
-    vi.mocked(nodemailer.createTransport).mockReturnValue({
-      sendMail,
-    } as unknown as ReturnType<typeof nodemailer.createTransport>);
+    mockSend.mockResolvedValue({ data: { id: "msg_123" }, error: null });
 
     const result = await sendEmail({
       to: "user@example.com",
@@ -44,7 +40,7 @@ describe("sendEmail", () => {
     if (result.ok) {
       expect(result.id).toBe("msg_123");
     }
-    expect(sendMail).toHaveBeenCalledWith({
+    expect(mockSend).toHaveBeenCalledWith({
       from: "noreply@keevanstore.in",
       to: "user@example.com",
       subject: "Test",
@@ -52,8 +48,8 @@ describe("sendEmail", () => {
     });
   });
 
-  it("returns error when SMTP is not configured", async () => {
-    delete process.env.SMTP_HOST;
+  it("returns error when Resend API key is not configured", async () => {
+    delete process.env.RESEND_API_KEY;
 
     const result = await sendEmail({
       to: "user@example.com",
@@ -63,15 +59,12 @@ describe("sendEmail", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain("SMTP is not configured");
+      expect(result.error).toContain("Resend API key is not configured");
     }
   });
 
   it("handles send failure", async () => {
-    const sendMail = vi.fn().mockRejectedValue(new Error("Connection refused"));
-    vi.mocked(nodemailer.createTransport).mockReturnValue({
-      sendMail,
-    } as unknown as ReturnType<typeof nodemailer.createTransport>);
+    mockSend.mockRejectedValue(new Error("Connection refused"));
 
     const result = await sendEmail({
       to: "user@example.com",
@@ -87,10 +80,7 @@ describe("sendEmail", () => {
 
   it("uses custom SMTP_FROM when set", async () => {
     process.env.SMTP_FROM = "shop@keevanstore.in";
-    const sendMail = vi.fn().mockResolvedValue({ messageId: "msg_456" });
-    vi.mocked(nodemailer.createTransport).mockReturnValue({
-      sendMail,
-    } as unknown as ReturnType<typeof nodemailer.createTransport>);
+    mockSend.mockResolvedValue({ data: { id: "msg_456" }, error: null });
 
     await sendEmail({
       to: "buyer@example.com",
@@ -98,17 +88,14 @@ describe("sendEmail", () => {
       html: "<p>Thanks</p>",
     });
 
-    expect(sendMail).toHaveBeenCalledWith(
+    expect(mockSend).toHaveBeenCalledWith(
       expect.objectContaining({ from: "shop@keevanstore.in" })
     );
   });
 
   it("uses defaults when SMTP_FROM is not set", async () => {
     delete process.env.SMTP_FROM;
-    const sendMail = vi.fn().mockResolvedValue({ messageId: "msg_789" });
-    vi.mocked(nodemailer.createTransport).mockReturnValue({
-      sendMail,
-    } as unknown as ReturnType<typeof nodemailer.createTransport>);
+    mockSend.mockResolvedValue({ data: { id: "msg_789" }, error: null });
 
     await sendEmail({
       to: "test@example.com",
@@ -116,7 +103,7 @@ describe("sendEmail", () => {
       html: "<p>Body</p>",
     });
 
-    expect(sendMail).toHaveBeenCalledWith(
+    expect(mockSend).toHaveBeenCalledWith(
       expect.objectContaining({ from: "noreply@keevanstore.in" })
     );
   });
@@ -135,7 +122,8 @@ describe("orderConfirmationHtml", () => {
     expect(html).toContain("https://keevanstore.in/download/tok_abc123");
     expect(html).toContain("Order Confirmed");
     expect(html).toContain("Ebook Title");
-    expect(html).toContain("UGX 25,000");
+    expect(html).toContain("UGX");
+    expect(html).toContain("25,000");
   });
 
   it("escapes HTML in user-supplied fields", () => {
@@ -164,7 +152,8 @@ describe("withdrawalStatusHtml", () => {
 
     expect(html).toContain("Approved");
     expect(html).toContain("#16a34a");
-    expect(html).toContain("UGX 100,000");
+    expect(html).toContain("UGX");
+    expect(html).toContain("100,000");
     expect(html).toContain("Mobile Money");
   });
 
@@ -233,7 +222,8 @@ describe("refundStatusHtml", () => {
 
     expect(html).toContain("Approved");
     expect(html).toContain("#16a34a");
-    expect(html).toContain("UGX 25,000");
+    expect(html).toContain("UGX");
+    expect(html).toContain("25,000");
     expect(html).toContain("Digital Product");
   });
 

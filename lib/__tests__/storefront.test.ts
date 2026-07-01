@@ -24,21 +24,24 @@ describe("getDownloadPageState", () => {
     });
   });
 
-  function makeChain(opts: { single: ReturnType<typeof vi.fn> }) {
-    const chain = {
+  function makeChain(opts: { single?: ReturnType<typeof vi.fn>; maybeSingle?: ReturnType<typeof vi.fn> }) {
+    const chain: Record<string, unknown> = {
       select: vi.fn(() => chain),
       eq: vi.fn(() => chain),
-      single: opts.single,
+      order: vi.fn(() => chain),
+      abortSignal: vi.fn(() => chain),
+      single: opts.single ?? vi.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: opts.maybeSingle ?? vi.fn().mockResolvedValue({ data: null, error: null }),
     };
     return () => chain;
   }
 
-  it("returns product null and serviceAvailable=true when slug not found", async () => {
-    const mockSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-    mockGetOptionalSupabaseAdminClient.mockReturnValue({ from: makeChain({ single: mockSingle }) });
+  it("returns product null and serviceAvailable=false when slug not found", async () => {
+    const mockMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+    mockGetOptionalSupabaseAdminClient.mockReturnValue({ from: makeChain({ maybeSingle: mockMaybeSingle }) });
 
     const result = await getDownloadPageState("nonexistent");
-    expect(result.serviceAvailable).toBe(true);
+    expect(result.serviceAvailable).toBe(false);
     expect(result.product).toBeNull();
     expect(result.verifiedToken).toBeNull();
   });
@@ -60,12 +63,12 @@ describe("getDownloadPageState", () => {
     const fakeStore = { id: "store-1", slug: "my-store", name: "My Store", status: "active" };
     const fakeCreator = { id: "creator-1", display_name: "Author Name" };
 
-    const mockSingle = vi.fn()
+    const mockMaybeSingle = vi.fn()
       .mockResolvedValueOnce({ data: fakeProduct, error: null })
       .mockResolvedValueOnce({ data: fakeStore, error: null })
       .mockResolvedValueOnce({ data: fakeCreator, error: null });
 
-    mockGetOptionalSupabaseAdminClient.mockReturnValue({ from: makeChain({ single: mockSingle }) });
+    mockGetOptionalSupabaseAdminClient.mockReturnValue({ from: makeChain({ maybeSingle: mockMaybeSingle }) });
 
     const result = await getDownloadPageState("my-ebook");
     expect(result.serviceAvailable).toBe(true);
@@ -101,14 +104,14 @@ describe("getDownloadPageState", () => {
       product_id: "prod-1"
     };
 
-    const mockSingle = vi.fn()
+    const mockMaybeSingle = vi.fn()
       .mockResolvedValueOnce({ data: fakeProduct, error: null })
       .mockResolvedValueOnce({ data: fakeStore, error: null })
       .mockResolvedValueOnce({ data: fakeCreator, error: null });
 
-    const mockSingleDownload = vi.fn().mockResolvedValue({ data: fakeDownload, error: null });
-    const productChain = makeChain({ single: mockSingle });
-    const downloadChain = makeChain({ single: mockSingleDownload });
+    const mockMaybeSingleDownload = vi.fn().mockResolvedValue({ data: fakeDownload, error: null });
+    const productChain = makeChain({ maybeSingle: mockMaybeSingle });
+    const downloadChain = makeChain({ maybeSingle: mockMaybeSingleDownload });
     mockGetOptionalSupabaseAdminClient.mockReturnValue({
       from: vi.fn((table: string) => {
         if (table === "downloads") return downloadChain();
@@ -147,14 +150,14 @@ describe("getDownloadPageState", () => {
       product_id: "prod-1"
     };
 
-    const mockSingle = vi.fn()
+    const mockMaybeSingle = vi.fn()
       .mockResolvedValueOnce({ data: fakeProduct, error: null })
       .mockResolvedValueOnce({ data: fakeStore, error: null })
       .mockResolvedValueOnce({ data: fakeCreator, error: null });
 
-    const mockSingleDownload = vi.fn().mockResolvedValue({ data: fakeDownload, error: null });
-    const productChain = makeChain({ single: mockSingle });
-    const downloadChain = makeChain({ single: mockSingleDownload });
+    const mockMaybeSingleDownload = vi.fn().mockResolvedValue({ data: fakeDownload, error: null });
+    const productChain = makeChain({ maybeSingle: mockMaybeSingle });
+    const downloadChain = makeChain({ maybeSingle: mockMaybeSingleDownload });
     mockGetOptionalSupabaseAdminClient.mockReturnValue({
       from: vi.fn((table: string) => {
         if (table === "downloads") return downloadChain();
@@ -186,14 +189,14 @@ describe("getDownloadPageState", () => {
     const fakeStore = { id: "store-1", slug: "my-store", name: "My Store", status: "active" };
     const fakeCreator = { id: "creator-1", display_name: "Author Name" };
 
-    const mockSingle = vi.fn()
+    const mockMaybeSingle = vi.fn()
       .mockResolvedValueOnce({ data: fakeProduct, error: null })
       .mockResolvedValueOnce({ data: fakeStore, error: null })
       .mockResolvedValueOnce({ data: fakeCreator, error: null });
 
-    const mockSingleDownload = vi.fn().mockResolvedValue({ data: null, error: null });
-    const productChain = makeChain({ single: mockSingle });
-    const downloadChain = makeChain({ single: mockSingleDownload });
+    const mockMaybeSingleDownload = vi.fn().mockResolvedValue({ data: null, error: null });
+    const productChain = makeChain({ maybeSingle: mockMaybeSingle });
+    const downloadChain = makeChain({ maybeSingle: mockMaybeSingleDownload });
     mockGetOptionalSupabaseAdminClient.mockReturnValue({
       from: vi.fn((table: string) => {
         if (table === "downloads") return downloadChain();

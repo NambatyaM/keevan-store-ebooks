@@ -60,7 +60,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
       setComment("");
       setShowForm(false);
-      toast({ title: "Review submitted", description: "It will appear once approved." });
+      toast("success", "Review submitted");
     } catch {
       setSubmitError("Unable to submit review.");
     } finally {

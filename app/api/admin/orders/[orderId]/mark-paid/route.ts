@@ -22,7 +22,22 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
   }
 
   const now = new Date().toISOString();
+  const downloadToken = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
+  // Create download token FIRST to ensure it exists before marking paid
+  const { error: dlError } = await supabase.from("downloads").insert({
+    order_id: order.id,
+    product_id: order.product_id,
+    token: downloadToken,
+    expires_at: expiresAt,
+  });
+
+  if (dlError) {
+    throw Object.assign(new Error("Failed to create download record"), { status: 500 });
+  }
+
+  // Now update the order status to paid
   const { error: orderUpdateError } = await supabase
     .from("orders")
     .update({ status: "paid", paid_at: now })
@@ -30,19 +45,8 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
     .eq("status", "pending");
 
   if (orderUpdateError) {
+    console.error("[Admin Mark Paid] Order update failed after download created:", orderUpdateError);
     throw Object.assign(new Error("Failed to mark order as paid"), { status: 500 });
-  }
-
-  const downloadToken = crypto.randomUUID();
-  const { error: dlError } = await supabase.from("downloads").insert({
-    order_id: order.id,
-    product_id: order.product_id,
-    token: downloadToken,
-    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-  });
-
-  if (dlError) {
-    console.error("[Admin Mark Paid] Failed to create download:", dlError);
   }
 
   const { data: payment } = await supabase

@@ -12,6 +12,7 @@ import Image from "next/image";
 import { formatCurrency, site, type Currency } from "@/lib/constants";
 import { getCoverUrl, getPublishedProductBySlug } from "@/lib/storefront";
 import { ProductReviews } from "@/components/product-reviews";
+import type { StorefrontProduct } from "@/lib/storefront";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -43,32 +44,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  let product;
+  let product: StorefrontProduct | null = null;
+  let fetchError = false;
+
   try {
     product = await getPublishedProductBySlug(slug);
-  } catch {
-    console.error("ProductPage: getPublishedProductBySlug failed");
-    return (
-      <>
-        <SiteHeader />
-        <main className="mx-auto flex max-w-7xl items-center justify-center px-4 py-24 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <WifiOff className="mx-auto text-brand-green" size={48} aria-hidden />
-            <h1 className="mt-4 text-2xl font-bold">Service Temporarily Unavailable</h1>
-            <p className="mt-2 text-neutral-600">Our database service is currently unavailable. Please try again shortly.</p>
-            <Link href="/" className="mt-6 inline-block text-brand-green hover:underline">Return to home</Link>
-          </div>
-        </main>
-        <SiteFooter />
-      </>
-    );
+  } catch (e) {
+    console.error("ProductPage: failed to fetch product", e);
+    fetchError = true;
   }
 
   if (!product) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (supabaseUrl && supabaseKey) {
-      try {
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (supabaseUrl && supabaseKey) {
         const cookieStore = await cookies();
         const sb = createServerClient(supabaseUrl, supabaseKey, {
           cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} },
@@ -83,9 +73,28 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             }
           }
         }
-      } catch (e) { console.error("ProductPage: draft preview failed", e); }
+      }
+    } catch (e) { console.error("ProductPage: draft preview failed", e); }
+  }
+
+  if (!product) {
+    if (fetchError) {
+      return (
+        <>
+          <SiteHeader />
+          <main className="mx-auto flex max-w-7xl items-center justify-center px-4 py-24 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <WifiOff className="mx-auto text-brand-green" size={48} aria-hidden />
+              <h1 className="mt-4 text-2xl font-bold">Service Temporarily Unavailable</h1>
+              <p className="mt-2 text-neutral-600">Our database service is currently unavailable. Please try again shortly.</p>
+              <Link href="/" className="mt-6 inline-block text-brand-green hover:underline">Return to home</Link>
+            </div>
+          </main>
+          <SiteFooter />
+        </>
+      );
     }
-    if (!product) notFound();
+    notFound();
   }
 
   const productSchema = {
@@ -125,6 +134,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     ]
   };
 
+  const coverUrl = getCoverUrl(product.coverPath, 600);
+
   return (
     <>
       <SiteHeader />
@@ -141,8 +152,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <span className="text-neutral-800">{product.title}</span>
         </nav>
         <div className="relative grid aspect-[4/5] place-items-center overflow-hidden rounded-lg bg-neutral-100 p-6 text-center">
-          {getCoverUrl(product.coverPath) ? (
-            <Image src={getCoverUrl(product.coverPath, 600)!} alt={product.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" loading="lazy" />
+          {coverUrl ? (
+            <Image src={coverUrl} alt={product.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" loading="lazy" />
           ) : (
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">Digital Product</p>

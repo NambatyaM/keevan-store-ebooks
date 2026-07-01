@@ -92,7 +92,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
   } catch {}
 
-  const storeCurrency = (store.currency as string) ?? "UGX";
+  const storeCurrency = (store.currency as Currency) ?? "UGX";
 
   if (input.phone) {
     const phoneRegex = currencyPhoneRegex[storeCurrency] ?? currencyPhoneRegex.UGX;

@@ -18,6 +18,7 @@ export default function EditProductPage() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [status, setStatus] = useState<"draft" | "published" | "disabled">("draft");
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
   const [filePath, setFilePath] = useState("");
   const [fileSize, setFileSize] = useState(0);
@@ -138,11 +139,11 @@ export default function EditProductPage() {
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-neutral-700">Title</label>
-              <input value={title} onChange={(e) => { setTitle(e.target.value); if (!slug || slug === generateSlug(slug)) setSlug(generateSlug(e.target.value)); }} className="focus-ring mt-1 w-full rounded-md border border-neutral-300 px-4 py-3" required />
+              <input value={title} onChange={(e) => { setTitle(e.target.value); if (!slugManuallyEdited) setSlug(generateSlug(e.target.value)); }} className="focus-ring mt-1 w-full rounded-md border border-neutral-300 px-4 py-3" required />
             </div>
             <div>
               <label className="block text-sm font-semibold text-neutral-700">Slug</label>
-              <input value={slug} onChange={(e) => setSlug(generateSlug(e.target.value))} className="focus-ring mt-1 w-full rounded-md border border-neutral-300 px-4 py-3 font-mono text-sm" required />
+              <input value={slug} onChange={(e) => { setSlug(generateSlug(e.target.value)); setSlugManuallyEdited(true); }} className="focus-ring mt-1 w-full rounded-md border border-neutral-300 px-4 py-3 font-mono text-sm" required />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-neutral-700">Description</label>

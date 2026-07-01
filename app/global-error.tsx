@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
-import Link from "next/link";
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => { Sentry.captureException(error); console.error(error); }, [error]);
@@ -19,9 +18,6 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
               <button onClick={reset} className="inline-flex min-h-11 items-center justify-center rounded-md bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-[#006f43]">
                 Try again
               </button>
-              <Link href="/" className="inline-flex min-h-11 items-center justify-center rounded-md border border-brand-green bg-white px-5 py-3 text-sm font-semibold text-brand-green hover:bg-brand-mist">
-                Go home
-              </Link>
             </div>
           </div>
         </main>
