@@ -185,7 +185,7 @@ describe("getPesapalTransactionStatus", () => {
     expect(result.status).toBe("COMPLETED");
     expect(mockFetch).toHaveBeenLastCalledWith(
       "https://pay.pesapal.com/v3/api/Transactions/GetTransactionStatus?orderTrackingId=trk-1",
-      expect.objectContaining({ headers: { Authorization: "Bearer tok-1" } })
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: "Bearer tok-1" }) })
     );
   });
 

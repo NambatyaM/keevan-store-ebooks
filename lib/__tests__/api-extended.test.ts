@@ -40,7 +40,7 @@ vi.mock("@/lib/supabase", () => ({
 
 vi.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: vi.fn(() => ({
-    auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }) },
+    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }) },
   })),
 }));
 
@@ -157,14 +157,14 @@ describe("requireUser", () => {
   });
 
   it("falls back to cookie auth when no bearer token", async () => {
-    const mockGetSession = vi.fn().mockResolvedValue({
-      data: { session: { user: { id: "u2", email: "cookie@test.com" } } },
+    const mockGetUser = vi.fn().mockResolvedValue({
+      data: { user: { id: "u2", email: "cookie@test.com" } },
       error: null,
     });
 
     const supabaseServerModule = await import("@/lib/supabase-server");
     (supabaseServerModule.createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue({
-      auth: { getSession: mockGetSession },
+      auth: { getUser: mockGetUser },
     });
 
     mockSupabase.from.mockImplementation((table: string) => {

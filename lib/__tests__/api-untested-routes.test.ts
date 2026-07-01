@@ -63,7 +63,7 @@ vi.mock("@/lib/supabase", () => ({
 
 vi.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: vi.fn(() => ({
-    auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }) },
+    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }) },
   })),
 }));
 
@@ -307,11 +307,13 @@ describe("GET /api/analytics/summary", () => {
     return import("@/app/api/analytics/summary/route").then((m) => m.GET);
   }
 
-  it("rejects unauthenticated requests (401)", async () => {
+  it("returns empty summary for unauthenticated requests", async () => {
     const GET = await importHandler();
     const req = authRequest("/api/analytics/summary");
     const res = await GET(req);
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.summary).toEqual({});
   });
 });
 

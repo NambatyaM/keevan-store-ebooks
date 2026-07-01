@@ -87,9 +87,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         .single();
       if (buyer) buyerId = buyer.id;
     }
-  } catch (err: unknown) {
-    const e = err as { status?: number };
-    if (e.status !== 401) throw err;
+  } catch {
+    // buyerId stays null — guest checkout proceeds without buyer linking
   }
 
   const storeCurrency = (store.currency as Currency) ?? "UGX";

@@ -13,7 +13,7 @@ vi.mock("@supabase/supabase-js", () => ({
 vi.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
       signOut: vi.fn().mockResolvedValue({ error: null }),
     },
   })),
@@ -80,7 +80,7 @@ const mockSupabase = {
 vi.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
       signOut: vi.fn().mockResolvedValue({ error: null }),
     },
   })),
