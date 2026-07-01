@@ -1,4 +1,4 @@
-import { cache } from "react";
+import { NoopCache } from "@/lib/utils";
 import { getOptionalSupabaseAdminClient } from "@/lib/supabase";
 
 export function getCoverUrl(coverPath: string | null, _width?: number): string | null {
@@ -34,6 +34,17 @@ export type StorefrontStore = {
   products: StorefrontProduct[];
 };
 
+/**
+ * Discriminated result for storefront store lookups.
+ * - "found"     → store exists and is active, data is populated
+ * - "suspended" → store exists but has been suspended by admin
+ * - "not_found" → no store with this handle exists
+ */
+export type StorefrontStoreResult =
+  | { status: "found"; store: StorefrontStore }
+  | { status: "suspended" }
+  | { status: "not_found" };
+
 export type DownloadPageState = {
   product: StorefrontProduct | null;
   verifiedToken: string | null;
@@ -41,11 +52,16 @@ export type DownloadPageState = {
   serviceAvailable: boolean;
 };
 
-function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 10000): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Query timeout")), timeoutMs))
-  ]);
+async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 10000): Promise<{ ok: true; value: T } | { ok: false }> {
+  try {
+    const value = await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Query timeout")), timeoutMs))
+    ]);
+    return { ok: true, value };
+  } catch {
+    return { ok: false };
+  }
 }
 
 async function getSupabase() {
@@ -56,7 +72,7 @@ async function getSupabase() {
   return supabase;
 }
 
-export const getPublishedProductBySlug = cache(async function getPublishedProductBySlug(slug: string, bypassStatus = false): Promise<StorefrontProduct | null> {
+export const getPublishedProductBySlug = NoopCache(async function getPublishedProductBySlug(slug: string, bypassStatus = false): Promise<StorefrontProduct | null> {
   const supabase = await getSupabase();
   if (!supabase) return null;
 
@@ -67,11 +83,12 @@ export const getPublishedProductBySlug = cache(async function getPublishedProduc
 
   if (!bypassStatus) query = query.eq("status", "published");
 
-  const { data: product, error: productError } = await withTimeout(query.maybeSingle());
-
+  const productResult = await withTimeout(query.maybeSingle());
+  if (!productResult.ok) return null;
+  const { data: product, error: productError } = productResult.value;
   if (productError || !product) return null;
 
-  const { data: store, error: storeError } = await withTimeout(
+  const storeResult = await withTimeout(
     supabase
       .from("stores")
       .select("id,slug,name,status")
@@ -79,17 +96,19 @@ export const getPublishedProductBySlug = cache(async function getPublishedProduc
       .eq("status", "active")
       .maybeSingle()
   );
-
+  if (!storeResult.ok) return null;
+  const { data: store, error: storeError } = storeResult.value;
   if (storeError || !store) return null;
 
-  const { data: creator, error: creatorError } = await withTimeout(
+  const creatorResult = await withTimeout(
     supabase
       .from("creators")
       .select("id,display_name")
       .eq("id", product.creator_id)
       .maybeSingle()
   );
-
+  if (!creatorResult.ok) return null;
+  const { data: creator, error: creatorError } = creatorResult.value;
   if (creatorError || !creator) return null;
 
   return {
@@ -109,32 +128,35 @@ export const getPublishedProductBySlug = cache(async function getPublishedProduc
   };
 });
 
-export async function getPublishedStoreByHandle(handle: string): Promise<StorefrontStore | null> {
+export async function getPublishedStoreByHandle(handle: string): Promise<StorefrontStoreResult> {
   const supabase = await getSupabase();
-  if (!supabase) return null;
+  if (!supabase) return { status: "not_found" };
 
-  const { data: store, error: storeError } = await withTimeout(
+  const storeResult = await withTimeout(
     supabase
       .from("stores")
-      .select("id,creator_id,slug,name,description")
+      .select("id,creator_id,slug,name,description,status")
       .eq("slug", handle)
-      .eq("status", "active")
       .maybeSingle()
   );
+  if (!storeResult.ok) return { status: "not_found" };
+  const { data: store, error: storeError } = storeResult.value;
+  if (storeError || !store) return { status: "not_found" };
+  if (store.status === "suspended") return { status: "suspended" };
+  if (store.status !== "active") return { status: "not_found" };
 
-  if (storeError || !store) return null;
-
-  const { data: creator, error: creatorError } = await withTimeout(
+  const creatorResult = await withTimeout(
     supabase
       .from("creators")
       .select("display_name")
       .eq("id", store.creator_id)
       .maybeSingle()
   );
+  if (!creatorResult.ok) return { status: "not_found" };
+  const { data: creator, error: creatorError } = creatorResult.value;
+  if (creatorError || !creator) return { status: "not_found" };
 
-  if (creatorError || !creator) return null;
-
-  const { data: products, error: productsError } = await withTimeout(
+  const productsResult = await withTimeout(
     supabase
       .from("products")
       .select("id,creator_id,store_id,slug,title,description,price,currency,file_mime,cover_path")
@@ -142,30 +164,36 @@ export async function getPublishedStoreByHandle(handle: string): Promise<Storefr
       .eq("status", "published")
       .order("created_at", { ascending: false })
   );
+  if (!productsResult.ok) return { status: "not_found" };
+  const { data: products, error: productsError } = productsResult.value;
+  if (productsError) return { status: "not_found" };
 
-  if (productsError) return null;
+  const creatorName: string = creator.display_name ?? "";
 
   return {
-    id: store.id,
-    handle: store.slug,
-    name: store.name,
-    description: store.description,
-    creatorName: creator.display_name,
-    products: (products ?? []).map((product) => ({
-      id: product.id,
-      slug: product.slug,
-      title: product.title,
-      description: product.description,
-      price: product.price,
-      currency: product.currency,
-      fileMime: product.file_mime,
-      coverPath: product.cover_path,
-      creatorId: product.creator_id,
-      creatorName: creator.display_name,
-      storeId: product.store_id,
-      storeHandle: store.slug,
-      storeName: store.name
-    }))
+    status: "found",
+    store: {
+      id: store.id,
+      handle: store.slug,
+      name: store.name,
+      description: store.description,
+      creatorName,
+      products: (products ?? []).map((product) => ({
+        id: product.id,
+        slug: product.slug,
+        title: product.title,
+        description: product.description,
+        price: product.price,
+        currency: product.currency,
+        fileMime: product.file_mime,
+        coverPath: product.cover_path,
+        creatorId: product.creator_id,
+        creatorName,
+        storeId: product.store_id,
+        storeHandle: store.slug,
+        storeName: store.name
+      }))
+    }
   };
 }
 
@@ -180,7 +208,7 @@ export async function getDownloadPageState(slug: string, token?: string): Promis
     return { product, verifiedToken: null, expired: false, serviceAvailable: false };
   }
 
-  const { data: download } = await withTimeout(
+  const downloadResult = await withTimeout(
     supabase
       .from("downloads")
       .select("token,expires_at,product_id")
@@ -188,6 +216,11 @@ export async function getDownloadPageState(slug: string, token?: string): Promis
       .eq("product_id", product.id)
       .maybeSingle()
   );
+
+  if (!downloadResult.ok) {
+    return { product, verifiedToken: null, expired: false, serviceAvailable: true };
+  }
+  const download = downloadResult.value.data ?? null;
 
   if (!download) {
     return { product, verifiedToken: null, expired: false, serviceAvailable: true };

@@ -21,6 +21,8 @@ export function BuyNowModal({ productId, productSlug, price, currency, title, cl
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [duplicateError, setDuplicateError] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -70,6 +72,18 @@ export function BuyNowModal({ productId, productSlug, price, currency, title, cl
       document.body.style.overflow = "";
     };
   }, [open, handleKeyDown]);
+
+  function validateName(val: string): string | null {
+    if (!val.trim()) return "Full name is required";
+    if (val.trim().length < 2) return "Name must be at least 2 characters";
+    return null;
+  }
+
+  function validateEmail(val: string): string | null {
+    if (!val.trim()) return "Email address is required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())) return "Enter a valid email address";
+    return null;
+  }
 
   function validatePhone(val: string): string | null {
     if (!val.trim()) return "Phone number is required";
@@ -123,13 +137,16 @@ export function BuyNowModal({ productId, productSlug, price, currency, title, cl
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const nameErr = validateName(buyerName);
+    const emailErr = validateEmail(buyerEmail);
     const phoneVal = phone.trim();
     const phoneErr = validatePhone(phoneVal);
-    if (phoneErr) {
-      setPhoneError(phoneErr);
-      return;
-    }
-    setPhoneError(null);
+
+    setNameError(nameErr);
+    setEmailError(emailErr);
+    setPhoneError(phoneErr);
+
+    if (nameErr || emailErr || phoneErr) return;
     setDuplicateError(false);
     await startCheckout(buyerName, buyerEmail, phoneVal);
   }
@@ -208,25 +225,51 @@ export function BuyNowModal({ productId, productSlug, price, currency, title, cl
               <label className="grid gap-2 text-sm font-medium text-neutral-700">
                 Full name
                 <input
-                  className="focus-ring rounded-md border border-neutral-300 px-4 py-3"
+                  className={cn(
+                    "focus-ring rounded-md border px-4 py-3",
+                    nameError ? "border-red-400" : "border-neutral-300"
+                  )}
                   value={buyerName}
-                  onChange={(event) => setBuyerName(event.target.value)}
+                  onChange={(event) => {
+                    setBuyerName(event.target.value);
+                    if (nameError) setNameError(null);
+                  }}
                   autoComplete="name"
                   required
                   aria-required="true"
+                  aria-invalid={!!nameError}
+                  aria-describedby={nameError ? "name-error" : undefined}
                 />
+                {nameError && (
+                  <p id="name-error" className="text-xs text-red-600" role="alert">
+                    {nameError}
+                  </p>
+                )}
               </label>
               <label className="grid gap-2 text-sm font-medium text-neutral-700">
                 Email for receipt
                 <input
-                  className="focus-ring rounded-md border border-neutral-300 px-4 py-3"
+                  className={cn(
+                    "focus-ring rounded-md border px-4 py-3",
+                    emailError ? "border-red-400" : "border-neutral-300"
+                  )}
                   type="email"
                   value={buyerEmail}
-                  onChange={(event) => setBuyerEmail(event.target.value)}
+                  onChange={(event) => {
+                    setBuyerEmail(event.target.value);
+                    if (emailError) setEmailError(null);
+                  }}
                   autoComplete="email"
                   required
                   aria-required="true"
+                  aria-invalid={!!emailError}
+                  aria-describedby={emailError ? "email-error" : undefined}
                 />
+                {emailError && (
+                  <p id="email-error" className="text-xs text-red-600" role="alert">
+                    {emailError}
+                  </p>
+                )}
               </label>
               <label className="grid gap-2 text-sm font-medium text-neutral-700">
                 Phone number

@@ -57,14 +57,50 @@ function pickNumber(record: Record<string, unknown>, keys: string[]) {
   return null;
 }
 
+/**
+ * Pesapal can return payment status as a string description OR as an integer code.
+ * Integer codes: 0 = Invalid, 1 = Completed, 2 = Failed, 3 = Reversed, 4 = Pending, 5 = Voided
+ * This helper coerces an integer status code to its string description so the
+ * rest of the code can rely on a single normalised string value.
+ */
+function resolvePaymentStatusFromCode(record: Record<string, unknown>): string | null {
+  const STATUS_CODE_MAP: Record<number, string> = {
+    0: "INVALID",
+    1: "COMPLETED",
+    2: "FAILED",
+    3: "REVERSED",
+    4: "PENDING",
+    5: "VOIDED",
+  };
+
+  for (const key of ["payment_status", "PaymentStatus", "paymentStatus"]) {
+    const val = record[key];
+    if (typeof val === "number" && val in STATUS_CODE_MAP) {
+      return STATUS_CODE_MAP[val];
+    }
+    if (typeof val === "string") {
+      const parsed = parseInt(val, 10);
+      if (!isNaN(parsed) && parsed in STATUS_CODE_MAP) {
+        return STATUS_CODE_MAP[parsed];
+      }
+    }
+  }
+  return null;
+}
+
 export function normalizePesapalStatus(payload: unknown): NormalizedPesapalStatus {
   const raw = typeof payload === "object" && payload !== null ? (payload as Record<string, unknown>) : {};
+
+  // Prefer the string description; fall back to resolving the integer status code.
+  const paymentStatusStr =
+    pickString(raw, ["payment_status_description", "paymentStatusDescription", "status", "Status"]) ??
+    resolvePaymentStatusFromCode(raw);
 
   return {
     merchantReference: pickString(raw, ["merchant_reference", "merchantReference", "order_merchant_reference", "OrderMerchantReference"]),
     trackingId: pickString(raw, ["order_tracking_id", "orderTrackingId", "tracking_id", "trackingId", "OrderTrackingId"]),
     amount: pickNumber(raw, ["amount", "Amount"]),
-    paymentStatus: pickString(raw, ["payment_status_description", "paymentStatusDescription", "status", "Status"]),
+    paymentStatus: paymentStatusStr,
     raw
   };
 }
@@ -88,6 +124,10 @@ export async function getPesapalToken(): Promise<PesapalToken> {
     return cachedToken;
   }
 
+  // Clear stale cache before attempting a refresh so a failed fetch
+  // never leaves a bad/expired token that passes the isTokenExpired guard.
+  cachedToken = null;
+
   const consumerKey = process.env.PESAPAL_CONSUMER_KEY;
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
@@ -107,6 +147,12 @@ export async function getPesapalToken(): Promise<PesapalToken> {
   }
 
   const data = await response.json();
+
+  // Validate that the response actually contains a usable token before caching.
+  if (!data.token || !data.expiryDate) {
+    throw new Error("Pesapal returned an invalid token response.");
+  }
+
   cachedToken = { token: data.token, expiryDate: data.expiryDate };
   return cachedToken;
 }
@@ -231,59 +277,103 @@ type SupabaseClient = import("@supabase/supabase-js").SupabaseClient;
 export async function verifyPesapalPayment(
   supabase: SupabaseClient,
   merchantReference: string,
-  trackingId: string
+  trackingId: string | null | undefined
 ): Promise<VerificationResult> {
-  const { data: payment } = await supabase
-    .from("payments")
-    .select("id,merchant_reference,order_id,orders!inner(amount)")
-    .eq("merchant_reference", merchantReference)
-    .single();
+  // Guard: a null/empty trackingId cannot be queried against the Pesapal API.
+  if (!trackingId) {
+    return { ok: false, error: "Missing Pesapal tracking ID", raw: {} };
+  }
+
+  let payment: Record<string, unknown> | null;
+  try {
+    const result = await supabase
+      .from("payments")
+      .select("id,merchant_reference,order_id,orders!inner(amount)")
+      .eq("merchant_reference", merchantReference)
+      .single();
+    payment = result.data;
+    if (result.error) return { ok: false, error: "Payment not found", raw: {} };
+  } catch {
+    return { ok: false, error: "Database error while looking up payment", raw: {} };
+  }
 
   if (!payment) return { ok: false, error: "Payment not found", raw: {} };
 
   const paymentOrder = Array.isArray(payment.orders) ? payment.orders[0] : payment.orders;
   if (!paymentOrder || typeof paymentOrder.amount !== "number") return { ok: false, error: "Payment not found", raw: {} };
 
-  const transactionStatus = normalizePesapalStatus(await getPesapalTransactionStatus(trackingId));
+  let pesapalStatusPayload: unknown;
+  try {
+    pesapalStatusPayload = await getPesapalTransactionStatus(trackingId);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Failed to verify payment with Pesapal";
+    return { ok: false, error: msg, raw: {} };
+  }
+
+  const transactionStatus = normalizePesapalStatus(pesapalStatusPayload);
 
   if (!transactionStatus.merchantReference || transactionStatus.merchantReference !== merchantReference) {
     return { ok: false, error: "Pesapal merchant reference mismatch", raw: transactionStatus.raw };
   }
 
   if (!transactionStatus.trackingId) {
-    return { ok: false, error: "Pesapal tracking id mismatch", raw: transactionStatus.raw };
+    return { ok: false, error: "Pesapal tracking ID missing in response", raw: transactionStatus.raw };
   }
 
-  if (typeof paymentOrder.amount !== "number" || transactionStatus.amount !== paymentOrder.amount) {
+  // Use rounded comparison to 2 decimal places to avoid floating-point drift
+  // (e.g. stored 1000.00 vs Pesapal returning 1000, or 0.3 vs 0.30000000000000004).
+  const roundedStored = Math.round(paymentOrder.amount * 100);
+  const roundedReturned = transactionStatus.amount !== null
+    ? Math.round(transactionStatus.amount * 100)
+    : null;
+
+  if (roundedReturned === null || roundedReturned !== roundedStored) {
     return { ok: false, error: "Pesapal amount mismatch", raw: transactionStatus.raw };
   }
 
   if (!isPesapalPaymentCompleted(transactionStatus.raw)) {
-    await supabase.rpc("fail_pesapal_payment", {
-      payment_merchant_reference: merchantReference,
-      failure_payload: transactionStatus.raw
-    });
-
+    try {
+      await supabase.rpc("fail_pesapal_payment", {
+        payment_merchant_reference: merchantReference,
+        failure_payload: transactionStatus.raw
+      });
+    } catch {
+      // Log but continue — the payment is already failed
+    }
     return { ok: false, error: "Payment is not completed", raw: transactionStatus.raw };
   }
 
   const currency = extractCurrency(transactionStatus.raw);
 
-  // Set the app.api_key context so the DB auth guard in finalize_pesapal_payment passes.
-  // Errors here are logged but must not block the finalize attempt below.
-  const { error: apiKeyError } = await supabase.rpc("set_app_api_key");
-  if (apiKeyError) {
-    console.error("[verifyPesapalPayment] set_app_api_key failed:", apiKeyError.message);
+  // Set the app API key required by the SECURITY DEFINER RPC.
+  // A single attempt is made; failure returns an error immediately rather than
+  // proceeding with a finalization call that would fail anyway.
+  try {
+    const { error: apiKeyError } = await supabase.rpc("set_app_api_key");
+    if (apiKeyError) {
+      console.error("[verifyPesapalPayment] set_app_api_key failed:", apiKeyError.message);
+      return { ok: false, error: "Auth context setup failed for payment finalization", raw: {} };
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Auth context setup threw an unexpected error";
+    console.error("[verifyPesapalPayment] set_app_api_key threw:", msg);
+    return { ok: false, error: "Auth context setup failed for payment finalization", raw: {} };
   }
 
-  const { data: finalized, error: finalizeError } = await supabase.rpc("finalize_pesapal_payment", {
-    payment_reference: merchantReference,
-    pesapal_tracking_id: transactionStatus.trackingId,
-    status_payload: transactionStatus.raw,
-    payment_currency: currency,
-  });
-
-  if (finalizeError) return { ok: false, error: finalizeError.message, raw: {} };
+  let finalized: unknown;
+  try {
+    const { data, error: finalizeError } = await supabase.rpc("finalize_pesapal_payment", {
+      payment_reference: merchantReference,
+      pesapal_tracking_id: transactionStatus.trackingId,
+      status_payload: transactionStatus.raw,
+      payment_currency: currency,
+    });
+    if (finalizeError) return { ok: false, error: finalizeError.message, raw: {} };
+    finalized = data;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Payment finalization failed";
+    return { ok: false, error: msg, raw: {} };
+  }
 
   const result = finalized as {
     ok: boolean;
@@ -296,10 +386,14 @@ export async function verifyPesapalPayment(
   if (!result?.ok) return { ok: false, error: result?.error ?? "Unable to issue download token", raw: {} };
 
   if (!result.already_processed && result.order_id) {
-    await supabase.from("analytics_events").insert({
-      event_type: "purchase",
-      metadata: { order_id: result.order_id }
-    });
+    try {
+      await supabase.from("analytics_events").insert({
+        event_type: "purchase",
+        metadata: { order_id: result.order_id }
+      });
+    } catch {
+      // Analytics insert failure must not block the download
+    }
   }
 
   return { ok: true, downloadToken: result.download_token ?? "", alreadyVerified: result.already_processed };

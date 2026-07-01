@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
+import { NotificationsDropdown } from "@/components/notifications-dropdown";
 
 type NavItem = {
   href: string;
@@ -209,9 +210,25 @@ export function DashboardShell({
   navItems?: Array<{ href: string; label: string }>;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { profile } = useAuth();
   const pathname = usePathname();
   const isAdmin = role === "admin";
+
+  const handleUnreadCountChange = useCallback((count: number) => {
+    setUnreadCount(count);
+  }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetch("/api/admin/notifications")
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data.unreadCount === "number") setUnreadCount(data.unreadCount);
+      })
+      .catch(() => {});
+  }, [isAdmin]);
 
   const nav = isAdmin ? adminNav : creatorNav;
   const storeSlug = (profile as any)?.store_slug;
@@ -280,15 +297,25 @@ export function DashboardShell({
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              className="relative rounded-lg p-2 text-muted transition hover:bg-neutral-100"
-              aria-label="Notifications"
-            >
-              <Bell size={20} />
-              <span className="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-error text-[10px] font-bold text-white">
-                3
-              </span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setNotificationsOpen((prev) => !prev)}
+                className="relative rounded-lg p-2 text-muted transition hover:bg-neutral-100"
+                aria-label="Notifications"
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-error text-[10px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+              <NotificationsDropdown
+                open={notificationsOpen}
+                onClose={() => setNotificationsOpen(false)}
+                onUnreadCountChange={handleUnreadCountChange}
+              />
+            </div>
 
             <div className="flex items-center gap-2 border-l border-border pl-3">
               <div className="grid h-8 w-8 place-items-center rounded-full bg-brand-green text-sm font-bold text-white">

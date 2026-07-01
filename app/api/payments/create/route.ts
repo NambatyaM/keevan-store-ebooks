@@ -138,10 +138,33 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     return apiError(paymentError.message, 400);
   }
 
-  const requestOrigin = request.headers.get("origin") || site.url;
-  const callbackBase = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : requestOrigin !== "null" ? requestOrigin : site.url;
+  // Build the callback base URL.
+  // Priority: NEXT_PUBLIC_SITE_URL (production domain, manually configured) → VERCEL_URL
+  // (deployment-specific URL, auto-set by Vercel) → request origin → empty string.
+  // NEXT_PUBLIC_SITE_URL must come first: VERCEL_URL is a preview-deploy URL on Vercel
+  // (e.g. my-app-abc123.vercel.app) and would route Pesapal callbacks to the wrong host.
+  const requestOrigin = request.headers.get("origin");
+  const callbackBase =
+    (site.url && site.url.trim() !== "")
+      ? site.url.replace(/\/$/, "")
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : (requestOrigin && requestOrigin !== "null" && requestOrigin.trim() !== "")
+          ? requestOrigin
+          : "";
+
+  if (!callbackBase) {
+    console.error("[payments/create] Cannot determine callback base URL — NEXT_PUBLIC_SITE_URL is not set and no fallback available");
+    return apiError("Payment configuration error. Please contact support.", 500);
+  }
+
+  if (!discountPrice || discountPrice <= 0) {
+    await Promise.all([
+      supabase.from("payments").delete().eq("order_id", order.id),
+      supabase.from("orders").delete().eq("id", order.id),
+    ]);
+    return apiError("Invalid product price", 400);
+  }
 
   try {
     const pesapal = await createPesapalOrder({
@@ -156,16 +179,33 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       callbackUrl: `${callbackBase}/order/success?order_id=${order.id}`
     });
 
+    if (!pesapal?.redirect_url) {
+      await Promise.all([
+        supabase.from("payments").delete().eq("order_id", order.id),
+        supabase.from("orders").delete().eq("id", order.id),
+      ]);
+      console.error("[payments/create] Pesapal returned no redirect_url for order:", order.id, "merchantRef:", merchantReference);
+      return apiError("Payment provider did not return a checkout URL. Please try again.", 502);
+    }
+
     if (discountId) {
-      await supabase.rpc("increment_discount_use", { discount_id: discountId });
+      try {
+        await supabase.rpc("increment_discount_use", { discount_id: discountId });
+      } catch (e) {
+        console.error("[payments/create] Failed to increment discount use count:", e);
+      }
     }
 
     return json({ orderId: order.id, merchantReference, redirectUrl: pesapal.redirect_url });
-  } catch {
-    await Promise.all([
-      supabase.from("payments").delete().eq("order_id", order.id),
-      supabase.from("orders").delete().eq("id", order.id),
-    ]);
-    return apiError("Unable to initiate payment with Pesapal. Please try again.", 502);
+  } catch (err) {
+    console.error("[payments/create] Pesapal order creation failed:", err, "merchantRef:", merchantReference);
+    try {
+      await supabase.from("payments").delete().eq("order_id", order.id);
+    } catch { /* cleanup best-effort */ }
+    try {
+      await supabase.from("orders").delete().eq("id", order.id);
+    } catch { /* cleanup best-effort */ }
+    const msg = err instanceof Error ? err.message : "Unable to initiate payment with Pesapal. Please try again.";
+    return apiError(msg, 502);
   }
 });

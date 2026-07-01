@@ -625,7 +625,7 @@ describe("Payment Security", () => {
 
     const result = await verifyPesapalPayment(mockSupabaseLocal, "REF-001", "TRK-001");
     expect(result.ok).toBe(false);
-    expect(result.error).toBe("Pesapal tracking id mismatch");
+    expect(result.error).toBe("Pesapal tracking ID missing in response");
   });
 
   it("withdrawalSchema rejects zero amount", () => {

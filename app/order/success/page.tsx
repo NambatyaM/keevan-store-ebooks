@@ -129,11 +129,31 @@ function OrderSuccessContent() {
           <p className="mt-2 text-neutral-600">
             Your payment was not completed. Please try again or contact support.
           </p>
-          {status.productSlug && (
-            <Link href={`/product/${status.productSlug}`} className="mt-4 inline-block text-brand-green hover:underline">
-              Try again
-            </Link>
-          )}
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            {status.storeSlug ? (
+              <Link
+                href={`/store/${status.storeSlug}`}
+                className="inline-flex items-center gap-2 rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-[#006f43]"
+              >
+                Try again
+              </Link>
+            ) : (
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-[#006f43]"
+              >
+                Return to home
+              </Link>
+            )}
+            <a
+              href={site.supportWhatsApp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+            >
+              Contact support on WhatsApp
+            </a>
+          </div>
         </div>
       </SimplePage>
     );
@@ -158,7 +178,7 @@ function OrderSuccessContent() {
               Download Now
             </a>
             <p className="mt-2 text-sm text-neutral-500">
-              This link expires in 24 hours. Download your file now.
+              This link expires in 7 days. Download your file now.
             </p>
           </div>
         )}

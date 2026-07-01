@@ -16,7 +16,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
     .from("orders")
     .select(`
       id, status, buyer_email, buyer_id, creator_id,
-      product:product_id (title, slug),
+      product:product_id (title, slug, store:store_id (slug)),
       creator:creator_id (display_name)
     `)
     .eq("id", orderId)
@@ -24,8 +24,9 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
 
   if (!order) return apiError("Order not found", 404);
 
-  const p = order.product as unknown as { title: string; slug: string } | undefined;
+  const p = order.product as unknown as { title: string; slug: string; store: { slug: string } | null } | undefined;
   const c = order.creator as unknown as { display_name: string } | undefined;
+  const storeSlug = p?.store?.slug ?? "";
 
   // --- Authenticated path: enforce ownership ---
   if (user) {
@@ -59,6 +60,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
       orderId: order.id,
       productTitle: p?.title ?? "",
       productSlug: p?.slug ?? "",
+      storeSlug,
       creatorName: c?.display_name ?? "",
       buyerId: user ? order.buyer_id : undefined,
       downloadUrl: download?.token ? `/api/downloads/${download.token}` : undefined,
@@ -72,6 +74,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
       orderId: order.id,
       productTitle: p?.title ?? "",
       productSlug: p?.slug ?? "",
+      storeSlug,
     });
   }
 
@@ -81,6 +84,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
     orderId: order.id,
     productTitle: p?.title ?? "",
     productSlug: p?.slug ?? "",
+    storeSlug,
     creatorName: c?.display_name ?? "",
   });
 });

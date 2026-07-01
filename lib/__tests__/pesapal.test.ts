@@ -113,6 +113,28 @@ describe("normalizePesapalStatus", () => {
     expect(result.amount).toBeNull();
     expect(result.paymentStatus).toBeNull();
   });
+
+  it("resolves integer payment_status code to string description", () => {
+    expect(normalizePesapalStatus({ payment_status: 1 }).paymentStatus).toBe("COMPLETED");
+    expect(normalizePesapalStatus({ payment_status: 2 }).paymentStatus).toBe("FAILED");
+    expect(normalizePesapalStatus({ payment_status: 4 }).paymentStatus).toBe("PENDING");
+    expect(normalizePesapalStatus({ payment_status: 0 }).paymentStatus).toBe("INVALID");
+    expect(normalizePesapalStatus({ payment_status: 3 }).paymentStatus).toBe("REVERSED");
+    expect(normalizePesapalStatus({ payment_status: 5 }).paymentStatus).toBe("VOIDED");
+  });
+
+  it("string description takes priority over integer payment_status code", () => {
+    const result = normalizePesapalStatus({
+      payment_status_description: "Completed",
+      payment_status: 2  // FAILED in integer form
+    });
+    expect(result.paymentStatus).toBe("Completed");
+  });
+
+  it("returns null paymentStatus when integer code is out of range", () => {
+    const result = normalizePesapalStatus({ payment_status: 99 });
+    expect(result.paymentStatus).toBeNull();
+  });
 });
 
 describe("isPesapalPaymentCompleted", () => {
@@ -142,5 +164,30 @@ describe("isPesapalPaymentCompleted", () => {
 
   it("returns false when status field is missing", () => {
     expect(isPesapalPaymentCompleted({})).toBe(false);
+  });
+
+  it("returns true when integer payment_status code 1 (Completed) is present", () => {
+    expect(isPesapalPaymentCompleted({ payment_status: 1 })).toBe(true);
+  });
+
+  it("returns false when integer payment_status code 2 (Failed) is present", () => {
+    expect(isPesapalPaymentCompleted({ payment_status: 2 })).toBe(false);
+  });
+
+  it("returns false when integer payment_status code 4 (Pending) is present", () => {
+    expect(isPesapalPaymentCompleted({ payment_status: 4 })).toBe(false);
+  });
+
+  it("returns true when PaymentStatus integer code 1 (PascalCase) is present", () => {
+    expect(isPesapalPaymentCompleted({ PaymentStatus: 1 })).toBe(true);
+  });
+
+  it("string integer '1' is resolved as Completed", () => {
+    expect(isPesapalPaymentCompleted({ payment_status: "1" })).toBe(true);
+  });
+
+  it("string description takes precedence over integer code", () => {
+    // String description says Pending but integer code says Completed — string wins
+    expect(isPesapalPaymentCompleted({ payment_status_description: "PENDING", payment_status: 1 })).toBe(false);
   });
 });

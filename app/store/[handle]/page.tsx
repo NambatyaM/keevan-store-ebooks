@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { WifiOff, Star, ShoppingBag, ShieldCheck, BookOpen } from "lucide-react";
+import { WifiOff, Star, ShoppingBag, ShieldCheck, BookOpen, AlertTriangle } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TrackView } from "@/components/track-view";
@@ -11,9 +11,10 @@ import { getCoverUrl, getPublishedStoreByHandle } from "@/lib/storefront";
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
   try {
-    const store = await getPublishedStoreByHandle(handle);
-    if (!store) return {};
+    const result = await getPublishedStoreByHandle(handle);
+    if (result.status !== "found") return {};
 
+    const { store } = result;
     return {
       title: `${store.creatorName} — Digital Store | Buy E-books Online`,
       description: store.description ?? `Browse digital products by ${store.creatorName}. Buy e-books, guides, and templates securely via Pesapal with instant download.`,
@@ -36,9 +37,9 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
 
 export default async function StorePage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
-  let store;
+  let result: Awaited<ReturnType<typeof getPublishedStoreByHandle>>;
   try {
-    store = await getPublishedStoreByHandle(handle);
+    result = await getPublishedStoreByHandle(handle);
   } catch {
     return (
       <>
@@ -56,7 +57,30 @@ export default async function StorePage({ params }: { params: Promise<{ handle: 
     );
   }
 
-  if (!store) notFound();
+  // Non-existent store → clean 404
+  if (result.status === "not_found") notFound();
+
+  // Suspended store → informative message (not a 404 or 500)
+  if (result.status === "suspended") {
+    return (
+      <>
+        <SiteHeader />
+        <main className="mx-auto flex max-w-7xl items-center justify-center px-4 py-24 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <AlertTriangle className="mx-auto text-amber-500" size={48} aria-hidden />
+            <h1 className="mt-4 text-2xl font-bold">Store Unavailable</h1>
+            <p className="mt-2 text-neutral-600">
+              This store has been temporarily suspended. Please check back later or{" "}
+              <Link href="/" className="text-brand-green hover:underline">browse other stores</Link>.
+            </p>
+          </div>
+        </main>
+        <SiteFooter />
+      </>
+    );
+  }
+
+  const { store } = result;
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",

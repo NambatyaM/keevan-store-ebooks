@@ -291,6 +291,8 @@ describe("CheckoutForm", () => {
       const user = userEvent.setup();
       render(<CheckoutForm productId={productId} currency="KES" />);
 
+      await user.type(screen.getByLabelText(/full name/i), "Test User");
+      await user.type(screen.getByLabelText(/email for receipt/i), "test@test.com");
       await user.type(
         screen.getByLabelText(/phone number/i),
         "+254712345678",
@@ -356,6 +358,8 @@ describe("CheckoutForm", () => {
     const user = userEvent.setup();
     render(<CheckoutForm productId={productId} currency="UGX" />);
 
+    await user.type(screen.getByLabelText(/full name/i), "Test User");
+    await user.type(screen.getByLabelText(/email for receipt/i), "test@test.com");
     await user.type(screen.getByLabelText(/phone number/i), "0772123456");
     await user.click(
       screen.getByRole("button", { name: /pay with pesapal/i }),
@@ -392,6 +396,8 @@ describe("CheckoutForm", () => {
       const user = userEvent.setup();
       render(<CheckoutForm productId={productId} currency="UGX" />);
 
+      await user.type(screen.getByLabelText(/full name/i), "Test User");
+      await user.type(screen.getByLabelText(/email for receipt/i), "test@test.com");
       await user.type(screen.getByLabelText(/phone number/i), "0772123456");
       await user.click(
         screen.getByRole("button", { name: /pay with pesapal/i }),
@@ -418,6 +424,8 @@ describe("CheckoutForm", () => {
       const user = userEvent.setup();
       render(<CheckoutForm productId={productId} currency="UGX" />);
 
+      await user.type(screen.getByLabelText(/full name/i), "Test User");
+      await user.type(screen.getByLabelText(/email for receipt/i), "test@test.com");
       await user.type(screen.getByLabelText(/phone number/i), "0772123456");
       await user.click(
         screen.getByRole("button", { name: /pay with pesapal/i }),
@@ -442,6 +450,8 @@ describe("CheckoutForm", () => {
       const user = userEvent.setup();
       render(<CheckoutForm productId={productId} currency="UGX" />);
 
+      await user.type(screen.getByLabelText(/full name/i), "Test User");
+      await user.type(screen.getByLabelText(/email for receipt/i), "test@test.com");
       await user.type(screen.getByLabelText(/phone number/i), "0772123456");
       await user.click(
         screen.getByRole("button", { name: /pay with pesapal/i }),
@@ -468,6 +478,8 @@ describe("CheckoutForm", () => {
       const user = userEvent.setup();
       render(<CheckoutForm productId={productId} currency="UGX" />);
 
+      await user.type(screen.getByLabelText(/full name/i), "Test User");
+      await user.type(screen.getByLabelText(/email for receipt/i), "test@test.com");
       await user.type(screen.getByLabelText(/phone number/i), "0772123456");
       await user.click(
         screen.getByRole("button", { name: /pay with pesapal/i }),
@@ -494,6 +506,8 @@ describe("CheckoutForm", () => {
       const user = userEvent.setup();
       render(<CheckoutForm productId={productId} currency="UGX" />);
 
+      await user.type(screen.getByLabelText(/full name/i), "Test User");
+      await user.type(screen.getByLabelText(/email for receipt/i), "test@test.com");
       await user.type(screen.getByLabelText(/phone number/i), "0772123456");
       await user.click(
         screen.getByRole("button", { name: /pay with pesapal/i }),
@@ -522,6 +536,8 @@ describe("CheckoutForm", () => {
       const user = userEvent.setup();
       render(<CheckoutForm productId={productId} currency="UGX" />);
 
+      await user.type(screen.getByLabelText(/full name/i), "Test User");
+      await user.type(screen.getByLabelText(/email for receipt/i), "test@test.com");
       await user.type(screen.getByLabelText(/phone number/i), "0772123456");
       await user.click(
         screen.getByRole("button", { name: /pay with pesapal/i }),
