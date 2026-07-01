@@ -15,7 +15,7 @@ function mockFromChain(data: unknown, error: unknown = null, customCount?: numbe
     single: vi.fn().mockResolvedValue({ data, error }),
     maybeSingle: vi.fn().mockResolvedValue({ data, error }),
     insert: vi.fn(() => ({ select: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data, error }) })) })),
-    update: vi.fn(() => ({ eq: vi.fn(() => ({ select: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data, error }) })) })) })),
+    update: vi.fn(() => chain),
     delete: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ data: null, error: null }) })),
     then: (resolve: (v: unknown) => void) => {
       if (countMode) resolve({ count: customCount ?? 0, data: null, error: null });

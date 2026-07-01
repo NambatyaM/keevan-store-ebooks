@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPesapalToken, getPesapalTransactionStatus } from "@/lib/pesapal";
+import { getPesapalToken, getPesapalTransactionStatus, extractCurrency } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { rateLimit } from "@/lib/api";
 
@@ -25,83 +25,71 @@ function ipnResponse(
   });
 }
 
+function errorResponse(status: number, error: string): NextResponse {
+  return NextResponse.json({ status, error }, { status });
+}
+
 async function handleIpn(
   trackingId: string,
   merchantReference: string,
   notificationType: string
 ): Promise<NextResponse> {
   if (!trackingId) {
-    console.warn("[Pesapal IPN] Missing OrderTrackingId");
     return ipnResponse("", merchantReference, notificationType);
   }
 
-  const supabase = getSupabaseAdminClient();
-
-  // Idempotency: check if this tracking ID was already processed
-  const { data: existingByTracking } = await supabase
-    .from("payments")
-    .select("id, status, order_id")
-    .eq("tracking_id", trackingId)
-    .maybeSingle();
-
-  if (existingByTracking && existingByTracking.status === "completed") {
-    console.log("[Pesapal IPN] Already processed tracking ID — skip:", trackingId);
-    return ipnResponse(trackingId, merchantReference, notificationType);
-  }
-
-  // Verify transaction status with Pesapal API (never trust IPN payload alone)
-  let transactionStatus: Record<string, unknown>;
   try {
-    await getPesapalToken();
-    transactionStatus = await getPesapalTransactionStatus(trackingId);
-    console.log("[Pesapal IPN] Transaction status:", JSON.stringify(transactionStatus));
-  } catch (err) {
-    console.error("[Pesapal IPN] Failed to verify with Pesapal:", err);
+    const supabase = getSupabaseAdminClient();
+
+    const { data: existingByTracking } = await supabase
+      .from("payments")
+      .select("id, status, order_id")
+      .eq("tracking_id", trackingId)
+      .maybeSingle();
+
+    if (existingByTracking && existingByTracking.status === "completed") {
+      return ipnResponse(trackingId, merchantReference, notificationType);
+    }
+
+    let transactionStatus: Record<string, unknown>;
+    try {
+      await getPesapalToken();
+      transactionStatus = await getPesapalTransactionStatus(trackingId);
+    } catch (err) {
+      return errorResponse(502, "Failed to verify with Pesapal");
+    }
+
+    const paymentStatusRaw = extractPaymentStatus(transactionStatus);
+    const paymentStatus = paymentStatusRaw.toLowerCase();
+
+    let resolvedRef = merchantReference;
+    if (!resolvedRef) {
+      resolvedRef = extractMerchantReference(transactionStatus) ?? "";
+      if (!resolvedRef) {
+        return ipnResponse(trackingId, "", notificationType);
+      }
+    }
+
+    const { data: payment, error: lookupError } = await supabase
+      .from("payments")
+      .select("id, order_id, status")
+      .eq("merchant_reference", resolvedRef)
+      .maybeSingle();
+
+    if (lookupError || !payment) {
+      return ipnResponse(trackingId, resolvedRef, notificationType);
+    }
+
+    if (paymentStatus === "completed") {
+      await handleCompleted(supabase, payment, trackingId, resolvedRef, transactionStatus);
+    } else if (paymentStatus === "failed") {
+      await handleFailed(supabase, payment, resolvedRef, transactionStatus);
+    }
+
+    return ipnResponse(trackingId, resolvedRef, notificationType);
+  } catch {
     return ipnResponse(trackingId, merchantReference, notificationType);
   }
-
-  const paymentStatusRaw = extractPaymentStatus(transactionStatus);
-  const paymentStatus = paymentStatusRaw.toLowerCase();
-  console.log("[Pesapal IPN] Payment status:", paymentStatus);
-
-  // Resolve merchant reference from transaction response if not in params
-  let resolvedRef = merchantReference;
-  if (!resolvedRef) {
-    resolvedRef = extractMerchantReference(transactionStatus) ?? "";
-    if (!resolvedRef) {
-      console.warn("[Pesapal IPN] Missing merchant reference in both params and transaction");
-      return ipnResponse(trackingId, "", notificationType);
-    }
-  }
-
-  // Find payment record
-  const { data: payment, error: lookupError } = await supabase
-    .from("payments")
-    .select("id, order_id, status")
-    .eq("merchant_reference", resolvedRef)
-    .maybeSingle();
-
-  if (lookupError) {
-    console.error("[Pesapal IPN] DB lookup error:", lookupError);
-    return ipnResponse(trackingId, resolvedRef, notificationType);
-  }
-
-  if (!payment) {
-    console.warn("[Pesapal IPN] No payment for merchant_reference:", resolvedRef);
-    return ipnResponse(trackingId, resolvedRef, notificationType);
-  }
-
-  console.log("[Pesapal IPN] Found payment:", { id: payment.id, order_id: payment.order_id, currentStatus: payment.status });
-
-  if (paymentStatus === "completed") {
-    await handleCompleted(supabase, payment, trackingId, resolvedRef, transactionStatus);
-  } else if (paymentStatus === "failed") {
-    await handleFailed(supabase, payment, resolvedRef, transactionStatus);
-  } else {
-    console.log("[Pesapal IPN] Unhandled status — logging only:", paymentStatus, transactionStatus);
-  }
-
-  return ipnResponse(trackingId, resolvedRef, notificationType);
 }
 
 function verifyIpnId(request: NextRequest): boolean {
@@ -116,7 +104,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (limited) return limited;
 
   if (!verifyIpnId(request)) {
-    console.warn("[Pesapal IPN] Rejected GET — ipn_id mismatch");
     return NextResponse.json({ status: 401, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -124,8 +111,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const orderTrackingId = searchParams.get("OrderTrackingId") ?? "";
   const orderMerchantReference = searchParams.get("OrderMerchantReference") ?? "";
   const orderNotificationType = searchParams.get("OrderNotificationType") ?? "IPNCHANGE";
-
-  console.log("[Pesapal IPN] Received GET", { orderTrackingId, orderMerchantReference, orderNotificationType });
 
   return handleIpn(orderTrackingId, orderMerchantReference, orderNotificationType);
 }
@@ -135,7 +120,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (limited) return limited;
 
   if (!verifyIpnId(request)) {
-    console.warn("[Pesapal IPN] Rejected POST — ipn_id mismatch");
     return NextResponse.json({ status: 401, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -158,8 +142,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!orderMerchantReference) {
     return NextResponse.json({ status: 400, error: "Missing OrderMerchantReference" }, { status: 400 });
   }
-
-  console.log("[Pesapal IPN] Received POST", { trackingId, orderMerchantReference });
 
   return handleIpn(trackingId, orderMerchantReference, "IPNCHANGE");
 }
@@ -185,15 +167,6 @@ function extractMerchantReference(payload: Record<string, unknown>): string | nu
   );
 }
 
-function extractCurrency(payload: Record<string, unknown>): string {
-  return (
-    (payload.currency as string) ??
-    (payload.Currency as string) ??
-    (payload.payment_currency as string) ??
-    "UGX"
-  );
-}
-
 async function handleCompleted(
   supabase: ReturnType<typeof getSupabaseAdminClient>,
   payment: { id: string; order_id: string; status: string },
@@ -202,12 +175,10 @@ async function handleCompleted(
   transactionStatus: Record<string, unknown>
 ) {
   if (payment.status === "completed") {
-    console.log("[Pesapal IPN] Payment already completed — skip:", merchantReference);
     return;
   }
 
   const currency = extractCurrency(transactionStatus);
-  console.log("[Pesapal IPN] Extracted currency:", currency);
 
   const { error: finalizeError } = await supabase.rpc("finalize_pesapal_payment", {
     payment_reference: merchantReference,
@@ -217,9 +188,7 @@ async function handleCompleted(
   });
 
   if (finalizeError) {
-    console.error("[Pesapal IPN] finalize_pesapal_payment RPC failed:", finalizeError);
-  } else {
-    console.log("[Pesapal IPN] Payment finalized via RPC with currency:", currency);
+    throw finalizeError;
   }
 }
 
@@ -230,7 +199,6 @@ async function handleFailed(
   transactionStatus: Record<string, unknown>
 ) {
   if (payment.status === "failed") {
-    console.log("[Pesapal IPN] Payment already failed — skip");
     return;
   }
 
@@ -241,19 +209,12 @@ async function handleFailed(
     .eq("status", "pending");
 
   if (payUpdateError) {
-    console.error("[Pesapal IPN] Failed to mark payment failed:", payUpdateError);
     return;
   }
 
-  const { error: orderUpdateError } = await supabase
+  await supabase
     .from("orders")
     .update({ status: "failed" })
     .eq("id", payment.order_id)
     .eq("status", "pending");
-
-  if (orderUpdateError) {
-    console.error("[Pesapal IPN] Failed to mark order failed:", orderUpdateError);
-  } else {
-    console.log("[Pesapal IPN] Payment and order marked failed");
-  }
 }

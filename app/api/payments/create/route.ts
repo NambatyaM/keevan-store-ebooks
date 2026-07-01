@@ -18,8 +18,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   if (productError || !product || product.status !== "published") return apiError("Product is not available for purchase", 404);
 
-  const { data: store } = await supabase.from("stores").select("status,currency").eq("id", product.store_id).single();
-  if (!store || store.status !== "active") return apiError("Product is not available for purchase", 404);
+  const { data: store, error: storeError } = await supabase.from("stores").select("status,currency").eq("id", product.store_id).single();
+  if (storeError || !store || store.status !== "active") return apiError("Product is not available for purchase", 404);
 
   const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
@@ -41,7 +41,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     );
   }
 
-  // Check for existing paid orders (duplicate purchase prevention)
   const { data: existingPaid } = await supabase
     .from("orders")
     .select("id")
@@ -58,7 +57,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     );
   }
 
-  // Check for active discount
   let discountPrice = product.price;
   let discountId: string | null = null;
 
@@ -78,7 +76,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
   }
 
-  // Check if buyer is logged in
   let buyerId: string | null = null;
   try {
     const { profile } = await requireUser(request);
@@ -90,7 +87,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         .single();
       if (buyer) buyerId = buyer.id;
     }
-  } catch {}
+  } catch (err: unknown) {
+    const e = err as { status?: number };
+    if (e.status !== 401) throw err;
+  }
 
   const storeCurrency = (store.currency as Currency) ?? "UGX";
 
@@ -152,15 +152,16 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       callbackUrl: `${callbackBase}/order/success?order_id=${order.id}`
     });
 
-    // Increment discount use count only after Pesapal order succeeds
     if (discountId) {
       await supabase.rpc("increment_discount_use", { discount_id: discountId });
     }
 
     return json({ orderId: order.id, merchantReference, redirectUrl: pesapal.redirect_url });
   } catch {
-    await supabase.from("payments").delete().eq("order_id", order.id);
-    await supabase.from("orders").delete().eq("id", order.id);
+    await Promise.all([
+      supabase.from("payments").delete().eq("order_id", order.id),
+      supabase.from("orders").delete().eq("id", order.id),
+    ]);
     return apiError("Unable to initiate payment with Pesapal. Please try again.", 502);
   }
 });

@@ -9,7 +9,8 @@ export const PATCH = withErrorHandling(async (request: NextRequest, context?: un
   const { supabase, authUser, profile } = await requireUser(request);
 
   if (profile.role !== "admin") {
-    const { data: creator } = await supabase.from("creators").select("user_id").eq("id", id).single();
+    const { data: creator, error: creatorError } = await supabase.from("creators").select("user_id").eq("id", id).single();
+    if (creatorError) return apiError(creatorError.message, 500);
     if (!creator || creator.user_id !== authUser.id) {
       return apiError("Creator not found", 404);
     }

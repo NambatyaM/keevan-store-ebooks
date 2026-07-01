@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { json, requireAdmin, logAdminAction, withErrorHandling } from "@/lib/api";
+import { apiError, json, requireAdmin, logAdminAction, withErrorHandling } from "@/lib/api";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export const POST = withErrorHandling(async (request: NextRequest, context?: unknown) => {
@@ -21,11 +21,21 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
     throw Object.assign(new Error("Only pending orders can be marked as paid"), { status: 400 });
   }
 
+  // Check for existing download token (idempotency)
+  const { data: existingDownload } = await supabase
+    .from("downloads")
+    .select("token")
+    .eq("order_id", order.id)
+    .maybeSingle();
+
+  if (existingDownload) {
+    return json({ ok: true, download_token: existingDownload.token, alreadyProcessed: true });
+  }
+
   const now = new Date().toISOString();
   const downloadToken = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  // Create download token FIRST to ensure it exists before marking paid
   const { error: dlError } = await supabase.from("downloads").insert({
     order_id: order.id,
     product_id: order.product_id,
@@ -37,7 +47,6 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
     throw Object.assign(new Error("Failed to create download record"), { status: 500 });
   }
 
-  // Now update the order status to paid
   const { error: orderUpdateError } = await supabase
     .from("orders")
     .update({ status: "paid", paid_at: now })
@@ -45,7 +54,6 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
     .eq("status", "pending");
 
   if (orderUpdateError) {
-    console.error("[Admin Mark Paid] Order update failed after download created:", orderUpdateError);
     throw Object.assign(new Error("Failed to mark order as paid"), { status: 500 });
   }
 
@@ -65,31 +73,13 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
 
   const earnings = order.creator_earnings ?? order.amount;
 
-  try {
-    const { error: balanceError } = await supabase.rpc("increment_creator_balance", {
-      creator_row_id: order.creator_id,
-      amount: earnings,
-    });
-    if (balanceError) {
-      console.error("[Admin Mark Paid] RPC failed, trying direct update:", balanceError);
-      const { data: creator } = await supabase
-        .from("creators")
-        .select("available_balance, total_earnings")
-        .eq("id", order.creator_id)
-        .single();
-      if (creator) {
-        await supabase
-          .from("creators")
-          .update({
-            available_balance: creator.available_balance + earnings,
-            total_earnings: creator.total_earnings + earnings,
-            updated_at: now,
-          })
-          .eq("id", order.creator_id);
-      }
-    }
-  } catch (err) {
-    console.error("[Admin Mark Paid] Balance update failed:", err);
+  const { error: balanceError } = await supabase.rpc("increment_creator_balance", {
+    creator_row_id: order.creator_id,
+    amount: earnings,
+  });
+
+  if (balanceError) {
+    throw Object.assign(new Error("Failed to update creator balance"), { status: 500 });
   }
 
   await logAdminAction({

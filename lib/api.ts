@@ -96,7 +96,8 @@ export function withErrorHandling(handler: (request: NextRequest, context?: unkn
           ...(process.env.NODE_ENV === "development" ? { details: err.details, stack: err.stack } : {})
         })
       );
-      return apiError(err.status === 500 ? "Unexpected server error" : err.message, err.status ?? 500, err.details);
+      const status = err.status ?? 500;
+      return apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details);
     }
   };
 }
@@ -120,7 +121,8 @@ export function withOptionalCsrf(handler: (request: NextRequest, context?: unkno
           ...(process.env.NODE_ENV === "development" ? { details: err.details, stack: err.stack } : {})
         })
       );
-      return apiError(err.status === 500 ? "Unexpected server error" : err.message, err.status ?? 500, err.details);
+      const status = err.status ?? 500;
+      return apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details);
     }
   };
 }

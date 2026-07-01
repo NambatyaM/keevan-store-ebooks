@@ -1,16 +1,22 @@
 import { NextRequest } from "next/server";
-import { json, requireAdmin, withErrorHandling } from "@/lib/api";
+import { apiError, json, requireAdmin, withErrorHandling } from "@/lib/api";
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const { supabase } = await requireAdmin(request);
 
   const url = new URL(request.url);
   const search = url.searchParams.get("search")?.trim().toLowerCase() || "";
+  const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+  const pageSize = Math.min(Number(url.searchParams.get("pageSize")) || 50, 200);
+  const offset = (page - 1) * pageSize;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("buyers")
     .select("*,users(full_name,email)")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(offset, offset + pageSize - 1);
+
+  if (error) return apiError(error.message, 500);
 
   let buyers = (data ?? []).map((buyer) => {
     const userData = Array.isArray(buyer.users) ? buyer.users[0] : buyer.users;

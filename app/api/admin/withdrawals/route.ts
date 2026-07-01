@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { json, requireAdmin, withErrorHandling } from "@/lib/api";
+import { apiError, json, requireAdmin, withErrorHandling } from "@/lib/api";
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const { supabase } = await requireAdmin(request);
@@ -18,6 +18,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     query = query.eq("status", status);
   }
 
-  const { data } = await query;
+  const { data, error } = await query;
+  if (error) return apiError(error.message, 500);
   return json({ withdrawals: data ?? [] });
 });

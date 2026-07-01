@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { json, requireAdmin, withErrorHandling } from "@/lib/api";
+import { apiError, json, requireAdmin, withErrorHandling } from "@/lib/api";
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const { supabase } = await requireAdmin(request);
@@ -9,15 +9,19 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const limit = Math.min(Number(url.searchParams.get("limit")) || 50, 200);
   const offset = (page - 1) * limit;
 
-  const { count: total } = await supabase
+  const { count: total, error: countError } = await supabase
     .from("stores")
     .select("*", { count: "exact", head: true });
 
-  const { data } = await supabase
+  if (countError) return apiError(countError.message, 500);
+
+  const { data, error } = await supabase
     .from("stores")
     .select("*,creators(id,display_name,user_id,users(full_name,email))")
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
+
+  if (error) return apiError(error.message, 500);
 
   const stores = (data ?? []).map((store) => {
     const creatorData = Array.isArray(store.creators) ? store.creators[0] : store.creators;

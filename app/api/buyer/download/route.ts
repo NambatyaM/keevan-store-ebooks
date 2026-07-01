@@ -7,52 +7,57 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   if (profile.role !== "buyer") return apiError("Access denied", 403);
 
-  const { data: buyer } = await supabase
+  const { data: buyer, error: buyerError } = await supabase
     .from("buyers")
     .select("id")
     .eq("user_id", authUser.id)
     .single();
 
+  if (buyerError) return apiError(buyerError.message, 500);
   if (!buyer) return apiError("Buyer not found", 404);
 
   const url = new URL(request.url);
   const slug = url.searchParams.get("slug");
   if (!slug) return apiError("Missing product slug", 400);
 
-  const { data: productMatch } = await supabase
+  const { data: productMatch, error: productError } = await supabase
     .from("products")
     .select("id")
     .eq("slug", slug)
     .single();
 
+  if (productError) return apiError(productError.message, 500);
   if (!productMatch) return apiError("Product not found", 404);
 
-  const { data: purchase } = await supabase
+  const { data: purchase, error: purchaseError } = await supabase
     .from("buyer_purchases")
     .select("product_id, store_id, order_id")
     .eq("buyer_id", buyer.id)
     .eq("product_id", productMatch.id)
     .maybeSingle();
 
+  if (purchaseError) return apiError(purchaseError.message, 500);
   if (!purchase) return apiError("Purchase not found", 404);
 
   const admin = getSupabaseAdminClient();
 
-  const { data: product } = await admin
+  const { data: product, error: productFileError } = await admin
     .from("products")
     .select("file_path")
     .eq("id", purchase.product_id)
     .single();
 
+  if (productFileError) return apiError(productFileError.message, 500);
   if (!product?.file_path) return apiError("File not found", 404);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const bucket = "products";
 
-  const { data: signedUrl } = await admin.storage
+  const { data: signedUrl, error: signedUrlError } = await admin.storage
     .from(bucket)
     .createSignedUrl(product.file_path, 86400);
 
+  if (signedUrlError) return apiError(signedUrlError.message, 500);
   if (!signedUrl) return apiError("Unable to generate download URL", 500);
 
   await Promise.allSettled([

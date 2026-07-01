@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { json, requireUser, withErrorHandling } from "@/lib/api";
+import { apiError, json, requireUser, withErrorHandling } from "@/lib/api";
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const { supabase, authUser, profile } = await requireUser(request);
@@ -24,7 +24,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       return json({ summary: {}, days });
     }
 
-    const { data: stores } = await supabase.from("stores").select("id").eq("creator_id", creator.id);
+    const { data: stores, error: storesError } = await supabase.from("stores").select("id").eq("creator_id", creator.id);
+    if (storesError) return apiError(storesError.message, 500);
     const storeIds = (stores ?? []).map((store) => store.id);
 
     if (!storeIds.length) {
@@ -34,7 +35,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     query = query.in("store_id", storeIds);
   }
 
-  const { data } = await query.order("created_at", { ascending: false }).limit(10000);
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(10000);
+  if (error) return apiError(error.message, 500);
 
   const summary = (data ?? []).reduce<Record<string, number>>((acc, event) => {
     acc[event.event_type] = (acc[event.event_type] ?? 0) + 1;

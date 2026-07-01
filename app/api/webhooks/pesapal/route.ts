@@ -4,22 +4,27 @@ import { normalizePesapalStatus, verifyPesapalPayment } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export const POST = withOptionalCsrf(async (request: NextRequest) => {
-  const rawBody = await request.text();
-  const rawPayload = JSON.parse(rawBody);
+  const expectedIpnId = process.env.PESAPAL_IPN_ID;
+  const receivedIpnId = request.nextUrl.searchParams.get("ipn_id") ?? "";
+  if (expectedIpnId && receivedIpnId !== expectedIpnId) {
+    return json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let rawPayload: unknown;
+  try {
+    rawPayload = await request.json();
+  } catch {
+    return json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
   const normalized = normalizePesapalStatus(rawPayload);
 
   if (!normalized.merchantReference || !normalized.trackingId) {
-    console.warn("Pesapal webhook received with missing merchantReference or trackingId");
     return json({ ok: true });
   }
 
   const supabase = getSupabaseAdminClient();
-
   const result = await verifyPesapalPayment(supabase, normalized.merchantReference, normalized.trackingId);
-
-  if (!result.ok) {
-    console.error("Webhook payment verification failed:", { merchantRef: normalized.merchantReference, error: result.error });
-  }
 
   return json({ ok: true, finalized: result.ok });
 });

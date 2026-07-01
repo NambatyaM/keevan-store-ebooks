@@ -103,11 +103,15 @@ export default function CreatorProductsPage() {
 
   const handleToggleStatus = async (product: Product) => {
     setTogglingId(product.id);
-    const action = product.status === "published" ? "disable" : "reactivate";
+    const newStatus = product.status === "published" ? "disabled" : "published";
     try {
-      const res = await fetch(`/api/admin/products/${product.id}/${action}`, { method: "POST" });
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
       if (!res.ok) throw new Error("Failed");
-      toast("success", `Product ${action === "disable" ? "disabled" : "published"} successfully`);
+      toast("success", `Product ${newStatus} successfully`);
       load();
     } catch {
       toast("error", "Failed to update product status");

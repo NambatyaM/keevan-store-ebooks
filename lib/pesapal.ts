@@ -61,6 +61,15 @@ export function normalizePesapalStatus(payload: unknown): NormalizedPesapalStatu
   };
 }
 
+export function extractCurrency(payload: Record<string, unknown>): string {
+  return (
+    (payload.currency as string) ??
+    (payload.Currency as string) ??
+    (payload.payment_currency as string) ??
+    "UGX"
+  );
+}
+
 export function isPesapalPaymentCompleted(payload: unknown) {
   const normalized = normalizePesapalStatus(payload);
   return normalized.paymentStatus?.toLowerCase() === "completed";
@@ -233,10 +242,13 @@ export async function verifyPesapalPayment(
     return { ok: false, error: "Payment is not completed", raw: transactionStatus.raw };
   }
 
+  const currency = extractCurrency(transactionStatus.raw);
+
   const { data: finalized, error: finalizeError } = await supabase.rpc("finalize_pesapal_payment", {
     payment_reference: merchantReference,
     pesapal_tracking_id: transactionStatus.trackingId,
-    status_payload: transactionStatus.raw
+    status_payload: transactionStatus.raw,
+    payment_currency: currency,
   });
 
   if (finalizeError) return { ok: false, error: finalizeError.message, raw: {} };

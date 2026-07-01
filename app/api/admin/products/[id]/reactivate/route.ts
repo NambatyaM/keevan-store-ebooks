@@ -5,7 +5,7 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
   const { params } = context as { params: Promise<{ id: string }> };
   const { id } = await params;
   const { supabase, authUser } = await requireAdmin(request);
-  const { data, error } = await supabase.from("products").update({ status: "published" }).eq("id", id).select("*").single();
+  const { data, error } = await supabase.from("products").update({ status: "published" }).eq("id", id).eq("status", "disabled").select("*").single();
 
   if (error) return apiError(error.message, 400);
   await logAdminAction({ adminUserId: authUser.id, action: "product.reactivate", targetTable: "products", targetId: id });

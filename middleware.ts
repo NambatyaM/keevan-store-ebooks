@@ -1,4 +1,68 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
+
+const ROLE_PATHS: Record<string, string[]> = {
+  admin: ["/admin"],
+  creator: ["/creator"],
+  buyer: ["/buyer"],
+};
+
+const DASHBOARD_ROUTES: Record<string, string> = {
+  admin: "/admin/dashboard",
+  creator: "/creator/dashboard",
+  buyer: "/buyer/dashboard",
+};
+
+function createSupabaseClient(request: NextRequest) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createServerClient(url, key, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll() {},
+    },
+  });
+}
+
+function createAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    console.warn("[Middleware] SUPABASE_SERVICE_ROLE_KEY is missing — role checks disabled, protected routes will redirect to login");
+    return null;
+  }
+  return createClient(url, key, { auth: { persistSession: false } });
+}
+
+async function getUserRole(request: NextRequest): Promise<string | null> {
+  try {
+    const supabase = createSupabaseClient(request);
+    if (!supabase) {
+      console.warn("[Middleware] Supabase client creation failed — role lookup skipped");
+      return null;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session?.user) return null;
+
+    const adminClient = createAdminClient();
+    if (!adminClient) return null;
+
+    const { data: user } = await adminClient
+      .from("users")
+      .select("role")
+      .eq("id", sessionData.session.user.id)
+      .single();
+
+    return user?.role ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname, hostname } = request.nextUrl;
@@ -13,19 +77,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const hasAuthCookie = request.cookies.getAll().some(
-    (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token")
-  );
+  const role = await getUserRole(request);
 
-  if (!hasAuthCookie) {
+  if (!role) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  const allowedPrefixes = ROLE_PATHS[role];
+  if (!allowedPrefixes || !allowedPrefixes.some((prefix) => pathname.startsWith(prefix))) {
+    const target = DASHBOARD_ROUTES[role] ?? "/login";
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/creator/:path*", "/admin/:path*", "/buyer/:path*"]
+  matcher: ["/creator/:path*", "/admin/:path*", "/buyer/:path*"],
 };
