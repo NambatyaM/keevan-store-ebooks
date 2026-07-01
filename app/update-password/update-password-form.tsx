@@ -18,8 +18,8 @@ export default function UpdatePasswordForm() {
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setReady(true);
       else setError("Invalid or expired reset link. Please request a new password reset.");
     }).catch(() => setError("Failed to verify reset link. Please try again."));
   }, []);

@@ -45,10 +45,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const supabase = createSupabaseBrowserClient();
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      if (currentSession?.user) {
-        await fetchProfile();
+      if (currentSession) {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        setUser(currentUser);
+        if (currentUser) {
+          await fetchProfile();
+        } else {
+          setProfile(null);
+        }
       } else {
+        setUser(null);
         setProfile(null);
       }
     } catch (err) {
@@ -62,22 +68,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const supabase = createSupabaseBrowserClient();
 
-      supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
         setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        if (currentSession?.user) {
-          fetchProfile().finally(() => setLoading(false));
+        if (currentSession) {
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+          setUser(currentUser);
+          if (currentUser) {
+            await fetchProfile();
+          }
         } else {
-          setLoading(false);
+          setUser(null);
         }
+        setLoading(false);
       }).catch((err) => { console.error("Failed to get session:", err); setLoading(false); });
 
-      const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
         setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        if (currentSession?.user) {
-          fetchProfile();
+        if (currentSession) {
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+          setUser(currentUser);
+          if (currentUser) {
+            fetchProfile();
+          } else {
+            setProfile(null);
+          }
         } else {
+          setUser(null);
           setProfile(null);
         }
       });

@@ -1,12 +1,17 @@
 import { NextRequest } from "next/server";
-import { apiError, json, requireUser, withErrorHandling } from "@/lib/api";
+import { apiError, json, resolveUser, withOptionalCsrf } from "@/lib/api";
+import { getSupabaseAdminClient } from "@/lib/supabase";
 
-export const GET = withErrorHandling(async (request: NextRequest) => {
-  const { supabase, authUser, profile } = await requireUser(request);
+export const GET = withOptionalCsrf(async (request: NextRequest) => {
+  const { supabase, authUser, profile } = await resolveUserAndProfile(request);
   const url = new URL(request.url);
 
   const days = Math.min(Math.max(Number(url.searchParams.get("days")) || 30, 1), 365);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  if (!authUser || !profile) {
+    return json({ summary: {}, days });
+  }
 
   let query = supabase
     .from("analytics_events")
@@ -45,3 +50,18 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   return json({ summary, days });
 });
+
+async function resolveUserAndProfile(request: NextRequest) {
+  try {
+    const { user } = await resolveUser(request);
+    if (!user) return { supabase: getSupabaseAdminClient(), authUser: null, profile: null };
+
+    const supabase = getSupabaseAdminClient();
+    try { await supabase.rpc("set_app_api_key"); } catch {}
+
+    const { data: profile } = await supabase.from("users").select("*").eq("id", user.id).single();
+    return { supabase, authUser: user, profile: profile ?? null };
+  } catch {
+    return { supabase: getSupabaseAdminClient(), authUser: null, profile: null };
+  }
+}

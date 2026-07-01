@@ -28,8 +28,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   // Verify authenticated user owns this order (if buyer is logged in)
   const cookieClient = createServerSupabaseClient(request);
-  const { data: sessionData } = await cookieClient.auth.getSession();
-  const sessionUser = sessionData.session?.user;
+  const { data: userData } = await cookieClient.auth.getUser();
+  const sessionUser = userData.user;
 
   if (sessionUser) {
     const { data: buyerRecord } = await supabase

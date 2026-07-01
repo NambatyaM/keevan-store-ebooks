@@ -160,7 +160,7 @@ export async function rateLimit(request: NextRequest, maxRequests = 60, windowSe
   return null;
 }
 
-async function resolveUser(request: NextRequest) {
+export async function resolveUser(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.replace(/^Bearer\s+/i, "");
 
@@ -173,9 +173,9 @@ async function resolveUser(request: NextRequest) {
   }
 
   const cookieClient = createServerSupabaseClient(request);
-  const { data: sessionData } = await cookieClient.auth.getSession();
-  if (sessionData.session?.user) {
-    return { user: sessionData.session.user };
+  const { data: userData } = await cookieClient.auth.getUser();
+  if (userData.user) {
+    return { user: userData.user };
   }
 
   return { user: null };

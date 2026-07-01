@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPesapalToken, getPesapalTransactionStatus, extractCurrency } from "@/lib/pesapal";
+import { getPesapalToken, getPesapalTransactionStatus, verifyPesapalPayment } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { rateLimit } from "@/lib/api";
 
@@ -172,23 +172,15 @@ async function handleCompleted(
   payment: { id: string; order_id: string; status: string },
   trackingId: string,
   merchantReference: string,
-  transactionStatus: Record<string, unknown>
+  _transactionStatus: Record<string, unknown>
 ) {
   if (payment.status === "completed") {
     return;
   }
 
-  const currency = extractCurrency(transactionStatus);
-
-  const { error: finalizeError } = await supabase.rpc("finalize_pesapal_payment", {
-    payment_reference: merchantReference,
-    pesapal_tracking_id: trackingId,
-    status_payload: transactionStatus,
-    payment_currency: currency,
-  });
-
-  if (finalizeError) {
-    throw finalizeError;
+  const result = await verifyPesapalPayment(supabase, merchantReference, trackingId);
+  if (!result.ok) {
+    throw new Error(result.error);
   }
 }
 

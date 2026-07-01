@@ -63,11 +63,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         const sb = createServerClient(supabaseUrl, supabaseKey, {
           cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} },
         });
-        const { data: { session } } = await sb.auth.getSession();
-        if (session?.user) {
+        const { data: { user } } = await sb.auth.getUser();
+        if (user) {
           const draftProduct = await getPublishedProductBySlug(slug, true);
           if (draftProduct) {
-            const { data: creator } = await sb.from("creators").select("id").eq("user_id", session.user.id).maybeSingle();
+            const { data: creator } = await sb.from("creators").select("id").eq("user_id", user.id).maybeSingle();
             if (creator && creator.id === draftProduct.creatorId) {
               product = draftProduct;
             }
@@ -153,7 +153,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </nav>
         <div className="relative grid aspect-[4/5] place-items-center overflow-hidden rounded-lg bg-neutral-100 p-6 text-center">
           {coverUrl ? (
-            <Image src={coverUrl} alt={product.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" loading="lazy" />
+            <Image src={coverUrl} alt={product.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" loading="lazy" unoptimized />
           ) : (
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">Digital Product</p>

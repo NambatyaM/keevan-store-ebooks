@@ -46,8 +46,8 @@ async function getUserRole(request: NextRequest): Promise<string | null> {
       return null;
     }
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session?.user) return null;
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return null;
 
     const adminClient = createAdminClient();
     if (!adminClient) return null;
@@ -55,7 +55,7 @@ async function getUserRole(request: NextRequest): Promise<string | null> {
     const { data: user } = await adminClient
       .from("users")
       .select("role")
-      .eq("id", sessionData.session.user.id)
+      .eq("id", userData.user.id)
       .single();
 
     return user?.role ?? null;

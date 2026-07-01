@@ -23,7 +23,7 @@ export const GET = withOptionalCsrf(async (request: NextRequest) => {
   try {
     const tokenRes = await fetch(`${baseUrl}/api/Auth/RequestToken`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Accept": "application/json", "Content-Type": "application/json" },
       body: JSON.stringify({ consumer_key: consumerKey, consumer_secret: consumerSecret }),
     });
 

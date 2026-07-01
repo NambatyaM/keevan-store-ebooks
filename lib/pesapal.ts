@@ -89,7 +89,7 @@ export async function getPesapalToken(): Promise<PesapalToken> {
 
   const response = await fetch(`${baseUrl}/api/Auth/RequestToken`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Accept": "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({ consumer_key: consumerKey, consumer_secret: consumerSecret }),
     cache: "no-store"
   });
@@ -124,6 +124,7 @@ export async function createPesapalOrder(input: {
   const response = await fetch(`${baseUrl}/api/Transactions/SubmitOrderRequest`, {
     method: "POST",
     headers: {
+      "Accept": "application/json",
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
     },
@@ -133,6 +134,7 @@ export async function createPesapalOrder(input: {
       amount: input.amount,
       description: input.description,
       callback_url: input.callbackUrl,
+      redirect_mode: "TOP_WINDOW",
       notification_id: ipnId,
       billing_address: {
         email_address: input.email,
@@ -154,7 +156,7 @@ export async function createPesapalOrder(input: {
 export async function getPesapalTransactionStatus(orderTrackingId: string) {
   const { token } = await getPesapalToken();
   const response = await fetch(`${baseUrl}/api/Transactions/GetTransactionStatus?orderTrackingId=${encodeURIComponent(orderTrackingId)}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { "Accept": "application/json", Authorization: `Bearer ${token}` },
     cache: "no-store"
   });
 
@@ -176,6 +178,7 @@ export async function refundPesapalOrder(input: {
   const response = await fetch(`${baseUrl}/api/Transactions/RefundRequest`, {
     method: "POST",
     headers: {
+      "Accept": "application/json",
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
     },
