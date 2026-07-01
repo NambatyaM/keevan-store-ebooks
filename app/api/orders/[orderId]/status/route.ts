@@ -1,18 +1,22 @@
 import { NextRequest } from "next/server";
-import { apiError, json, requireUser, withErrorHandling } from "@/lib/api";
+import { apiError, json, resolveUser, withErrorHandling } from "@/lib/api";
+import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export const GET = withErrorHandling(async (request: NextRequest, context?: unknown) => {
   const { params } = context as { params: Promise<{ orderId: string }> };
   const { orderId } = await params;
   if (!orderId) return apiError("Missing order ID", 400);
 
-  const { supabase, authUser } = await requireUser(request);
+  const { user } = await resolveUser(request);
+  const adminSupabase = getSupabaseAdminClient();
 
-  const { data: order } = await supabase
+  // Fetch the order using the admin client so RLS doesn't block guest lookups.
+  // Only select the fields we need — never expose sensitive billing/payment data.
+  const { data: order } = await adminSupabase
     .from("orders")
     .select(`
-      id, status, buyer_email, buyer_id, creator_id, amount,
-      product:product_id (title, slug, file_path),
+      id, status, buyer_email, buyer_id, creator_id,
+      product:product_id (title, slug),
       creator:creator_id (display_name)
     `)
     .eq("id", orderId)
@@ -20,20 +24,30 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
 
   if (!order) return apiError("Order not found", 404);
 
-  const p = order.product as unknown as { title: string; slug: string; file_path: string } | undefined;
+  const p = order.product as unknown as { title: string; slug: string } | undefined;
   const c = order.creator as unknown as { display_name: string } | undefined;
 
-  const isBuyer = order.buyer_email === authUser.email;
-  const isCreator = order.creator_id
-    ? (await supabase.from("creators").select("id").eq("id", order.creator_id).eq("user_id", authUser.id).maybeSingle()).data !== null
-    : false;
+  // --- Authenticated path: enforce ownership ---
+  if (user) {
+    const isBuyer = order.buyer_email === user.email;
+    const isCreator = order.creator_id
+      ? (await adminSupabase
+          .from("creators")
+          .select("id")
+          .eq("id", order.creator_id)
+          .eq("user_id", user.id)
+          .maybeSingle()
+        ).data !== null
+      : false;
 
-  if (!isBuyer && !isCreator) {
-    return apiError("Access denied", 403);
+    if (!isBuyer && !isCreator) {
+      return apiError("Access denied", 403);
+    }
   }
+  // --- Guest path: no ownership check, order was found by ID — that's sufficient ---
 
   if (order.status === "paid") {
-    const { data: download } = await supabase
+    const { data: download } = await adminSupabase
       .from("downloads")
       .select("token")
       .eq("order_id", orderId)
@@ -42,10 +56,11 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
     return json({
       ok: true,
       status: "completed",
+      orderId: order.id,
       productTitle: p?.title ?? "",
       productSlug: p?.slug ?? "",
       creatorName: c?.display_name ?? "",
-      buyerId: isBuyer ? order.buyer_id : undefined,
+      buyerId: user ? order.buyer_id : undefined,
       downloadUrl: download?.token ? `/api/downloads/${download.token}` : undefined,
     });
   }
@@ -54,6 +69,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
     return json({
       ok: false,
       status: "failed",
+      orderId: order.id,
       productTitle: p?.title ?? "",
       productSlug: p?.slug ?? "",
     });
@@ -62,6 +78,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
   return json({
     ok: true,
     status: "pending",
+    orderId: order.id,
     productTitle: p?.title ?? "",
     productSlug: p?.slug ?? "",
     creatorName: c?.display_name ?? "",

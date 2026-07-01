@@ -1,30 +1,37 @@
 # Keevan Store Vision
 
-Keevan Store is a creator-commerce platform for East African authors and digital creators. It is not a marketplace. Creators own individual stores and product pages, then share those links directly with their audiences. The platform serves Uganda, Kenya, Tanzania, and Rwanda.
+## Our North Star
 
-The platform exists to make e-book selling simple, trustworthy, and fast:
+Make selling digital products as simple as sharing a link — for every East African creator.
 
-- Creators register, create a store, upload digital products, share product links, track analytics, and request withdrawals.
-- Customers visit creator stores, purchase products through Pesapal (mobile money, cards, bank transfer in UGX), and receive instant downloads after server-side payment verification.
-- Keevan Store collects every payment through the platform-owned Pesapal account, keeps a 10% commission, credits creator earnings, and pays creators manually after withdrawal approval (minimum 50,000 UGX).
+## The Problem
 
-The platform handles refund requests through a structured in-app system: customers submit requests via email-based order lookup at `/request-refund`, admins review and approve/reject with notes at `/admin/refunds`. On approval, the payment is reversed via Pesapal's RefundRequest API, the creator's balance is deducted, and the download token is invalidated.
+East Africa has a vibrant community of authors, writers, and digital creators, but the tools to sell their work don't speak their market's language. Global platforms assume credit cards, US-dollar pricing, and marketplace discovery. Local creators need mobile money, region-appropriate currencies (UGX, KES, TZS, RWF), and the ability to sell directly to their own audience — not compete for visibility in a pooled marketplace.
 
-The platform sends transactional email notifications for order confirmations (download links), withdrawal status changes, and refund status updates via Nodemailer with Supabase SMTP credentials.
+## What We're Building
 
-Implementation must not route buyer funds directly to creators, expose downloads before payment verification, or turn the product into a marketplace where Keevan Store promotes pooled listings over creator-owned storefronts.
+Keevan Store is a creator-commerce platform designed from the ground up for the East African digital creator. Every creator gets their own storefront, their own handle, and their own direct link to share with their audience. The platform disappears into the background: creators focus on their work, customers pay with the methods they already use, and the infrastructure just works.
 
-## Technical Foundation
+**We are not a marketplace.** Creators own their storefronts and their customer relationships. Keevan Store provides the payment rails, the file delivery, and the trust layer — not a directory of listings competing for attention.
 
-- **Stack:** Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS
-- **Backend:** Supabase (PostgreSQL, Auth, Storage with signed URLs, RLS)
-- **Payments:** Pesapal (server-side three-way verification)
-- **Monitoring:** Sentry error tracking + @vercel/analytics
-- **Email:** Nodemailer with queue table and Vercel Cron processing
-- **Security:** Rate limiting (Supabase-based), CSRF protection, CSP headers, magic byte file validation, Zod input validation
+## Core Principles
 
-## Visual Identity
+**Creator-owned.** The creator's brand, their URL, their relationship with their audience. Keevan Store never inserts itself between a creator and their customer.
 
-- **Logo:** https://i.ibb.co/v6h94WVG/keevan-favicon.jpg
-- **Hero image:** African woman reading/studying with books and laptop (`/hero.webp`)
-- **Brand color:** Green (`#00854a`), theme color
+**Trust-first.** Every payment is verified server-side before a download is unlocked. Every file is validated by magic bytes, not just extension. Every refund is processed against the real payment. Trust is earned at every layer.
+
+**Region-designed.** Multi-currency from day one. Mobile money as a first-class payment method. Pricing in currencies buyers actually use. This is not a global platform adapted for Africa — it's an African platform built for its market.
+
+**Simple by default.** A creator registers, names their store, uploads a file, and gets a link. That's it. Everything else (payment verification, secure download delivery, email notifications) happens automatically.
+
+## What Success Looks Like
+
+- A creator in Kampala publishes an e-book, shares a link on WhatsApp, and receives payment in UGX — all without touching a dollar or a credit card
+- A customer in Nairobi buys from a Kenyan creator using M-Pesa, pays in KES, and downloads the file seconds later
+- An author in Kigali builds a storefront, grows an audience, and earns a sustainable income from digital sales — using the same tools as a creator in Dar es Salaam
+
+## Why It Matters
+
+East Africa's creator economy is growing, but the infrastructure to support it has not caught up. Writers self-publish on platforms that don't support local payments. Creators share files manually and hope for mobile money transfers that are hard to track. Buyers are asked to pay in currencies they don't use, through payment methods they don't have.
+
+Keevan Store exists to close that gap — to give East African creators the same friction-free selling experience that creators in other markets take for granted.

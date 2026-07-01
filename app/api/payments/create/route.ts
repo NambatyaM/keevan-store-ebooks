@@ -12,11 +12,16 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("id,slug,title,price,currency,creator_id,status,store_id")
+    .select("id,slug,title,price,currency,creator_id,status,store_id,file_path")
     .eq("id", input.productId)
     .single();
 
   if (productError || !product || product.status !== "published") return apiError("Product is not available for purchase", 404);
+
+  if (!product.file_path || product.file_path.trim() === "") {
+    console.error(`[payments/create] Product ${product.id} has no file_path — blocking purchase`);
+    return apiError("Product is not available for purchase", 404);
+  }
 
   const { data: store, error: storeError } = await supabase.from("stores").select("status,currency").eq("id", product.store_id).single();
   if (storeError || !store || store.status !== "active") return apiError("Product is not available for purchase", 404);

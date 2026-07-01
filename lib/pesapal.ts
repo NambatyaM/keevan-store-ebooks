@@ -13,6 +13,14 @@ export type NormalizedPesapalStatus = {
 
 const baseUrl = process.env.PESAPAL_BASE_URL ?? "https://pay.pesapal.com/v3";
 
+const CURRENCY_COUNTRY: Record<string, string> = {
+  UGX: "UG",
+  KES: "KE",
+  TZS: "TZ",
+  RWF: "RW",
+  USD: "US",
+};
+
 let cachedToken: PesapalToken | null = null;
 
 function isTokenExpired(token: PesapalToken): boolean {
@@ -122,7 +130,7 @@ export async function createPesapalOrder(input: {
   }
 
   const currency = input.currency ?? "UGX";
-  const countryCode = currency === "KES" ? "KE" : currency === "TZS" ? "TZ" : "UG";
+  const countryCode = CURRENCY_COUNTRY[currency] ?? "UG";
 
   const response = await fetch(`${baseUrl}/api/Transactions/SubmitOrderRequest`, {
     method: "POST",
@@ -260,6 +268,13 @@ export async function verifyPesapalPayment(
   }
 
   const currency = extractCurrency(transactionStatus.raw);
+
+  // Set the app.api_key context so the DB auth guard in finalize_pesapal_payment passes.
+  // Errors here are logged but must not block the finalize attempt below.
+  const { error: apiKeyError } = await supabase.rpc("set_app_api_key");
+  if (apiKeyError) {
+    console.error("[verifyPesapalPayment] set_app_api_key failed:", apiKeyError.message);
+  }
 
   const { data: finalized, error: finalizeError } = await supabase.rpc("finalize_pesapal_payment", {
     payment_reference: merchantReference,
