@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
 import { Check, Download, ShieldCheck, WifiOff } from "lucide-react";
 import { ButtonLink } from "@/components/button";
 import { BuyNowModal } from "@/components/buy-now-modal";
@@ -52,29 +50,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   } catch (e) {
     console.error("ProductPage: failed to fetch product", e);
     fetchError = true;
-  }
-
-  if (!product) {
-    try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      if (supabaseUrl && supabaseKey) {
-        const cookieStore = await cookies();
-        const sb = createServerClient(supabaseUrl, supabaseKey, {
-          cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} },
-        });
-        const { data: { user } } = await sb.auth.getUser();
-        if (user) {
-          const draftProduct = await getPublishedProductBySlug(slug, true);
-          if (draftProduct) {
-            const { data: creator } = await sb.from("creators").select("id").eq("user_id", user.id).maybeSingle();
-            if (creator && creator.id === draftProduct.creatorId) {
-              product = draftProduct;
-            }
-          }
-        }
-      }
-    } catch (e) { console.error("ProductPage: draft preview failed", e); }
   }
 
   if (!product) {

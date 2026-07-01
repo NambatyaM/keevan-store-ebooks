@@ -121,6 +121,9 @@ export async function createPesapalOrder(input: {
     throw new Error("Pesapal IPN id is missing.");
   }
 
+  const currency = input.currency ?? "UGX";
+  const countryCode = currency === "KES" ? "KE" : currency === "TZS" ? "TZ" : "UG";
+
   const response = await fetch(`${baseUrl}/api/Transactions/SubmitOrderRequest`, {
     method: "POST",
     headers: {
@@ -130,27 +133,38 @@ export async function createPesapalOrder(input: {
     },
     body: JSON.stringify({
       id: input.id,
-      currency: input.currency ?? "UGX",
+      currency,
       amount: input.amount,
       description: input.description,
       callback_url: input.callbackUrl,
-      redirect_mode: "TOP_WINDOW",
       notification_id: ipnId,
+      branch: input.description,
       billing_address: {
         email_address: input.email,
-        phone_number: input.phone,
+        phone_number: input.phone ?? "",
+        country_code: countryCode,
         first_name: input.firstName,
-        last_name: input.lastName
+        middle_name: "",
+        last_name: input.lastName,
+        line_1: "Keevan Store",
+        line_2: "",
+        city: "",
+        state: "",
+        postal_code: "",
+        zip_code: ""
       }
     }),
     cache: "no-store"
   });
 
   if (!response.ok) {
-    throw new Error("Unable to create Pesapal order.");
+    let detail = "Unable to create Pesapal order.";
+    try { const err = await response.json(); detail = err?.error?.message || err?.message || detail; } catch {}
+    throw new Error(detail);
   }
 
-  return response.json();
+  const result = await response.json();
+  return result;
 }
 
 export async function getPesapalTransactionStatus(orderTrackingId: string) {
