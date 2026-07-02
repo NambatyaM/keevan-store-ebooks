@@ -4,30 +4,9 @@ import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { formatCurrency, site, type Currency } from "@/lib/constants";
+import { formatCurrency, type Currency } from "@/lib/constants";
 import { getCoverUrl, getPublishedProductBySlug } from "@/lib/storefront";
 import type { StorefrontProduct } from "@/lib/storefront";
-
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  try {
-    const product = await getPublishedProductBySlug(slug);
-    if (!product) return {};
-    return {
-      title: `${product.title} — Buy Digital E-book Online`,
-      description: product.description,
-      alternates: { canonical: `${site.url}/product/${slug}` },
-      openGraph: {
-        title: `${product.title} — Buy Digital E-book Online`,
-        description: product.description,
-        type: "product",
-        images: product.coverPath ? [{ url: getCoverUrl(product.coverPath) }] : []
-      },
-    };
-  } catch {
-    return {};
-  }
-}
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
