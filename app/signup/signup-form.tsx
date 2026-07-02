@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { login } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
 import { PasswordInput } from "@/components/password-input";
 import { Check, X, AlertTriangle, Store, Banknote, Download, ShieldCheck } from "lucide-react";
@@ -61,12 +60,16 @@ export default function SignupForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : data.error?.message || data.message || "Registration failed");
 
-      const { user, session } = await login(email, password);
-      if (user && session) {
-        window.location.href = "/creator/dashboard";
-      } else {
-        throw new Error("Auto-login failed. Please log in manually.");
+      const loginRes = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!loginRes.ok) {
+        const loginBody = await loginRes.json().catch(() => ({}));
+        throw new Error(loginBody.error || "Auto-login failed. Please log in manually.");
       }
+      window.location.href = "/creator/dashboard";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

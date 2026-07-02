@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { login } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
 import { PasswordInput } from "@/components/password-input";
 
@@ -33,7 +32,16 @@ export default function BuyerSignupPage() {
         return;
       }
 
-      await login(email, password);
+      const loginRes = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!loginRes.ok) {
+        const loginBody = await loginRes.json().catch(() => ({}));
+        setError(loginBody.error || "Auto-login failed. Please log in manually.");
+        return;
+      }
       window.location.href = "/buyer/dashboard";
     } catch {
       setError("Unable to reach the registration service.");

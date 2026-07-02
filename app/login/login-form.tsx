@@ -3,7 +3,6 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { login } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
 import { PasswordInput } from "@/components/password-input";
 
@@ -19,21 +18,20 @@ function LoginFormInner() {
     setError(null);
     setSubmitting(true);
     try {
-      const { user, session } = await login(email, password);
-      if (user && session) {
-        const redirectParam = searchParams.get("redirect");
-        const target = redirectParam && /^\/(?!\/)/.test(redirectParam)
-          ? redirectParam
-          : (() => {
-              const role = user.user_metadata?.role ?? "creator";
-              return role === "admin" ? "/admin/dashboard"
-                : role === "buyer" ? "/buyer/dashboard"
-                : "/creator/dashboard";
-            })();
-        window.location.href = target;
-      } else {
-        throw new Error("Login failed");
-      }
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || "Login failed");
+      const redirectParam = searchParams.get("redirect");
+      const target = redirectParam && /^\/(?!\/)/.test(redirectParam)
+        ? redirectParam
+        : body.role === "admin" ? "/admin/dashboard"
+        : body.role === "buyer" ? "/buyer/dashboard"
+        : "/creator/dashboard";
+      window.location.href = target;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid email or password");
     } finally {
