@@ -83,7 +83,7 @@ export function withErrorHandling(handler: (request: NextRequest, context?: unkn
         checkCSRF(request);
       }
 
-      return await applyPendingCookies(await handler(request, context));
+      return await applyPendingCookies(request, await handler(request, context));
     } catch (error) {
       const err = error as Error & { status?: number; details?: unknown };
       const status = err.status ?? 500;
@@ -114,7 +114,7 @@ export function withErrorHandling(handler: (request: NextRequest, context?: unkn
         );
       }
 
-      return await applyPendingCookies(apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details));
+      return await applyPendingCookies(request, apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details));
     }
   };
 }
@@ -124,7 +124,7 @@ export function withOptionalCsrf(handler: (request: NextRequest, context?: unkno
     try {
       const limited = await rateLimit(request);
       if (limited) return limited;
-      return await applyPendingCookies(await handler(request, context));
+      return await applyPendingCookies(request, await handler(request, context));
     } catch (error) {
       const err = error as Error & { status?: number; details?: unknown };
       const status = err.status ?? 500;
@@ -155,7 +155,7 @@ export function withOptionalCsrf(handler: (request: NextRequest, context?: unkno
         );
       }
 
-      return await applyPendingCookies(apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details));
+      return await applyPendingCookies(request, apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details));
     }
   };
 }

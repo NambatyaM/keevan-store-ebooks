@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
@@ -25,7 +24,6 @@ function strengthLabel(checks: ReturnType<typeof passwordChecks>): { label: stri
 }
 
 export default function SignupForm() {
-  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,7 +63,7 @@ export default function SignupForm() {
 
       const { user, session } = await login(email, password);
       if (user && session) {
-        router.push("/creator/dashboard");
+        window.location.href = "/creator/dashboard";
       } else {
         throw new Error("Auto-login failed. Please log in manually.");
       }

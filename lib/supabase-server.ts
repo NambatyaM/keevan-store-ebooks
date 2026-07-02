@@ -1,7 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest } from "next/server";
 
-let pendingCookies: { name: string; value: string; options?: Record<string, unknown> }[] | null = null;
+const pendingCookiesMap = new WeakMap<
+  NextRequest,
+  { name: string; value: string; options?: Record<string, unknown> }[]
+>();
 
 export function createServerSupabaseClient(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -14,18 +17,18 @@ export function createServerSupabaseClient(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        pendingCookies = cookiesToSet.map(({ name, value, options }) => ({ name, value, options }));
+        pendingCookiesMap.set(request, cookiesToSet.map(({ name, value, options }) => ({ name, value, options })));
         cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
       }
     }
   });
 }
 
-export async function applyPendingCookies(response: Response): Promise<Response> {
-  const toSet = pendingCookies;
+export async function applyPendingCookies(request: NextRequest, response: Response): Promise<Response> {
+  const toSet = pendingCookiesMap.get(request);
   if (!toSet || toSet.length === 0) return response;
 
-  pendingCookies = null;
+  pendingCookiesMap.delete(request);
 
   for (const { name, value, options } of toSet) {
     const maxAge = (options?.maxAge as number) ?? 60 * 60 * 24 * 365;

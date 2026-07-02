@@ -14,7 +14,7 @@ const DASHBOARD_ROUTES: Record<string, string> = {
   buyer: "/buyer/dashboard",
 };
 
-function createSupabaseClient(request: NextRequest) {
+function createSupabaseClient(request: NextRequest, response: NextResponse) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
@@ -23,7 +23,12 @@ function createSupabaseClient(request: NextRequest) {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll() {},
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          request.cookies.set(name, value);
+          response.cookies.set(name, value, options);
+        });
+      },
     },
   });
 }
@@ -38,9 +43,9 @@ function createAdminClient() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-async function getUserRole(request: NextRequest): Promise<string | null> {
+async function getUserRole(request: NextRequest, response: NextResponse): Promise<string | null> {
   try {
-    const supabase = createSupabaseClient(request);
+    const supabase = createSupabaseClient(request, response);
     if (!supabase) {
       console.warn("[Middleware] Supabase client creation failed — role lookup skipped");
       return null;
@@ -77,7 +82,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const role = await getUserRole(request);
+  const response = NextResponse.next();
+  const role = await getUserRole(request, response);
 
   if (!role) {
     const loginUrl = new URL("/login", request.url);
@@ -91,7 +97,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(target, request.url));
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

@@ -15,9 +15,18 @@ vi.mock("@/lib/supabase-server", () => ({
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
       signOut: vi.fn().mockResolvedValue({ error: null }),
+      signInWithPassword: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
     },
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        })),
+      })),
+    })),
   })),
-  applyPendingCookies: vi.fn((r) => Promise.resolve(r)),
+  applyPendingCookies: vi.fn((_req, res) => Promise.resolve(res)),
 }));
 
 function mockFromChain(data: unknown, error: unknown = null) {
@@ -78,14 +87,25 @@ const mockSupabase = {
   },
 };
 
-vi.mock("@/lib/supabase-server", () => ({
-  createServerSupabaseClient: vi.fn(() => ({
-    auth: {
-      getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-      signOut: vi.fn().mockResolvedValue({ error: null }),
-    },
+const mockServerSupabase = {
+  auth: {
+    getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    signOut: vi.fn().mockResolvedValue({ error: null }),
+    signInWithPassword: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+  },
+  rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      })),
+    })),
   })),
-  applyPendingCookies: vi.fn((r) => Promise.resolve(r)),
+};
+
+vi.mock("@/lib/supabase-server", () => ({
+  createServerSupabaseClient: vi.fn(() => mockServerSupabase),
+  applyPendingCookies: vi.fn((_req, res) => Promise.resolve(res)),
 }));
 
 function makeRequest(url: string, overrides: Partial<RequestInit & { headers?: Record<string, string> }> = {}): NextRequest {
@@ -226,7 +246,7 @@ describe("POST /api/auth/login", () => {
   });
 
   it("returns 401 on invalid credentials", async () => {
-    mockSupabase.auth.signInWithPassword.mockResolvedValue({ data: null, error: new Error("Invalid login credentials") });
+    mockServerSupabase.auth.signInWithPassword.mockResolvedValue({ data: null, error: new Error("Invalid login credentials") });
     const POST = await importLogin();
     const res = await POST(makeRequest("/api/auth/login", {
       body: JSON.stringify({ email: "test@test.com", password: "wrong" }),

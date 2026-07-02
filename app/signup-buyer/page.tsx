@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
 import { PasswordInput } from "@/components/password-input";
 
 export default function BuyerSignupPage() {
-  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,7 +34,7 @@ export default function BuyerSignupPage() {
       }
 
       await login(email, password);
-      router.push("/buyer/dashboard");
+      window.location.href = "/buyer/dashboard";
     } catch {
       setError("Unable to reach the registration service.");
     } finally {

@@ -1,14 +1,13 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
 import { PasswordInput } from "@/components/password-input";
 
 function LoginFormInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,15 +22,15 @@ function LoginFormInner() {
       const { user, session } = await login(email, password);
       if (user && session) {
         const redirectParam = searchParams.get("redirect");
-        if (redirectParam && /^\/(?!\/)/.test(redirectParam)) {
-          router.push(redirectParam);
-        } else {
-          const role = user.user_metadata?.role ?? "creator";
-          const dashboard = role === "admin" ? "/admin/dashboard"
-            : role === "buyer" ? "/buyer/dashboard"
-            : "/creator/dashboard";
-          router.push(dashboard);
-        }
+        const target = redirectParam && /^\/(?!\/)/.test(redirectParam)
+          ? redirectParam
+          : (() => {
+              const role = user.user_metadata?.role ?? "creator";
+              return role === "admin" ? "/admin/dashboard"
+                : role === "buyer" ? "/buyer/dashboard"
+                : "/creator/dashboard";
+            })();
+        window.location.href = target;
       } else {
         throw new Error("Login failed");
       }

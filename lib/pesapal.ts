@@ -134,6 +134,9 @@ export async function getPesapalToken(): Promise<PesapalToken> {
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
   if (!consumerKey || !consumerSecret) {
+    captureException(new Error("Pesapal credentials missing in environment"), {
+      tags: { pesapal_action: "get_token" }
+    });
     throw new Error("Pesapal credentials are missing.");
   }
 
@@ -145,6 +148,11 @@ export async function getPesapalToken(): Promise<PesapalToken> {
   });
 
   if (!response.ok) {
+    const bodyText = typeof response.text === "function" ? await response.text().catch(() => "") : "";
+    captureException(new Error(`Pesapal auth failed: ${response.status}`), {
+      tags: { pesapal_action: "get_token" },
+      extra: { httpStatus: response.status, responseBody: bodyText }
+    });
     throw new Error("Unable to authenticate with Pesapal.");
   }
 
@@ -152,6 +160,10 @@ export async function getPesapalToken(): Promise<PesapalToken> {
 
   // Validate that the response actually contains a usable token before caching.
   if (!data.token || !data.expiryDate) {
+    captureException(new Error("Pesapal returned invalid token response"), {
+      tags: { pesapal_action: "get_token" },
+      extra: { responseBody: data }
+    });
     throw new Error("Pesapal returned an invalid token response.");
   }
 
@@ -243,15 +255,24 @@ export async function createPesapalOrder(input: {
       (typeof result.error === "string" && result.error ? result.error : null) ??
       (code ? `Pesapal rejected the order (code ${code}).` : (response.ok ? "Pesapal rejected the order." : "Unable to create Pesapal order."));
     console.error("[createPesapalOrder] Pesapal error response:", JSON.stringify(result));
+    captureException(new Error(`Pesapal SubmitOrderRequest failed: ${detail}`), {
+      tags: { pesapal_action: "submit_order" },
+      extra: { responseBody: result, httpStatus: response.status }
+    });
     throw new Error(detail);
   }
 
-  if (!result.redirect_url) {
+  const redirectUrl = (result.redirect_url as string) ?? (result.redirectUrl as string) ?? "";
+  if (!redirectUrl.trim()) {
     console.error("[createPesapalOrder] Missing redirect_url in Pesapal response:", JSON.stringify(result));
+    captureException(new Error("Pesapal returned no redirect_url"), {
+      tags: { pesapal_action: "submit_order" },
+      extra: { responseBody: result, httpStatus: response.status }
+    });
     throw new Error("Pesapal did not return a checkout URL. Please try again.");
   }
 
-  return result;
+  return { ...result, redirect_url: redirectUrl };
 }
 
 export async function getPesapalTransactionStatus(orderTrackingId: string) {
