@@ -42,7 +42,11 @@ function OrderSuccessContent() {
 
     try {
       const res = await fetch(statusUrl());
-      if (!res.ok) { setError("Order not found."); return; }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body?.error?.message ?? body?.error ?? "Order not found.");
+        return;
+      }
       const data = await res.json();
       setStatus(data);
 
@@ -73,7 +77,11 @@ function OrderSuccessContent() {
     if (!orderId) { setError("No order ID provided."); return; }
     try {
       const res = await fetch(statusUrl());
-      if (!res.ok) { setError("Unable to check order status."); return; }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body?.error?.message ?? body?.error ?? "Unable to check order status.");
+        return;
+      }
       window.location.reload();
     } catch {
       setError("Unable to reach payment verification. Please try again.");
