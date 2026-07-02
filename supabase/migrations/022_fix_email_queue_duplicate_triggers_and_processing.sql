@@ -65,6 +65,14 @@ CREATE INDEX IF NOT EXISTS idx_email_queue_pending_retry
 -- ============================================================
 -- PART 4: Reindex to ensure all indexes are up to date
 -- ============================================================
-REINDEX INDEX IF EXISTS idx_email_queue_status;
-REINDEX INDEX IF EXISTS idx_email_queue_pending_retry;
-REINDEX INDEX IF EXISTS idx_email_queue_created_at;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_email_queue_status') THEN
+    REINDEX INDEX idx_email_queue_status;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_email_queue_pending_retry') THEN
+    REINDEX INDEX idx_email_queue_pending_retry;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_email_queue_created_at') THEN
+    REINDEX INDEX idx_email_queue_created_at;
+  END IF;
+END $$;
