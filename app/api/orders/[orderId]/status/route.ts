@@ -106,7 +106,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
         .eq("order_id", orderId)
         .maybeSingle();
 
-      const resolvedTrackingId = (payment?.pesapal_tracking_id as string | undefined) ?? trackingIdFromUrl || null;
+      const resolvedTrackingId = (payment?.pesapal_tracking_id as string | undefined) ?? (trackingIdFromUrl || null);
 
       if (payment?.merchant_reference && resolvedTrackingId) {
         const result = await verifyPesapalPayment(

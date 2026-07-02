@@ -193,7 +193,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
     // Save the Pesapal tracking ID so the status route can later verify the
     // payment directly without relying on the IPN webhook.
-    const trackingId = (pesapal.order_tracking_id as string | undefined) ?? "";
+    const pesapalResult = pesapal as Record<string, unknown>;
+    const trackingId = (pesapalResult.order_tracking_id as string | undefined) ?? "";
     if (trackingId) {
       try {
         await supabase
