@@ -24,17 +24,24 @@ type OrderStatus = {
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
+  const merchantRef = searchParams.get("OrderMerchantReference") ?? searchParams.get("ref") ?? "";
   const [status, setStatus] = useState<OrderStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pollingExpired, setPollingExpired] = useState(false);
   const pollStartRef = useRef<number | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  function statusUrl() {
+    let url = `/api/orders/${orderId}/status`;
+    if (merchantRef) url += `?ref=${encodeURIComponent(merchantRef)}`;
+    return url;
+  }
+
   const checkOrder = useCallback(async () => {
     if (!orderId) { setError("No order ID provided."); return; }
 
     try {
-      const res = await fetch(`/api/orders/${orderId}/status`);
+      const res = await fetch(statusUrl());
       if (!res.ok) { setError("Order not found."); return; }
       const data = await res.json();
       setStatus(data);
@@ -52,7 +59,7 @@ function OrderSuccessContent() {
     } catch {
       setError("Unable to check order status.");
     }
-  }, [orderId]);
+  }, [orderId, merchantRef]);
 
   useEffect(() => {
     if (orderId) checkOrder();
@@ -60,18 +67,18 @@ function OrderSuccessContent() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [orderId, checkOrder]);
+  }, [orderId, merchantRef, checkOrder]);
 
   const handleVerify = useCallback(async () => {
     if (!orderId) { setError("No order ID provided."); return; }
     try {
-      const res = await fetch(`/api/orders/${orderId}/status`);
+      const res = await fetch(statusUrl());
       if (!res.ok) { setError("Unable to check order status."); return; }
       window.location.reload();
     } catch {
       setError("Unable to reach payment verification. Please try again.");
     }
-  }, [orderId]);
+  }, [orderId, merchantRef]);
 
   if (error) {
     return (

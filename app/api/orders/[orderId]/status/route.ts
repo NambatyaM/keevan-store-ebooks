@@ -10,17 +10,47 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
   const { user } = await resolveUser(request);
   const adminSupabase = getSupabaseAdminClient();
 
-  // Fetch the order using the admin client so RLS doesn't block guest lookups.
-  // Only select the fields we need — never expose sensitive billing/payment data.
-  const { data: order } = await adminSupabase
-    .from("orders")
-    .select(`
-      id, status, buyer_email, buyer_id, creator_id,
-      product:product_id (title, slug, store:store_id (slug)),
-      creator:creator_id (display_name)
-    `)
-    .eq("id", orderId)
-    .maybeSingle();
+  const ref = request.nextUrl.searchParams.get("ref");
+
+  // Try looking up the order by merchant reference first if provided
+  let order: Record<string, unknown> | null = null;
+  if (ref) {
+    const { data: payment } = await adminSupabase
+      .from("payments")
+      .select("order_id")
+      .eq("merchant_reference", ref)
+      .maybeSingle();
+    if (payment?.order_id) {
+      const { data: found } = await adminSupabase
+        .from("orders")
+        .select(`
+          id, status, buyer_email, buyer_id, creator_id,
+          product:product_id (title, slug, store:store_id (slug)),
+          creator:creator_id (display_name)
+        `)
+        .eq("id", payment.order_id)
+        .maybeSingle();
+      order = found;
+    }
+  }
+
+  // Fall back to looking up by order ID directly
+  if (!order) {
+    const { data: found, error: err } = await adminSupabase
+      .from("orders")
+      .select(`
+        id, status, buyer_email, buyer_id, creator_id,
+        product:product_id (title, slug, store:store_id (slug)),
+        creator:creator_id (display_name)
+      `)
+      .eq("id", orderId)
+      .maybeSingle();
+    if (err) {
+      console.error("[orderStatus] Supabase error:", err.message);
+      return apiError("Database error", 500);
+    }
+    order = found;
+  }
 
   if (!order) return apiError("Order not found", 404);
 
