@@ -1,4 +1,4 @@
-import { NoopCache } from "@/lib/utils";
+import { cache } from "react";
 import { getOptionalSupabaseAdminClient } from "@/lib/supabase";
 
 export function getCoverUrl(coverPath: string | null, _width?: number): string | null {
@@ -77,7 +77,7 @@ async function getSupabase() {
   return supabase;
 }
 
-export const getPublishedProductBySlug = NoopCache(async function getPublishedProductBySlug(slug: string, bypassStatus = false): Promise<StorefrontProduct | null> {
+export const getPublishedProductBySlug = cache(async (slug: string, bypassStatus = false): Promise<StorefrontProduct | null> => {
   try {
     const supabase = await getSupabase();
     if (!supabase) return null;

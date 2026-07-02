@@ -57,7 +57,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ slug:
     <SimplePage title="Secure Checkout" eyebrow="Pesapal payment">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <div className="grid gap-6 md:grid-cols-[1fr_0.8fr]">
-        <CheckoutForm productId={product.id} />
+        <CheckoutForm productId={product.id} price={product.price} currency={product.currency as Currency} title={product.title} />
         <aside className="rounded-lg bg-neutral-100 p-5">
           <p className="font-bold">{product.title}</p>
           <p className="mt-2 text-sm text-neutral-600">{product.fileMime}</p>

@@ -222,13 +222,27 @@ export async function createPesapalOrder(input: {
   }
 
   // Pesapal can return HTTP 200 with an error code in the JSON body.
-  // When that happens, result.error is a truthy value (e.g. 1) and
-  // redirect_url is missing. We must check both.
-  if (!response.ok || result.error) {
+  // When that happens, the response body indicates a rejected order and
+  // redirect_url is missing. We must check both the error indicator and
+  // the presence of redirect_url before returning.
+  const isError = response.ok && (
+    result.error ||
+    result.error_code ||
+    result.status === "error"
+  );
+
+  if (!response.ok || isError) {
+    const code = result.error ?? result.error_code ?? "";
     const detail =
-      (result.error_message as string) ||
-      (result.message as string) ||
-      (response.ok ? "Pesapal rejected the order" : "Unable to create Pesapal order.");
+      typeof result.error_message === "string" && result.error_message
+        ? result.error_message
+        : typeof result.message === "string" && result.message
+          ? result.message
+          : typeof result.error_description === "string" && result.error_description
+            ? result.error_description
+            : response.ok
+              ? `Pesapal rejected the order${code ? ` (error ${code})` : ""}.`
+              : "Unable to create Pesapal order.";
     console.error("[createPesapalOrder] Pesapal error response:", JSON.stringify(result));
     throw new Error(detail);
   }
