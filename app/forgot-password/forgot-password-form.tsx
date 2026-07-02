@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createSupabaseBrowserClient } from "@/lib/auth";
 import { SimplePage } from "@/components/simple-page";
 
 export default function ForgotPasswordForm() {
@@ -17,11 +16,13 @@ export default function ForgotPasswordForm() {
     setSubmitting(true);
 
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/update-password`,
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
-      if (resetError) throw resetError;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "Something went wrong");
       setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

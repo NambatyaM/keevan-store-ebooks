@@ -22,9 +22,9 @@ function LoginFormInner() {
     try {
       const { user, session } = await login(email, password);
       if (user && session) {
-          const redirectParam = searchParams.get("redirect");
-          if (redirectParam && /^\/(?!\/)/.test(redirectParam)) {
-            router.push(redirectParam);
+        const redirectParam = searchParams.get("redirect");
+        if (redirectParam && /^\/(?!\/)/.test(redirectParam)) {
+          router.push(redirectParam);
         } else {
           const role = user.user_metadata?.role ?? "creator";
           const dashboard = role === "admin" ? "/admin/dashboard"

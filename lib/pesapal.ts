@@ -213,13 +213,31 @@ export async function createPesapalOrder(input: {
     cache: "no-store"
   });
 
-  if (!response.ok) {
-    let detail = "Unable to create Pesapal order.";
-    try { const err = await response.json(); detail = err?.error?.message || err?.message || detail; } catch {}
+  let result: Record<string, unknown>;
+  try {
+    result = await response.json();
+  } catch {
+    if (!response.ok) throw new Error("Unable to create Pesapal order.");
+    throw new Error("Invalid response from Pesapal.");
+  }
+
+  // Pesapal can return HTTP 200 with an error code in the JSON body.
+  // When that happens, result.error is a truthy value (e.g. 1) and
+  // redirect_url is missing. We must check both.
+  if (!response.ok || result.error) {
+    const detail =
+      (result.error_message as string) ||
+      (result.message as string) ||
+      (response.ok ? "Pesapal rejected the order" : "Unable to create Pesapal order.");
+    console.error("[createPesapalOrder] Pesapal error response:", JSON.stringify(result));
     throw new Error(detail);
   }
 
-  const result = await response.json();
+  if (!result.redirect_url) {
+    console.error("[createPesapalOrder] Missing redirect_url in Pesapal response:", JSON.stringify(result));
+    throw new Error("Pesapal did not return a checkout URL. Please try again.");
+  }
+
   return result;
 }
 

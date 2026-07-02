@@ -179,15 +179,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       callbackUrl: `${callbackBase}/order/success?order_id=${order.id}`
     });
 
-    if (!pesapal?.redirect_url) {
-      await Promise.all([
-        supabase.from("payments").delete().eq("order_id", order.id),
-        supabase.from("orders").delete().eq("id", order.id),
-      ]);
-      console.error("[payments/create] Pesapal returned no redirect_url for order:", order.id, "merchantRef:", merchantReference);
-      return apiError("Payment provider did not return a checkout URL. Please try again.", 502);
-    }
-
     if (discountId) {
       try {
         await supabase.rpc("increment_discount_use", { discount_id: discountId });

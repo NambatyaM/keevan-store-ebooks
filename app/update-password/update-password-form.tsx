@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/auth";
+import { useAuth } from "@/components/auth-provider";
 import { SimplePage } from "@/components/simple-page";
 import { PasswordInput } from "@/components/password-input";
 
 export default function UpdatePasswordForm() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -17,12 +19,14 @@ export default function UpdatePasswordForm() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setReady(true);
-      else setError("Invalid or expired reset link. Please request a new password reset.");
-    }).catch(() => setError("Failed to verify reset link. Please try again."));
-  }, []);
+    if (!loading) {
+      if (user) {
+        setReady(true);
+      } else {
+        setError("Invalid or expired reset link. Please request a new password reset.");
+      }
+    }
+  }, [user, loading]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

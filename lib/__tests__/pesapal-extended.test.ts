@@ -157,7 +157,7 @@ describe("createPesapalOrder", () => {
       ok: true,
       json: async () => ({ token: "tok-1", expiryDate: "2026-06-01T13:00:00Z" }),
     });
-    mockFetch.mockResolvedValueOnce({ ok: false });
+    mockFetch.mockResolvedValueOnce({ ok: false, json: async () => ({}) });
     const { createPesapalOrder } = await import("@/lib/pesapal");
     await expect(createPesapalOrder({
       id: "ref-1", amount: 50000, email: "buyer@test.com",
