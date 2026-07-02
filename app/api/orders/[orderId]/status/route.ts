@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { apiError, json, resolveUser, withErrorHandling } from "@/lib/api";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { verifyPesapalPayment } from "@/lib/pesapal";
+import { getPesapalTransactionStatus, normalizePesapalStatus, extractCurrency } from "@/lib/pesapal";
 
 export const GET = withErrorHandling(async (request: NextRequest, context?: unknown) => {
   const { params } = context as { params: Promise<{ orderId: string }> };
@@ -97,7 +97,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
     });
   }
 
-  // --- Pending: try direct verification with Pesapal ---
+  // --- Pending: check with Pesapal directly ---
   if (order.status === "pending") {
     try {
       const { data: payment } = await adminSupabase
@@ -109,41 +109,58 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
       const resolvedTrackingId = (payment?.pesapal_tracking_id as string | undefined) ?? (trackingIdFromUrl || null);
 
       if (payment?.merchant_reference && resolvedTrackingId) {
-        const result = await verifyPesapalPayment(
-          adminSupabase,
-          payment.merchant_reference,
-          resolvedTrackingId
-        );
+        let statusPayload: unknown;
+        try {
+          statusPayload = await getPesapalTransactionStatus(resolvedTrackingId);
+        } catch (e) {
+          console.warn("[orderStatus] Pesapal API unreachable:", e instanceof Error ? e.message : e);
+        }
 
-        if (result.ok) {
-          const { data: updatedOrder } = await adminSupabase
-            .from("orders")
-            .select(`
-              id, status, buyer_email, buyer_id, creator_id,
-              product:product_id (title, slug, store:store_id (slug)),
-              creator:creator_id (display_name)
-            `)
-            .eq("id", orderId)
-            .single();
+        if (statusPayload) {
+          const normalized = normalizePesapalStatus(statusPayload);
 
-          if (updatedOrder?.status === "paid") {
-            const { data: download } = await adminSupabase
-              .from("downloads")
-              .select("token")
-              .eq("order_id", orderId)
-              .maybeSingle();
+          if (normalized.paymentStatus?.toLowerCase() === "completed") {
+            const currency = extractCurrency(normalized.raw);
 
-            return json({
-              ok: true,
-              status: "completed",
-              orderId: updatedOrder.id,
-              productTitle: p?.title ?? "",
-              productSlug: p?.slug ?? "",
-              storeSlug,
-              creatorName: c?.display_name ?? "",
-              buyerId: user ? updatedOrder.buyer_id : undefined,
-              downloadUrl: download?.token ? `/api/downloads/${download.token}` : undefined,
-            });
+            const { data: finalized } = await adminSupabase
+              .rpc("finalize_pesapal_payment", {
+                payment_reference: payment.merchant_reference,
+                pesapal_tracking_id: normalized.trackingId ?? resolvedTrackingId,
+                status_payload: normalized.raw,
+                payment_currency: currency,
+              });
+
+            if (finalized?.ok) {
+              const { data: updatedOrder } = await adminSupabase
+                .from("orders")
+                .select(`
+                  id, status, buyer_email, buyer_id, creator_id,
+                  product:product_id (title, slug, store:store_id (slug)),
+                  creator:creator_id (display_name)
+                `)
+                .eq("id", orderId)
+                .single();
+
+              if (updatedOrder?.status === "paid") {
+                const { data: download } = await adminSupabase
+                  .from("downloads")
+                  .select("token")
+                  .eq("order_id", orderId)
+                  .maybeSingle();
+
+                return json({
+                  ok: true,
+                  status: "completed",
+                  orderId: updatedOrder.id,
+                  productTitle: p?.title ?? "",
+                  productSlug: p?.slug ?? "",
+                  storeSlug,
+                  creatorName: c?.display_name ?? "",
+                  buyerId: user ? updatedOrder.buyer_id : undefined,
+                  downloadUrl: download?.token ? `/api/downloads/${download.token}` : undefined,
+                });
+              }
+            }
           }
         }
       }
