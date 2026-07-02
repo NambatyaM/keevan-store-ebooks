@@ -3,13 +3,16 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { MessageCircle } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { LogoIcon } from "@/components/logo";
+import { site } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/about", label: "About" },
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
 ];
@@ -58,11 +61,11 @@ export function MobileNav() {
         aria-controls="mobile-menu-panel"
       >
         <span className="relative h-5 w-5" aria-hidden="true">
-          {/* Top bar */}
+          {/* Top bar → rotates 45° down-right */}
           <span
             className={cn(
               "absolute left-0 top-[3px] h-[2px] w-full rounded-full bg-current",
-              "motion-safe:transition-all duration-200"
+              "motion-safe:transition-all duration-[250ms]"
             )}
             style={{
               transform: open
@@ -70,19 +73,19 @@ export function MobileNav() {
                 : "translateY(0) rotate(0deg)",
             }}
           />
-          {/* Middle bar */}
+          {/* Middle bar → fades out */}
           <span
             className={cn(
               "absolute left-0 top-[9px] h-[2px] w-full rounded-full bg-current",
-              "motion-safe:transition-all duration-200"
+              "motion-safe:transition-all duration-[250ms]"
             )}
             style={{ opacity: open ? 0 : 1 }}
           />
-          {/* Bottom bar */}
+          {/* Bottom bar → rotates -45° up-right */}
           <span
             className={cn(
               "absolute left-0 top-[15px] h-[2px] w-full rounded-full bg-current",
-              "motion-safe:transition-all duration-200"
+              "motion-safe:transition-all duration-[250ms]"
             )}
             style={{
               transform: open
@@ -96,7 +99,7 @@ export function MobileNav() {
       {/* Backdrop overlay — always mounted for smooth opacity transition */}
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-black/30 motion-safe:transition-opacity duration-200 md:hidden",
+          "fixed inset-0 z-40 bg-black/40 motion-safe:transition-opacity duration-[250ms] md:hidden",
           open ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setOpen(false)}
@@ -112,21 +115,21 @@ export function MobileNav() {
         aria-hidden={!open}
         inert={!open || undefined}
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex w-80 max-w-[85vw] flex-col bg-white shadow-xl md:hidden",
-          "motion-safe:transition-transform duration-200",
+          "fixed inset-y-0 right-0 z-50 flex w-[85vw] max-w-[360px] flex-col bg-white shadow-xl md:hidden",
+          "motion-safe:transition-transform duration-[250ms]",
           open ? "translate-x-0" : "translate-x-full"
         )}
       >
         {/* Drawer header */}
-        <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
+        <div className="flex shrink-0 items-center justify-between border-b border-neutral-100 px-5 py-4">
           <Link
             href="/"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 font-bold"
+            className="flex items-center gap-2 font-bold text-sm"
             tabIndex={open ? 0 : -1}
           >
-            <span className="grid h-9 w-9 place-items-center">
-              <LogoIcon size={36} />
+            <span className="grid h-7 w-7 place-items-center">
+              <LogoIcon size={28} />
             </span>
             Keevan Store
           </Link>
@@ -152,41 +155,54 @@ export function MobileNav() {
         </div>
 
         {/* Nav links */}
-        <nav className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="flex flex-col gap-1">
-            {/* Primary CTA — visually distinct */}
+        <nav className="flex-1 overflow-y-auto px-5 py-5">
+          <div className="flex flex-col gap-0.5">
+            {/* -- Group 1: Primary CTA — conversion action -- */}
             <Link
               href="/"
               onClick={() => setOpen(false)}
-              className="flex items-center rounded-lg bg-brand-green px-4 py-3 text-base font-semibold text-white min-h-[48px]"
+              className="flex items-center gap-3 rounded-lg bg-brand-green px-5 py-3 text-[16px] font-semibold text-white min-h-[48px]"
               tabIndex={open ? 0 : -1}
             >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              </svg>
               Browse Products
             </Link>
 
-            <hr className="my-3 border-neutral-200" />
+            {/* -- Divider -- */}
+            <div className="my-4 border-t border-neutral-100" />
 
-            {/* Main navigation links */}
+            {/* -- Group 2: Main nav links -- */}
             {nav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="flex items-center rounded-lg px-4 py-3 text-base font-medium text-neutral-700 hover:bg-brand-mist min-h-[48px]"
+                className="flex items-center rounded-lg px-5 py-3 text-[16px] font-medium text-neutral-700 hover:bg-brand-mist min-h-[48px]"
                 tabIndex={open ? 0 : -1}
               >
                 {item.label}
               </Link>
             ))}
 
-            <hr className="my-3 border-neutral-200" />
+            {/* -- Divider -- */}
+            <div className="my-4 border-t border-neutral-100" />
 
-            {/* Auth-aware section */}
-            {loading ? (
-              <div className="px-4 py-3 text-base text-neutral-400">
-                Loading...
-              </div>
-            ) : role ? (
+            {/* -- Group 3: Auth-aware section -- */}
+            {loading && !role ? null : role ? (
               <Link
                 href={
                   role === "admin"
@@ -196,25 +212,25 @@ export function MobileNav() {
                       : "/creator/dashboard"
                 }
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-center rounded-lg bg-brand-green px-4 py-3 text-base font-semibold text-white min-h-[48px]"
+                className="flex items-center justify-center rounded-lg bg-brand-green px-5 py-3 text-[16px] font-semibold text-white min-h-[48px]"
                 tabIndex={open ? 0 : -1}
               >
                 Dashboard
               </Link>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 <Link
                   href="/login"
                   onClick={() => setOpen(false)}
-                  className="flex items-center justify-center rounded-lg border border-neutral-300 px-4 py-3 text-base font-medium text-neutral-700 hover:bg-neutral-50 min-h-[48px]"
+                  className="flex items-center rounded-lg px-5 py-3 text-[16px] font-medium text-neutral-700 hover:bg-neutral-50 min-h-[48px]"
                   tabIndex={open ? 0 : -1}
                 >
-                  Sign In
+                  Log in
                 </Link>
                 <Link
                   href="/signup-buyer"
                   onClick={() => setOpen(false)}
-                  className="flex items-center justify-center rounded-lg px-4 py-3 text-base font-medium text-neutral-700 hover:bg-brand-mist min-h-[48px]"
+                  className="flex items-center rounded-lg px-5 py-3 text-[16px] font-medium text-neutral-700 hover:bg-brand-mist min-h-[48px]"
                   tabIndex={open ? 0 : -1}
                 >
                   Sign Up as Buyer
@@ -222,13 +238,45 @@ export function MobileNav() {
                 <Link
                   href="/signup"
                   onClick={() => setOpen(false)}
-                  className="flex items-center justify-center rounded-lg bg-brand-green px-4 py-3 text-base font-semibold text-white min-h-[48px]"
+                  className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-brand-green px-5 py-3 text-[16px] font-semibold text-white min-h-[48px]"
                   tabIndex={open ? 0 : -1}
                 >
-                  Start Selling Free
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <line x1="19" y1="8" x2="19" y2="14" />
+                    <line x1="22" y1="11" x2="16" y2="11" />
+                  </svg>
+                  Create Your Free Store
                 </Link>
               </div>
             )}
+
+            {/* -- Divider -- */}
+            <div className="my-4 border-t border-neutral-100" />
+
+            {/* -- Group 4: Support / trust signal -- */}
+            <a
+              href={site.supportWhatsApp}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-5 py-3 text-[14px] font-medium text-neutral-500 hover:bg-brand-mist hover:text-brand-green min-h-[44px]"
+              tabIndex={open ? 0 : -1}
+            >
+              <MessageCircle size={18} className="shrink-0" />
+              Chat with us on WhatsApp
+            </a>
           </div>
         </nav>
       </div>
