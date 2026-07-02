@@ -58,24 +58,11 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
   const c = order.creator as unknown as { display_name: string } | undefined;
   const storeSlug = p?.store?.slug ?? "";
 
-  // --- Authenticated path: enforce ownership ---
-  if (user) {
-    const isBuyer = order.buyer_email === user.email;
-    const isCreator = order.creator_id
-      ? (await adminSupabase
-          .from("creators")
-          .select("id")
-          .eq("id", order.creator_id)
-          .eq("user_id", user.id)
-          .maybeSingle()
-        ).data !== null
-      : false;
-
-    if (!isBuyer && !isCreator) {
-      return apiError("Access denied", 403);
-    }
-  }
-  // --- Guest path: no ownership check, order was found by ID — that's sufficient ---
+  // No ownership check — the order_id UUID in the URL is unguessable and acts
+  // as the authorization token for this page (buyer was redirected here from
+  // Pesapal after payment).  A logged-in user whose email doesn't match
+  // order.buyer_email (e.g. guest checkout with a different email) must still
+  // be able to see their order status and download link.
 
   if (order.status === "paid") {
     const { data: download } = await adminSupabase
