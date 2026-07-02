@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { refundRequestSchema, refundDecisionSchema, customerRefundLookupSchema } from "@/lib/schemas";
-import { refundPesapalOrder } from "@/lib/pesapal";
+import { refundPesapalOrder, resetPesapalTokenCache } from "@/lib/pesapal";
 
 describe("refundRequestSchema", () => {
   const valid = {
@@ -139,6 +139,7 @@ describe("refundPesapalOrder", () => {
 
   beforeEach(() => {
     originalFetch = globalThis.fetch;
+    resetPesapalTokenCache();
     process.env.PESAPAL_CONSUMER_KEY = "test-key";
     process.env.PESAPAL_CONSUMER_SECRET = "test-secret";
     process.env.PESAPAL_IPN_ID = "test-ipn";
@@ -224,27 +225,28 @@ describe("refundPesapalOrder", () => {
       return Promise.resolve({ ok: false, json: () => Promise.resolve({}) });
     });
 
-    await expect(refundPesapalOrder({
+    const result = await refundPesapalOrder({
       confirmationCode: "CONF-003",
       amount: 50000,
       username: "admin@example.com",
       remarks: "Test"
-    })).rejects.toThrow("Network error");
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("Unable to reach Pesapal");
   });
 
   it("handles missing credentials", async () => {
-    vi.mocked(globalThis.fetch).mockImplementation(() => {
-      throw new Error("Pesapal credentials are missing.");
-    });
     process.env.PESAPAL_CONSUMER_KEY = "";
     process.env.PESAPAL_CONSUMER_SECRET = "";
 
-    await expect(refundPesapalOrder({
+    const result = await refundPesapalOrder({
       confirmationCode: "CONF-004",
       amount: 50000,
       username: "admin@example.com",
       remarks: "Test"
-    })).rejects.toThrow();
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("Pesapal credentials are missing.");
   });
 
   it("sends correct request parameters to Pesapal", async () => {

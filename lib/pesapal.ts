@@ -31,6 +31,10 @@ function isTokenExpired(token: PesapalToken): boolean {
   return Date.now() >= expiry - 60000;
 }
 
+export function resetPesapalTokenCache(): void {
+  cachedToken = null;
+}
+
 function pickString(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = record[key];
@@ -140,12 +144,23 @@ export async function getPesapalToken(): Promise<PesapalToken> {
     throw new Error("Pesapal credentials are missing.");
   }
 
-  const response = await fetch(`${baseUrl}/api/Auth/RequestToken`, {
-    method: "POST",
-    headers: { "Accept": "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify({ consumer_key: consumerKey, consumer_secret: consumerSecret }),
-    cache: "no-store"
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/api/Auth/RequestToken`, {
+      method: "POST",
+      headers: { "Accept": "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({ consumer_key: consumerKey, consumer_secret: consumerSecret }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(15000)
+    });
+  } catch (fetchErr) {
+    const msg = fetchErr instanceof Error ? fetchErr.message : "Pesapal token request failed (network error)";
+    captureException(new Error(`Pesapal token fetch threw: ${msg}`), {
+      tags: { pesapal_action: "get_token" },
+      extra: { baseUrl }
+    });
+    throw new Error("Unable to reach Pesapal. Please verify PESAPAL_BASE_URL and network connectivity.");
+  }
 
   if (!response.ok) {
     const bodyText = typeof response.text === "function" ? await response.text().catch(() => "") : "";
@@ -153,7 +168,7 @@ export async function getPesapalToken(): Promise<PesapalToken> {
       tags: { pesapal_action: "get_token" },
       extra: { httpStatus: response.status, responseBody: bodyText }
     });
-    throw new Error("Unable to authenticate with Pesapal.");
+    throw new Error("Unable to authenticate with Pesapal. Verify PESAPAL_CONSUMER_KEY and PESAPAL_CONSUMER_SECRET.");
   }
 
   const data = await response.json();
@@ -192,38 +207,49 @@ export async function createPesapalOrder(input: {
   const currency = input.currency ?? "UGX";
   const countryCode = CURRENCY_COUNTRY[currency] ?? "UG";
 
-  const response = await fetch(`${baseUrl}/api/Transactions/SubmitOrderRequest`, {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      id: input.id,
-      currency,
-      amount: input.amount,
-      description: input.description,
-      callback_url: input.callbackUrl,
-      notification_id: ipnId,
-      branch: input.description,
-      billing_address: {
-        email_address: input.email,
-        phone_number: input.phone ?? "",
-        country_code: countryCode,
-        first_name: input.firstName,
-        middle_name: "",
-        last_name: input.lastName,
-        line_1: "Keevan Store",
-        line_2: "",
-        city: "",
-        state: "",
-        postal_code: "",
-        zip_code: ""
-      }
-    }),
-    cache: "no-store"
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/api/Transactions/SubmitOrderRequest`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        id: input.id,
+        currency,
+        amount: input.amount,
+        description: input.description,
+        callback_url: input.callbackUrl,
+        notification_id: ipnId,
+        branch: input.description,
+        billing_address: {
+          email_address: input.email,
+          phone_number: input.phone ?? "",
+          country_code: countryCode,
+          first_name: input.firstName,
+          middle_name: "",
+          last_name: input.lastName,
+          line_1: "Keevan Store",
+          line_2: "",
+          city: "",
+          state: "",
+          postal_code: "",
+          zip_code: ""
+        }
+      }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(20000)
+    });
+  } catch (fetchErr) {
+    const msg = fetchErr instanceof Error ? fetchErr.message : "Pesapal order request failed (network error)";
+    captureException(new Error(`Pesapal SubmitOrderRequest fetch threw: ${msg}`), {
+      tags: { pesapal_action: "submit_order" },
+      extra: { baseUrl, currency, amount: input.amount }
+    });
+    throw new Error("Unable to reach Pesapal payment service. Please try again.");
+  }
 
   let result: Record<string, unknown>;
   try {
@@ -276,11 +302,25 @@ export async function createPesapalOrder(input: {
 }
 
 export async function getPesapalTransactionStatus(orderTrackingId: string) {
-  const { token } = await getPesapalToken();
-  const response = await fetch(`${baseUrl}/api/Transactions/GetTransactionStatus?orderTrackingId=${encodeURIComponent(orderTrackingId)}`, {
-    headers: { "Accept": "application/json", Authorization: `Bearer ${token}` },
-    cache: "no-store"
-  });
+  let token: string;
+  try {
+    ({ token } = await getPesapalToken());
+  } catch (credErr) {
+    const msg = credErr instanceof Error ? credErr.message : "Pesapal status check failed (auth error)";
+    throw new Error(`Unable to verify payment with Pesapal: ${msg}`);
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/api/Transactions/GetTransactionStatus?orderTrackingId=${encodeURIComponent(orderTrackingId)}`, {
+      headers: { "Accept": "application/json", Authorization: `Bearer ${token}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(15000)
+    });
+  } catch (fetchErr) {
+    const msg = fetchErr instanceof Error ? fetchErr.message : "Pesapal status check failed (network error)";
+    throw new Error(`Unable to verify payment with Pesapal: ${msg}`);
+  }
 
   if (!response.ok) {
     throw new Error("Unable to verify Pesapal transaction.");
@@ -295,25 +335,43 @@ export async function refundPesapalOrder(input: {
   username: string;
   remarks: string;
 }) {
-  const { token } = await getPesapalToken();
+  let token: string;
+  try {
+    ({ token } = await getPesapalToken());
+  } catch (credErr) {
+    const msg = credErr instanceof Error ? credErr.message : "Pesapal refund failed (auth error)";
+    return { ok: false as const, error: msg, raw: {} };
+  }
 
-  const response = await fetch(`${baseUrl}/api/Transactions/RefundRequest`, {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      confirmation_code: input.confirmationCode,
-      amount: input.amount,
-      username: input.username,
-      remarks: input.remarks
-    }),
-    cache: "no-store"
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/api/Transactions/RefundRequest`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        confirmation_code: input.confirmationCode,
+        amount: input.amount,
+        username: input.username,
+        remarks: input.remarks
+      }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(15000)
+    });
+  } catch (fetchErr) {
+    const msg = fetchErr instanceof Error ? fetchErr.message : "Pesapal refund request failed (network error)";
+    return { ok: false as const, error: `Unable to reach Pesapal: ${msg}`, raw: {} };
+  }
 
-  const data = await response.json();
+  let data: Record<string, unknown>;
+  try {
+    data = await response.json();
+  } catch {
+    return { ok: false as const, error: "Pesapal refund request failed", raw: {} };
+  }
 
   if (!response.ok || data.error === 500) {
     return { ok: false as const, error: data.message ?? "Pesapal refund request failed", raw: data };

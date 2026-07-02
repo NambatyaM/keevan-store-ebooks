@@ -6,7 +6,19 @@ import { calculateSaleSplit, site, currencyPhoneRegex, type Currency } from "@/l
 import { createPesapalOrder } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
+function validatePesapalConfig(): string | null {
+  if (!process.env.PESAPAL_CONSUMER_KEY) return "PESAPAL_CONSUMER_KEY is not configured";
+  if (!process.env.PESAPAL_CONSUMER_SECRET) return "PESAPAL_CONSUMER_SECRET is not configured";
+  return null;
+}
+
 export const POST = withErrorHandling(async (request: NextRequest) => {
+  const configErr = validatePesapalConfig();
+  if (configErr) {
+    console.error("[payments/create] Pesapal config validation failed:", configErr);
+    return apiError(configErr, 502);
+  }
+
   const input = await readJson(request, checkoutSchema);
   const supabase = getSupabaseAdminClient();
 
@@ -189,14 +201,14 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
     return json({ orderId: order.id, merchantReference, redirectUrl: pesapal.redirect_url });
   } catch (err) {
-    console.error("[payments/create] Pesapal order creation failed:", err, "merchantRef:", merchantReference);
+    const pesapalError = err instanceof Error ? err.message : String(err ?? "Unknown error");
+    console.error("[payments/create] Pesapal order creation failed:", { error: pesapalError, merchantRef: merchantReference });
     try {
       await supabase.from("payments").delete().eq("order_id", order.id);
     } catch { /* cleanup best-effort */ }
     try {
       await supabase.from("orders").delete().eq("id", order.id);
     } catch { /* cleanup best-effort */ }
-    const msg = err instanceof Error ? err.message : "Unable to initiate payment with Pesapal. Please try again.";
-    return apiError(msg, 502);
+    return apiError(pesapalError, 502);
   }
 });

@@ -70,6 +70,8 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://test.supabase.co");
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "test-key");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "test-anon-key");
+  vi.stubEnv("PESAPAL_CONSUMER_KEY", "test-key");
+  vi.stubEnv("PESAPAL_CONSUMER_SECRET", "test-secret");
   mockSupabase.from.mockReturnValue(rateLimitChain);
   mockCalculateSaleSplit.mockReturnValue({ grossAmount: 50000, platformFee: 5000, creatorEarnings: 45000 });
   mockCreatePesapalOrder.mockResolvedValue({ redirect_url: "https://pay.pesapal.com/order/123", order_tracking_id: "trk-1" });
