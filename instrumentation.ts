@@ -9,4 +9,13 @@ export async function register() {
   }
 }
 
-export const onRequestError = Sentry.captureRequestError;
+export const onRequestError: typeof Sentry.captureRequestError = (error, request, context) => {
+  console.error("[onRequestError]", {
+    message: error?.message,
+    digest: (error as Error & { digest?: string }).digest,
+    stack: error?.stack,
+    route: context?.route?.path ?? "unknown",
+    reqPath: request?.url ? new URL(request.url).pathname : "unknown",
+  });
+  return Sentry.captureRequestError(error, request, context);
+};
