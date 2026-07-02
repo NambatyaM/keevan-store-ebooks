@@ -277,7 +277,6 @@ describe("POST /api/auth/logout", () => {
       if (table === "users") return mockFromChain({ id: "u1", email: "admin@test.com", role: "admin", full_name: "Admin" });
       return rateLimitChain;
     });
-    mockSupabase.auth.admin.signOut.mockResolvedValue({ error: null });
 
     const POST = await importLogout();
     const req = makeRequest("/api/auth/logout", { headers: { authorization: "Bearer tok" } });
@@ -285,7 +284,7 @@ describe("POST /api/auth/logout", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
-    expect(mockSupabase.auth.admin.signOut).toHaveBeenCalledWith("u1");
+    expect(mockSupabase.auth.admin.signOut).not.toHaveBeenCalled();
   });
 
   it("returns 401 when not authenticated", async () => {
