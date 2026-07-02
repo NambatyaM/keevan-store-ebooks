@@ -111,19 +111,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const coverUrl = getCoverUrl(product.coverPath, 600);
 
-  console.error("[ProductPage product data]", JSON.stringify({
-    id: product.id,
-    slug: product.slug,
-    title: product.title,
-    description: product.description?.length,
-    price: product.price,
-    currency: product.currency,
-    fileMime: product.fileMime,
-    coverPath: product.coverPath,
-    creatorName: product.creatorName,
-    storeHandle: product.storeHandle,
-  }));
-
   try {
     return (
       <>
@@ -203,7 +190,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   </section>
                 ))}
               </div>
-            <ProductReviews productId={product.id} />
+{/* <ProductReviews productId={product.id} /> */}
             </div>
           </section>
         </main>
