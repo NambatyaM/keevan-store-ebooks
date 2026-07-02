@@ -27,6 +27,16 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     return apiError(validation.message, 400);
   }
 
+  // Cross-validate: ensure the file's MIME type is allowed for the given kind.
+  // This prevents uploading an image to the products bucket (or an ebook to covers)
+  // even if magic bytes are valid for the detected MIME.
+  if (!(rules.types as string[]).includes(validation.mime)) {
+    return apiError(
+      `${kind === "ebook" ? "E-book" : "Cover image"} must be one of: ${rules.types.join(", ")}.`,
+      400
+    );
+  }
+
   const ext = file.name.split(".").pop() ?? "bin";
   const storagePath = `${creator.id}/${randomUUID()}.${ext}`;
   const bucket = kind === "image" ? "covers" : "products";

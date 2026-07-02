@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPesapalToken, getPesapalTransactionStatus, verifyPesapalPayment } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { rateLimit } from "@/lib/api";
+import { withOptionalCsrf } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -99,10 +99,7 @@ function verifyIpnId(request: NextRequest): boolean {
   return receivedIpnId === expectedIpnId;
 }
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
-  const limited = await rateLimit(request, 30, 60);
-  if (limited) return limited;
-
+export const GET = withOptionalCsrf(async (request: NextRequest) => {
   if (!verifyIpnId(request)) {
     return NextResponse.json({ status: 401, error: "Unauthorized" }, { status: 401 });
   }
@@ -113,12 +110,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const orderNotificationType = searchParams.get("OrderNotificationType") ?? "IPNCHANGE";
 
   return handleIpn(orderTrackingId, orderMerchantReference, orderNotificationType);
-}
+});
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
-  const limited = await rateLimit(request, 30, 60);
-  if (limited) return limited;
-
+export const POST = withOptionalCsrf(async (request: NextRequest) => {
   if (!verifyIpnId(request)) {
     return NextResponse.json({ status: 401, error: "Unauthorized" }, { status: 401 });
   }
@@ -144,7 +138,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   return handleIpn(trackingId, orderMerchantReference, "IPNCHANGE");
-}
+});
 
 function extractPaymentStatus(payload: Record<string, unknown>): string {
   return (

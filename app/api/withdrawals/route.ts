@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { apiError, json, readJson, requireUser, withErrorHandling } from "@/lib/api";
 import { withdrawalSchema } from "@/lib/schemas";
-import { getSupabaseAdminClient } from "@/lib/supabase";
 import { minimumWithdrawalByCurrency, type Currency } from "@/lib/constants";
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
@@ -21,10 +20,9 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const input = await readJson(request, withdrawalSchema);
-  const { supabase: userSupabase, authUser } = await requireUser(request);
+  const { supabase, authUser } = await requireUser(request);
 
-  // Get the creator's store to determine their currency
-  const { data: creator } = await userSupabase
+  const { data: creator } = await supabase
     .from("creators")
     .select("id")
     .eq("user_id", authUser.id)
@@ -32,7 +30,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   if (!creator) return apiError("Creator profile not found", 404);
 
-  const { data: store } = await userSupabase
+  const { data: store } = await supabase
     .from("stores")
     .select("currency")
     .eq("creator_id", creator.id)
@@ -48,7 +46,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     );
   }
 
-  const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase.rpc("reserve_withdrawal", {
     p_amount: input.amount,
     p_payout_method: input.payoutMethod,

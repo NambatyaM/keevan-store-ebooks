@@ -1,40 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-function mockFromChain(data: unknown, error: unknown = null, customCount?: number) {
-  let countMode = false;
-  const eq = vi.fn(() => chain);
-  const resolveValue = { data, error };
-  const chain = {
-    select: vi.fn((_col: string, opts?: { count?: string }) => {
-      if (opts?.count === "exact") countMode = true;
-      return chain;
-    }),
-    eq,
-    single: vi.fn().mockResolvedValue(resolveValue),
-    maybeSingle: vi.fn().mockResolvedValue(resolveValue),
-    insert: vi.fn(() => ({ select: vi.fn(() => ({ single: vi.fn().mockResolvedValue(resolveValue) })) })),
-    update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ data: null, error: null }) })),
-    then: (resolve: (v: unknown) => void) => {
-      if (countMode) resolve({ count: customCount ?? 0, data: null, error: null });
-      else resolve(resolveValue);
-    },
-    order: vi.fn(() => chain),
-    limit: vi.fn(() => chain),
-    lt: vi.fn(() => chain),
-  };
-  return chain;
-}
-
-const rateLimitChain = (() => {
-  const chain = mockFromChain(null);
-  chain.maybeSingle = vi.fn().mockResolvedValue({ data: { count: 5 }, error: null });
-  return chain;
-})();
-
 const mockSupabase = {
   rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
-  from: vi.fn(() => rateLimitChain),
+  from: vi.fn(() => ({
+    update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ data: null, error: null }) })),
+    maybeSingle: vi.fn().mockResolvedValue({ data: { count: 5 }, error: null }),
+  })),
   auth: {
     getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
     admin: { signOut: vi.fn() },
@@ -78,7 +50,7 @@ beforeEach(() => {
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "test-key");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "test-anon-key");
   vi.stubEnv("CRON_SECRET", "test-cron-secret-123");
-  mockSupabase.from.mockReturnValue(rateLimitChain);
+  mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
 });
 
 describe("GET /api/cron/process-emails", () => {
@@ -95,13 +67,7 @@ describe("GET /api/cron/process-emails", () => {
   });
 
   it("processes queue with valid cron secret", async () => {
-    const supabase = mockSupabase;
-    const chain = supabase.from("email_queue") as ReturnType<typeof mockFromChain>;
-    chain.then = (resolve: (v: unknown) => void) => resolve({
-      data: [],
-      error: null,
-      count: 0,
-    });
+    mockSupabase.rpc.mockResolvedValue({ data: [], error: null });
 
     const request = makeCronRequest("/api/cron/process-emails", "test-cron-secret-123");
     const response = await GET(request);
@@ -114,22 +80,7 @@ describe("GET /api/cron/process-emails", () => {
   });
 
   it("handles database fetch error", async () => {
-    const supabase = mockSupabase;
-
-    const errorChain = {
-      select: vi.fn(() => errorChain),
-      eq: vi.fn(() => errorChain),
-      lt: vi.fn(() => errorChain),
-      order: vi.fn(() => errorChain),
-      limit: vi.fn(() => errorChain),
-      single: vi.fn(),
-      maybeSingle: vi.fn(),
-      insert: vi.fn(),
-      update: vi.fn(),
-      then: (resolve: (v: unknown) => void) => resolve({ data: null, error: { message: "DB error" } }),
-    };
-
-    supabase.from.mockReturnValue(errorChain);
+    mockSupabase.rpc.mockResolvedValue({ data: null, error: { message: "DB error" } });
 
     const request = makeCronRequest("/api/cron/process-emails", "test-cron-secret-123");
     const response = await GET(request);
@@ -149,13 +100,7 @@ describe("POST /api/cron/process-emails", () => {
   });
 
   it("processes queue via POST with valid secret", async () => {
-    const supabase = mockSupabase;
-    const chain = supabase.from("email_queue") as ReturnType<typeof mockFromChain>;
-    chain.then = (resolve: (v: unknown) => void) => resolve({
-      data: [],
-      error: null,
-      count: 0,
-    });
+    mockSupabase.rpc.mockResolvedValue({ data: [], error: null });
 
     const request = makeCronRequest("/api/cron/process-emails", "test-cron-secret-123", "POST");
     const response = await POST(request);

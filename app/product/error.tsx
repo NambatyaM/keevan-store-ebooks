@@ -10,8 +10,10 @@ export default function ProductError({ error, reset }: { error: Error & { digest
     console.error("Product page error:", error.message, error.stack);
   }, [error]);
 
-  const isTimeout = error?.message?.toLowerCase().includes("timeout");
-  const isNetwork = error?.message?.toLowerCase().includes("network") || error?.message?.toLowerCase().includes("fetch");
+  const msg = error?.message ?? "";
+  const isTimeout = msg.toLowerCase().includes("timeout");
+  const isNetwork = msg.toLowerCase().includes("network") || msg.toLowerCase().includes("fetch");
+  const digest = (error as Error & { digest?: string }).digest;
 
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-7xl items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
@@ -28,6 +30,11 @@ export default function ProductError({ error, reset }: { error: Error & { digest
         <p className="mt-2 text-sm text-neutral-500">
           Error: {error?.message ?? "Unknown"}
         </p>
+        {digest && (
+          <p className="mt-1 text-xs text-neutral-400">
+            Reference: {digest}
+          </p>
+        )}
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <button onClick={reset} className="inline-flex min-h-11 items-center justify-center rounded-md bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-[#006f43]">
             Try again

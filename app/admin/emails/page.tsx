@@ -111,7 +111,7 @@ export default function AdminEmailsPage() {
                     </span>
                   </div>
                   {status?.cron_configured ? (
-                    <p className="mt-2 text-xs text-muted">Runs every 1 minute via Vercel Cron Jobs.</p>
+                    <p className="mt-2 text-xs text-muted">Runs once daily at 6 AM via Vercel Cron Jobs.</p>
                   ) : (
                     <p className="mt-2 text-xs text-muted">
                       Set CRON_SECRET in environment variables and deploy to enable automated processing.

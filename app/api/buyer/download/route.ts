@@ -55,7 +55,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   const { data: signedUrl, error: signedUrlError } = await admin.storage
     .from(bucket)
-    .createSignedUrl(product.file_path, 86400);
+    .createSignedUrl(product.file_path, 60);
 
   if (signedUrlError) return apiError(signedUrlError.message, 500);
   if (!signedUrl) return apiError("Unable to generate download URL", 500);

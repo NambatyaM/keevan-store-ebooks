@@ -8,7 +8,7 @@ export const PATCH = withErrorHandling(async (request: NextRequest, context?: un
   const input = await readJson(request, storeSchema.partial());
   const { supabase, authUser, profile } = await requireUser(request);
 
-  const { data: store } = await supabase.from("stores").select("creator_id,currency").eq("id", id).maybeSingle();
+  const { data: store } = await supabase.from("stores").select("creator_id,currency,slug").eq("id", id).maybeSingle();
   if (!store) return apiError("Store not found", 404);
 
   if (profile.role !== "admin") {
@@ -16,6 +16,12 @@ export const PATCH = withErrorHandling(async (request: NextRequest, context?: un
     if (!creator || store.creator_id !== creator.id) {
       return apiError("Store not found", 404);
     }
+  }
+
+  // Explicit duplicate handle check if slug is being changed
+  if (input.slug && input.slug !== store.slug) {
+    const { data: slugTaken } = await supabase.from("stores").select("id").neq("id", id).eq("slug", input.slug).maybeSingle();
+    if (slugTaken) return apiError("Store handle is already taken. Please choose another.", 409);
   }
 
   // Prevent currency change after first paid order

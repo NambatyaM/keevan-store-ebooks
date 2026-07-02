@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { apiError, json, requireAdmin, withErrorHandling } from "@/lib/api";
+import { apiError, json, readJson, requireAdmin, withErrorHandling } from "@/lib/api";
+import { markNotificationsReadSchema } from "@/lib/schemas";
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const { supabase, authUser, profile } = await requireAdmin(request);
@@ -29,11 +30,9 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
 export const PATCH = withErrorHandling(async (request: NextRequest) => {
   const { supabase } = await requireAdmin(request);
+  const { ids } = await readJson(request, markNotificationsReadSchema);
 
-  const body = await request.json().catch(() => ({}));
-  const ids: string[] = body.ids ?? [];
-
-  if (ids.length === 0) {
+  if (!ids || ids.length === 0) {
     const { error } = await supabase
       .from("notifications")
       .update({ read: true })

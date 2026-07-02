@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { apiError, json, logAdminAction, readJson, requireAdmin, withErrorHandling } from "@/lib/api";
 import { refundDecisionSchema } from "@/lib/schemas";
 import { refundPesapalOrder, getPesapalTransactionStatus } from "@/lib/pesapal";
-import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export const POST = withErrorHandling(async (request: NextRequest, context?: unknown) => {
   const input = await readJson(request, refundDecisionSchema);

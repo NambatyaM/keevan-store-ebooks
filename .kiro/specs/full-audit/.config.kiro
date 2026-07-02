@@ -1,0 +1,7 @@
+{
+  "type": "spec",
+  "name": "full-audit",
+  "displayName": "Keevan Store — Full Production Audit",
+  "description": "Complete audit of all platform systems: buyer flow, payments, creator dashboard, admin dashboard, security, and reliability. Fixes all bugs found. No new features.",
+  "status": "active"
+}

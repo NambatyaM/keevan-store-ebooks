@@ -16,6 +16,9 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   if (!buyer) return json({ purchases: [] });
 
+  const url = new URL(request.url);
+  const limit = Math.min(Number(url.searchParams.get("limit")) || 50, 100);
+
   const { data: purchases } = await supabase
     .from("buyer_purchases")
     .select(`
@@ -25,7 +28,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       store:store_id (slug)
     `)
     .eq("buyer_id", buyer.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
   const orderIds = (purchases ?? []).map((bp) => bp.order_id).filter(Boolean);
 

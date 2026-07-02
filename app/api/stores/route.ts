@@ -12,6 +12,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const { data: existingStore } = await supabase.from("stores").select("id").eq("creator_id", creator.id).maybeSingle();
   if (existingStore) return apiError("You already have a store. Only one store per creator is allowed.", 409);
 
+  // Explicit duplicate handle check — DB constraint exists but we want a clean 409
+  const { data: slugTaken } = await supabase.from("stores").select("id").eq("slug", input.slug).maybeSingle();
+  if (slugTaken) return apiError("Store handle is already taken. Please choose another.", 409);
+
   const { data, error } = await supabase.from("stores").insert({ creator_id: creator.id, ...input }).select("*").single();
   if (error) return apiError(error.message, 400);
   return json({ store: data }, { status: 201 });

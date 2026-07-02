@@ -53,9 +53,14 @@ export type DownloadPageState = {
 };
 
 async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 10000): Promise<{ ok: true; value: T } | { ok: false }> {
+  // Attach a noop catch to silence orphaned rejections: if the timeout wins the
+  // race the original promise is left dangling; its eventual rejection would
+  // trigger an unhandledRejection crash in Next.js server component rendering.
+  const safePromise = Promise.resolve(promise);
+  safePromise.catch(() => {});
   try {
     const value = await Promise.race([
-      promise,
+      safePromise as Promise<T>,
       new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Query timeout")), timeoutMs))
     ]);
     return { ok: true, value };
@@ -73,59 +78,64 @@ async function getSupabase() {
 }
 
 export const getPublishedProductBySlug = NoopCache(async function getPublishedProductBySlug(slug: string, bypassStatus = false): Promise<StorefrontProduct | null> {
-  const supabase = await getSupabase();
-  if (!supabase) return null;
+  try {
+    const supabase = await getSupabase();
+    if (!supabase) return null;
 
-  let query = supabase
-    .from("products")
-    .select("id,creator_id,store_id,slug,title,description,price,currency,file_mime,cover_path")
-    .eq("slug", slug);
+    let query = supabase
+      .from("products")
+      .select("id,creator_id,store_id,slug,title,description,price,currency,file_mime,cover_path")
+      .eq("slug", slug);
 
-  if (!bypassStatus) query = query.eq("status", "published");
+    if (!bypassStatus) query = query.eq("status", "published");
 
-  const productResult = await withTimeout(query.maybeSingle());
-  if (!productResult.ok) return null;
-  const { data: product, error: productError } = productResult.value;
-  if (productError || !product) return null;
+    const productResult = await withTimeout(query.maybeSingle());
+    if (!productResult.ok) return null;
+    const { data: product, error: productError } = productResult.value;
+    if (productError || !product) return null;
 
-  const storeResult = await withTimeout(
-    supabase
-      .from("stores")
-      .select("id,slug,name,status")
-      .eq("id", product.store_id)
-      .eq("status", "active")
-      .maybeSingle()
-  );
-  if (!storeResult.ok) return null;
-  const { data: store, error: storeError } = storeResult.value;
-  if (storeError || !store) return null;
+    const storeResult = await withTimeout(
+      supabase
+        .from("stores")
+        .select("id,slug,name,status")
+        .eq("id", product.store_id)
+        .eq("status", "active")
+        .maybeSingle()
+    );
+    if (!storeResult.ok) return null;
+    const { data: store, error: storeError } = storeResult.value;
+    if (storeError || !store) return null;
 
-  const creatorResult = await withTimeout(
-    supabase
-      .from("creators")
-      .select("id,display_name")
-      .eq("id", product.creator_id)
-      .maybeSingle()
-  );
-  if (!creatorResult.ok) return null;
-  const { data: creator, error: creatorError } = creatorResult.value;
-  if (creatorError || !creator) return null;
+    const creatorResult = await withTimeout(
+      supabase
+        .from("creators")
+        .select("id,display_name")
+        .eq("id", product.creator_id)
+        .maybeSingle()
+    );
+    if (!creatorResult.ok) return null;
+    const { data: creator, error: creatorError } = creatorResult.value;
+    if (creatorError || !creator) return null;
 
-  return {
-    id: product.id,
-    slug: product.slug,
-    title: product.title,
-    description: product.description,
-    price: product.price,
-    currency: product.currency,
-    fileMime: product.file_mime,
-    coverPath: product.cover_path,
-    creatorId: product.creator_id,
-    creatorName: creator.display_name,
-    storeId: store.id,
-    storeHandle: store.slug,
-    storeName: store.name
-  };
+    return {
+      id: product.id,
+      slug: product.slug,
+      title: product.title,
+      description: product.description,
+      price: product.price,
+      currency: product.currency,
+      fileMime: product.file_mime,
+      coverPath: product.cover_path,
+      creatorId: product.creator_id,
+      creatorName: creator.display_name,
+      storeId: store.id,
+      storeHandle: store.slug,
+      storeName: store.name
+    };
+  } catch (e) {
+    console.error("[storefront] getPublishedProductBySlug unexpected error:", e);
+    return null;
+  }
 });
 
 export async function getPublishedStoreByHandle(handle: string): Promise<StorefrontStoreResult> {

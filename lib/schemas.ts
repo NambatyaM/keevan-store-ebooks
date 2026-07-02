@@ -96,6 +96,10 @@ export const refundDecisionSchema = z.object({
   notes: z.string().max(1000).optional()
 });
 
+export const markNotificationsReadSchema = z.object({
+  ids: z.array(z.string().uuid()).optional()
+});
+
 export const analyticsEventSchema = z.object({
   storeId: z.string().uuid().optional(),
   productId: z.string().uuid().optional(),

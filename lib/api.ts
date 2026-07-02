@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { captureException } from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
@@ -93,9 +94,10 @@ export function withErrorHandling(handler: (request: NextRequest, context?: unkn
           method: request.method,
           message: err.message,
           status: err.status ?? 500,
-          ...(process.env.NODE_ENV === "development" ? { details: err.details, stack: err.stack } : {})
+          ...(process.env.NODE_ENV === "production" ? {} : { details: err.details, stack: err.stack })
         })
       );
+      captureException(error);
       const status = err.status ?? 500;
       return apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details);
     }
@@ -118,9 +120,10 @@ export function withOptionalCsrf(handler: (request: NextRequest, context?: unkno
           method: request.method,
           message: err.message,
           status: err.status ?? 500,
-          ...(process.env.NODE_ENV === "development" ? { details: err.details, stack: err.stack } : {})
+          ...(process.env.NODE_ENV === "production" ? {} : { details: err.details, stack: err.stack })
         })
       );
+      captureException(error);
       const status = err.status ?? 500;
       return apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details);
     }

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { apiError, json, readJson, requireUser, requireAdmin, withErrorHandling } from "@/lib/api";
+import { apiError, json, readJson, requireUser, withErrorHandling } from "@/lib/api";
 import { productSchema } from "@/lib/schemas";
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
@@ -18,14 +18,32 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 });
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
-  const input = await readJson(request, productSchema);
+  // Authenticate first, then parse input so we can enforce ownership
   const { supabase, authUser } = await requireUser(request);
+  const input = await readJson(request, productSchema);
+
   const { data: creator } = await supabase.from("creators").select("id").eq("user_id", authUser.id).single();
   if (!creator) return apiError("Creator profile not found", 404);
 
-  const { data: store } = await supabase.from("stores").select("id").eq("id", input.storeId).eq("creator_id", creator.id).maybeSingle();
+  // Ownership check: the store must belong to the authenticated creator
+  const { data: store } = await supabase
+    .from("stores")
+    .select("id")
+    .eq("id", input.storeId)
+    .eq("creator_id", creator.id)
+    .maybeSingle();
   if (!store) return apiError("Store not found", 404);
 
+  // Slug uniqueness within the store (app-level check — DB unique index provides the hard constraint)
+  const { data: slugConflict } = await supabase
+    .from("products")
+    .select("id")
+    .eq("store_id", input.storeId)
+    .eq("slug", input.slug)
+    .maybeSingle();
+  if (slugConflict) return apiError("A product with this slug already exists in your store", 409);
+
+  // Verify uploaded file actually exists in storage before committing the row
   const { data: fileExists } = await supabase.storage.from("products").info(input.filePath);
   if (!fileExists) return apiError("Uploaded file not found in storage. Please re-upload.", 400);
 

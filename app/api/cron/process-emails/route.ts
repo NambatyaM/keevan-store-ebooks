@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { json, withOptionalCsrf } from "@/lib/api";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { type QueueItem, renderAndSend } from "@/lib/email-processor";
+import { renderAndSend } from "@/lib/email-processor";
 
 async function authorizeCron(request: NextRequest): Promise<void> {
   const secret = process.env.CRON_SECRET;
@@ -27,16 +27,11 @@ async function processEmails(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
   const limit = Math.min(Number(url.searchParams.get("limit")) || 100, 500);
 
-  const { data: queueItems, error: fetchError } = await supabase
-    .from("email_queue")
-    .select("*")
-    .eq("status", "pending")
-    .lt("retry_count", 3)
-    .order("created_at", { ascending: true })
-    .limit(limit);
+  const { data: queueItems, error: claimError } = await supabase
+    .rpc("claim_email_queue_items", { p_limit: limit });
 
-  if (fetchError) {
-    return json({ ok: false, error: fetchError.message, processed: 0, failed: 0 }, { status: 500 });
+  if (claimError) {
+    return json({ ok: false, error: claimError.message, processed: 0, failed: 0 }, { status: 500 });
   }
 
   if (!queueItems || queueItems.length === 0) {
