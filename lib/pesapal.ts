@@ -220,10 +220,10 @@ export async function createPesapalOrder(input: {
         id: input.id,
         currency,
         amount: input.amount,
-        description: input.description,
+        description: input.description.slice(0, 100),
         callback_url: input.callbackUrl,
         notification_id: ipnId,
-        branch: input.description,
+        branch: "Keevan Store",
         billing_address: {
           email_address: input.email,
           phone_number: input.phone ?? "",
