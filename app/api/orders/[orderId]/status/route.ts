@@ -12,6 +12,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
   const adminSupabase = getSupabaseAdminClient();
 
   const ref = request.nextUrl.searchParams.get("ref");
+  const trackingIdFromUrl = request.nextUrl.searchParams.get("trackingId") ?? "";
 
   // Try looking up the order by merchant reference first if provided
   let order: Record<string, unknown> | null = null;
@@ -105,11 +106,13 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
         .eq("order_id", orderId)
         .maybeSingle();
 
-      if (payment?.merchant_reference && payment?.pesapal_tracking_id) {
+      const resolvedTrackingId = (payment?.pesapal_tracking_id as string | undefined) ?? trackingIdFromUrl || null;
+
+      if (payment?.merchant_reference && resolvedTrackingId) {
         const result = await verifyPesapalPayment(
           adminSupabase,
           payment.merchant_reference,
-          payment.pesapal_tracking_id as string
+          resolvedTrackingId
         );
 
         if (result.ok) {

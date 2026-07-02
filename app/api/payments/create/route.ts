@@ -191,6 +191,20 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       callbackUrl: `${callbackBase}/order/success?order_id=${order.id}`
     });
 
+    // Save the Pesapal tracking ID so the status route can later verify the
+    // payment directly without relying on the IPN webhook.
+    const trackingId = (pesapal.order_tracking_id as string | undefined) ?? "";
+    if (trackingId) {
+      try {
+        await supabase
+          .from("payments")
+          .update({ pesapal_tracking_id: trackingId })
+          .eq("merchant_reference", merchantReference);
+      } catch (e) {
+        console.error("[payments/create] Failed to save pesapal_tracking_id:", e);
+      }
+    }
+
     if (discountId) {
       try {
         await supabase.rpc("increment_discount_use", { discount_id: discountId });

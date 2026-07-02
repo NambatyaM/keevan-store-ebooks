@@ -25,6 +25,7 @@ function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
   const merchantRef = searchParams.get("OrderMerchantReference") ?? searchParams.get("ref") ?? "";
+  const trackingId = searchParams.get("OrderTrackingId") ?? "";
   const [status, setStatus] = useState<OrderStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pollingExpired, setPollingExpired] = useState(false);
@@ -33,7 +34,10 @@ function OrderSuccessContent() {
 
   function statusUrl() {
     let url = `/api/orders/${orderId}/status`;
-    if (merchantRef) url += `?ref=${encodeURIComponent(merchantRef)}`;
+    const params: string[] = [];
+    if (merchantRef) params.push(`ref=${encodeURIComponent(merchantRef)}`);
+    if (trackingId) params.push(`trackingId=${encodeURIComponent(trackingId)}`);
+    if (params.length) url += `?${params.join("&")}`;
     return url;
   }
 
@@ -63,7 +67,7 @@ function OrderSuccessContent() {
     } catch {
       setError("Unable to check order status.");
     }
-  }, [orderId, merchantRef]);
+  }, [orderId, merchantRef, trackingId]);
 
   useEffect(() => {
     if (orderId) checkOrder();
@@ -71,7 +75,7 @@ function OrderSuccessContent() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [orderId, merchantRef, checkOrder]);
+  }, [orderId, merchantRef, trackingId, checkOrder]);
 
   const handleVerify = useCallback(async () => {
     if (!orderId) { setError("No order ID provided."); return; }
@@ -86,7 +90,7 @@ function OrderSuccessContent() {
     } catch {
       setError("Unable to reach payment verification. Please try again.");
     }
-  }, [orderId, merchantRef]);
+  }, [orderId, merchantRef, trackingId]);
 
   if (error) {
     return (
