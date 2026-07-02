@@ -461,18 +461,18 @@ export async function verifyPesapalPayment(
   const currency = extractCurrency(transactionStatus.raw);
 
   // Set the app API key required by the SECURITY DEFINER RPC.
-  // A single attempt is made; failure returns an error immediately rather than
-  // proceeding with a finalization call that would fail anyway.
+  // This is only needed for non-admin (authenticated-user) callers — admin
+  // clients (service_role) pass auth in finalize_pesapal_payment via
+  // is_admin().  Failure is non-fatal because the function might not exist
+  // yet in environments where migration 027 hasn't been applied; the
+  // finalization RPC enforces its own auth regardless.
   try {
     const { error: apiKeyError } = await supabase.rpc("set_app_api_key");
     if (apiKeyError) {
-      console.error("[verifyPesapalPayment] set_app_api_key failed:", apiKeyError.message);
-      return { ok: false, error: "Auth context setup failed for payment finalization", raw: {} };
+      console.warn("[verifyPesapalPayment] set_app_api_key warning:", apiKeyError.message);
     }
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Auth context setup threw an unexpected error";
-    console.error("[verifyPesapalPayment] set_app_api_key threw:", msg);
-    return { ok: false, error: "Auth context setup failed for payment finalization", raw: {} };
+    console.warn("[verifyPesapalPayment] set_app_api_key warning:", e instanceof Error ? e.message : e);
   }
 
   let finalized: unknown;
