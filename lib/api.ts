@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { captureException } from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { createServerSupabaseClient, applyPendingCookies } from "@/lib/supabase-server";
 
 export function json(data: unknown, init?: ResponseInit) {
   return NextResponse.json(data, init);
@@ -83,23 +83,38 @@ export function withErrorHandling(handler: (request: NextRequest, context?: unkn
         checkCSRF(request);
       }
 
-      return await handler(request, context);
+      return await applyPendingCookies(await handler(request, context));
     } catch (error) {
       const err = error as Error & { status?: number; details?: unknown };
-      console.error(
-        JSON.stringify({
-          level: "error",
-          timestamp: new Date().toISOString(),
-          path: request.nextUrl?.pathname ?? "unknown",
-          method: request.method,
-          message: err.message,
-          status: err.status ?? 500,
-          ...(process.env.NODE_ENV === "production" ? {} : { details: err.details, stack: err.stack })
-        })
-      );
-      captureException(error);
       const status = err.status ?? 500;
-      return apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details);
+
+      if (status >= 500) {
+        console.error(
+          JSON.stringify({
+            level: "error",
+            timestamp: new Date().toISOString(),
+            path: request.nextUrl?.pathname ?? "unknown",
+            method: request.method,
+            message: err.message,
+            status,
+            ...(process.env.NODE_ENV === "production" ? {} : { details: err.details, stack: err.stack })
+          })
+        );
+        captureException(error);
+      } else {
+        console.warn(
+          JSON.stringify({
+            level: "warn",
+            timestamp: new Date().toISOString(),
+            path: request.nextUrl?.pathname ?? "unknown",
+            method: request.method,
+            message: err.message,
+            status,
+          })
+        );
+      }
+
+      return await applyPendingCookies(apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details));
     }
   };
 }
@@ -109,23 +124,38 @@ export function withOptionalCsrf(handler: (request: NextRequest, context?: unkno
     try {
       const limited = await rateLimit(request);
       if (limited) return limited;
-      return await handler(request, context);
+      return await applyPendingCookies(await handler(request, context));
     } catch (error) {
       const err = error as Error & { status?: number; details?: unknown };
-      console.error(
-        JSON.stringify({
-          level: "error",
-          timestamp: new Date().toISOString(),
-          path: request.nextUrl?.pathname ?? "unknown",
-          method: request.method,
-          message: err.message,
-          status: err.status ?? 500,
-          ...(process.env.NODE_ENV === "production" ? {} : { details: err.details, stack: err.stack })
-        })
-      );
-      captureException(error);
       const status = err.status ?? 500;
-      return apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details);
+
+      if (status >= 500) {
+        console.error(
+          JSON.stringify({
+            level: "error",
+            timestamp: new Date().toISOString(),
+            path: request.nextUrl?.pathname ?? "unknown",
+            method: request.method,
+            message: err.message,
+            status,
+            ...(process.env.NODE_ENV === "production" ? {} : { details: err.details, stack: err.stack })
+          })
+        );
+        captureException(error);
+      } else {
+        console.warn(
+          JSON.stringify({
+            level: "warn",
+            timestamp: new Date().toISOString(),
+            path: request.nextUrl?.pathname ?? "unknown",
+            method: request.method,
+            message: err.message,
+            status,
+          })
+        );
+      }
+
+      return await applyPendingCookies(apiError(status === 500 ? "Unexpected server error" : err.message, status, err.details));
     }
   };
 }

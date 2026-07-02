@@ -50,6 +50,7 @@ vi.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }) },
   })),
+  applyPendingCookies: vi.fn((r) => Promise.resolve(r)),
 }));
 
 describe("Payment strictness — download locked before IPN", () => {

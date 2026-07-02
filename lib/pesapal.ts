@@ -232,17 +232,16 @@ export async function createPesapalOrder(input: {
   );
 
   if (!response.ok || isError) {
-    const code = result.error ?? result.error_code ?? "";
+    const code = pickString(result as Record<string, unknown>, ["error_code", "errorCode", "code"]);
+    const nested =
+      typeof result.error === "object" && result.error !== null
+        ? (result.error as Record<string, unknown>)
+        : null;
     const detail =
-      typeof result.error_message === "string" && result.error_message
-        ? result.error_message
-        : typeof result.message === "string" && result.message
-          ? result.message
-          : typeof result.error_description === "string" && result.error_description
-            ? result.error_description
-            : response.ok
-              ? `Pesapal rejected the order${code ? ` (error ${code})` : ""}.`
-              : "Unable to create Pesapal order.";
+      pickString(result as Record<string, unknown>, ["error_message", "errorMessage", "message", "error_description"]) ??
+      (nested ? pickString(nested, ["message", "error_message", "errorMessage", "error_description", "description"]) : null) ??
+      (typeof result.error === "string" && result.error ? result.error : null) ??
+      (code ? `Pesapal rejected the order (code ${code}).` : (response.ok ? "Pesapal rejected the order." : "Unable to create Pesapal order."));
     console.error("[createPesapalOrder] Pesapal error response:", JSON.stringify(result));
     throw new Error(detail);
   }

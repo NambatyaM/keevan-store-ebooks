@@ -17,6 +17,7 @@ vi.mock("@/lib/supabase-server", () => ({
       signOut: vi.fn().mockResolvedValue({ error: null }),
     },
   })),
+  applyPendingCookies: vi.fn((r) => Promise.resolve(r)),
 }));
 
 function mockFromChain(data: unknown, error: unknown = null) {
@@ -84,6 +85,7 @@ vi.mock("@/lib/supabase-server", () => ({
       signOut: vi.fn().mockResolvedValue({ error: null }),
     },
   })),
+  applyPendingCookies: vi.fn((r) => Promise.resolve(r)),
 }));
 
 function makeRequest(url: string, overrides: Partial<RequestInit & { headers?: Record<string, string> }> = {}): NextRequest {

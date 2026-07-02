@@ -42,6 +42,7 @@ vi.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }) },
   })),
+  applyPendingCookies: vi.fn((r) => Promise.resolve(r)),
 }));
 
 vi.mock("@/lib/pesapal", () => ({

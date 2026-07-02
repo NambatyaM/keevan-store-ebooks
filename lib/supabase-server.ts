@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest } from "next/server";
 
+let pendingCookies: { name: string; value: string; options?: Record<string, unknown> }[] | null = null;
+
 export function createServerSupabaseClient(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -12,8 +14,29 @@ export function createServerSupabaseClient(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        pendingCookies = cookiesToSet.map(({ name, value, options }) => ({ name, value, options }));
+        cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
       }
     }
   });
+}
+
+export async function applyPendingCookies(response: Response): Promise<Response> {
+  const toSet = pendingCookies;
+  if (!toSet || toSet.length === 0) return response;
+
+  pendingCookies = null;
+
+  for (const { name, value, options } of toSet) {
+    const maxAge = (options?.maxAge as number) ?? 60 * 60 * 24 * 365;
+    const path = (options?.path as string) ?? "/";
+    const secure = options?.secure !== false;
+    const sameSite = (options?.sameSite as string) ?? "lax";
+    response.headers.append(
+      "Set-Cookie",
+      `${encodeURIComponent(name)}=${encodeURIComponent(value)}; Path=${path}; Max-Age=${maxAge}; SameSite=${sameSite}${secure ? "; Secure" : ""}${options?.httpOnly ? "; HttpOnly" : ""}`
+    );
+  }
+
+  return response;
 }
