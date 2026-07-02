@@ -111,89 +111,107 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const coverUrl = getCoverUrl(product.coverPath, 600);
 
-  return (
-    <>
-      <SiteHeader />
-      <TrackView productId={product.id} storeId={product.storeId} eventType="product_view" />
-      <main className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[0.9fr_1.1fr] lg:px-8">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-        <nav aria-label="Breadcrumb" className="text-sm text-neutral-500 md:col-span-2">
-          <Link href="/" className="hover:text-brand-green">Home</Link>
-          <span className="mx-2">/</span>
-          <Link href={`/store/${product.storeHandle}`} className="hover:text-brand-green">{product.creatorName}</Link>
-          <span className="mx-2">/</span>
-          <span className="text-neutral-800">{product.title}</span>
-        </nav>
-        <div className="relative grid aspect-[4/5] place-items-center overflow-hidden rounded-lg bg-neutral-100 p-6 text-center">
-          {coverUrl ? (
-            <Image src={coverUrl} alt={product.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" loading="lazy" unoptimized />
-          ) : (
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">Digital Product</p>
-              <h2 className="mt-3 text-3xl font-black text-brand-black">{product.title}</h2>
-              <p className="mt-4 text-sm text-neutral-500">{product.fileMime} &middot; Instant download</p>
-            </div>
-          )}
-        </div>
-        <section>
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">{product.fileMime}</p>
-          <h1 className="mt-3 text-4xl font-black leading-tight text-brand-black">{product.title}</h1>
-          <p className="mt-3 text-neutral-600">By <Link href={`/store/${product.storeHandle}`} className="text-brand-green hover:underline">{product.creatorName}</Link></p>
-          <p className="mt-6 text-lg leading-8 text-neutral-700">{product.description}</p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <div className="flex items-center gap-2 rounded-lg bg-brand-mist p-3 text-sm font-semibold">
-              <Check size={17} className="text-brand-green" aria-hidden /> Secure Pesapal checkout
-            </div>
-            <div className="flex items-center gap-2 rounded-lg bg-brand-mist p-3 text-sm font-semibold">
-              <Check size={17} className="text-brand-green" aria-hidden /> Instant delivery after verification
-            </div>
-            <div className="flex items-center gap-2 rounded-lg bg-brand-mist p-3 text-sm font-semibold">
-              <Check size={17} className="text-brand-green" aria-hidden /> Secure pricing, no hidden fees
-            </div>
-            <div className="flex items-center gap-2 rounded-lg bg-brand-mist p-3 text-sm font-semibold">
-              <Check size={17} className="text-brand-green" aria-hidden /> Protected signed download link
-            </div>
-          </div>
-          <div className="mt-8 rounded-lg border border-neutral-200 p-5">
-            <div className="flex items-center justify-between gap-5">
+  try {
+    return (
+      <>
+        <SiteHeader />
+        <TrackView productId={product.id} storeId={product.storeId} eventType="product_view" />
+        <main className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[0.9fr_1.1fr] lg:px-8">
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+          <nav aria-label="Breadcrumb" className="text-sm text-neutral-500 md:col-span-2">
+            <Link href="/" className="hover:text-brand-green">Home</Link>
+            <span className="mx-2">/</span>
+            <Link href={`/store/${product.storeHandle}`} className="hover:text-brand-green">{product.creatorName}</Link>
+            <span className="mx-2">/</span>
+            <span className="text-neutral-800">{product.title}</span>
+          </nav>
+          <div className="relative grid aspect-[4/5] place-items-center overflow-hidden rounded-lg bg-neutral-100 p-6 text-center">
+            {coverUrl ? (
+              <Image src={coverUrl} alt={product.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" loading="lazy" unoptimized />
+            ) : (
               <div>
-                <p className="text-sm text-neutral-500">Price</p>
-                <p className="text-3xl font-black">{formatCurrency(product.price, product.currency as Currency)}</p>
+                <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">Digital Product</p>
+                <h2 className="mt-3 text-3xl font-black text-brand-black">{product.title}</h2>
+                <p className="mt-4 text-sm text-neutral-500">{product.fileMime} &middot; Instant download</p>
               </div>
-              <ShieldCheck className="text-brand-green" aria-hidden />
-            </div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <BuyNowModal productId={product.id} productSlug={product.slug} price={product.price} currency={product.currency as Currency} title={product.title} />
-              <ButtonLink href={`/store/${product.storeHandle}`} variant="secondary">
-                Visit Creator Store
-              </ButtonLink>
-            </div>
-            <p className="mt-4 flex items-center gap-2 text-sm text-neutral-600">
-              <Download size={16} aria-hidden />
-              Secure download appears after Pesapal payment verification.
-            </p>
+            )}
           </div>
-          <div className="mt-8">
-            <h3 className="text-lg font-bold">Frequently asked questions about this product</h3>
-            <div className="mt-4 grid gap-4">
-              {[
-                { q: "How do I download after purchasing?", a: "After payment is confirmed, you will receive a signed download link on the confirmation page and via the product's download page. No account needed." },
-                { q: "What payment methods are accepted?", a: "Payments are processed through Pesapal, supporting mobile money (MTN, Airtel), debit and credit cards, and bank transfers in UGX." },
-                { q: "Can I get a refund?", a: "Because digital products are delivered instantly, refunds are handled case by case for duplicate charges, failed delivery, or verified creator error." }
-              ].map(({ q, a }) => (
-                <section key={q} className="rounded-lg border border-neutral-200 p-4">
-                  <h4 className="font-bold">{q}</h4>
-                  <p className="mt-1 text-sm text-neutral-600">{a}</p>
-                </section>
-              ))}
+          <section>
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">{product.fileMime}</p>
+            <h1 className="mt-3 text-4xl font-black leading-tight text-brand-black">{product.title}</h1>
+            <p className="mt-3 text-neutral-600">By <Link href={`/store/${product.storeHandle}`} className="text-brand-green hover:underline">{product.creatorName}</Link></p>
+            <p className="mt-6 text-lg leading-8 text-neutral-700">{product.description}</p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="flex items-center gap-2 rounded-lg bg-brand-mist p-3 text-sm font-semibold">
+                <Check size={17} className="text-brand-green" aria-hidden /> Secure Pesapal checkout
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-brand-mist p-3 text-sm font-semibold">
+                <Check size={17} className="text-brand-green" aria-hidden /> Instant delivery after verification
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-brand-mist p-3 text-sm font-semibold">
+                <Check size={17} className="text-brand-green" aria-hidden /> Secure pricing, no hidden fees
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-brand-mist p-3 text-sm font-semibold">
+                <Check size={17} className="text-brand-green" aria-hidden /> Protected signed download link
+              </div>
             </div>
-          <ProductReviews productId={product.id} />
+            <div className="mt-8 rounded-lg border border-neutral-200 p-5">
+              <div className="flex items-center justify-between gap-5">
+                <div>
+                  <p className="text-sm text-neutral-500">Price</p>
+                  <p className="text-3xl font-black">{formatCurrency(product.price, product.currency as Currency)}</p>
+                </div>
+                <ShieldCheck className="text-brand-green" aria-hidden />
+              </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <BuyNowModal productId={product.id} productSlug={product.slug} price={product.price} currency={product.currency as Currency} title={product.title} />
+                <ButtonLink href={`/store/${product.storeHandle}`} variant="secondary">
+                  Visit Creator Store
+                </ButtonLink>
+              </div>
+              <p className="mt-4 flex items-center gap-2 text-sm text-neutral-600">
+                <Download size={16} aria-hidden />
+                Secure download appears after Pesapal payment verification.
+              </p>
+            </div>
+            <div className="mt-8">
+              <h3 className="text-lg font-bold">Frequently asked questions about this product</h3>
+              <div className="mt-4 grid gap-4">
+                {[
+                  { q: "How do I download after purchasing?", a: "After payment is confirmed, you will receive a signed download link on the confirmation page and via the product's download page. No account needed." },
+                  { q: "What payment methods are accepted?", a: "Payments are processed through Pesapal, supporting mobile money (MTN, Airtel), debit and credit cards, and bank transfers in UGX." },
+                  { q: "Can I get a refund?", a: "Because digital products are delivered instantly, refunds are handled case by case for duplicate charges, failed delivery, or verified creator error." }
+                ].map(({ q, a }) => (
+                  <section key={q} className="rounded-lg border border-neutral-200 p-4">
+                    <h4 className="font-bold">{q}</h4>
+                    <p className="mt-1 text-sm text-neutral-600">{a}</p>
+                  </section>
+                ))}
+              </div>
+            <ProductReviews productId={product.id} />
+            </div>
+          </section>
+        </main>
+        <SiteFooter />
+      </>
+    );
+  } catch (e) {
+    console.error("ProductPage: caught render error", e);
+    return (
+      <>
+        <SiteHeader />
+        <main className="mx-auto flex max-w-7xl items-center justify-center px-4 py-24 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <WifiOff className="mx-auto text-brand-green" size={48} aria-hidden />
+            <h1 className="mt-4 text-2xl font-bold">Something went wrong</h1>
+            <p className="mt-2 text-neutral-600">We encountered an error loading this product. Please try again.</p>
+            <Link href="/" className="mt-6 inline-block text-brand-green hover:underline">Return to home</Link>
           </div>
-        </section>
-      </main>
-      <SiteFooter />
-    </>
-  );
+        </main>
+        <SiteFooter />
+      </>
+    );
+  }
 }
