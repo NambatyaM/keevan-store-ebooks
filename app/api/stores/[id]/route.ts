@@ -3,10 +3,12 @@ import { apiError, json, readJson, requireUser, withErrorHandling } from "@/lib/
 import { storeSchema } from "@/lib/schemas";
 
 export const PATCH = withErrorHandling(async (request: NextRequest, context?: unknown) => {
+  const { supabase, authUser, profile } = await requireUser(request);
+  if (!context) return apiError("Not found", 404);
   const { params } = context as { params: Promise<{ id: string }> };
   const { id } = await params;
+  if (!id) return apiError("Not found", 404);
   const input = await readJson(request, storeSchema.partial());
-  const { supabase, authUser, profile } = await requireUser(request);
 
   const { data: store } = await supabase.from("stores").select("creator_id,currency,slug").eq("id", id).maybeSingle();
   if (!store) return apiError("Store not found", 404);
@@ -43,8 +45,10 @@ export const PATCH = withErrorHandling(async (request: NextRequest, context?: un
 });
 
 export const DELETE = withErrorHandling(async (request: NextRequest, context?: unknown) => {
+  if (!context) return apiError("Not found", 404);
   const { params } = context as { params: Promise<{ id: string }> };
   const { id } = await params;
+  if (!id) return apiError("Not found", 404);
   const { supabase, authUser, profile } = await requireUser(request);
 
   const { data: store } = await supabase.from("stores").select("creator_id").eq("id", id).maybeSingle();

@@ -107,7 +107,7 @@ export default async function StorePage({ params }: { params: Promise<{ handle: 
           <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
               <div className="grid h-24 w-24 shrink-0 place-items-center rounded-2xl bg-brand-green text-3xl font-black text-white shadow-soft ring-4 ring-white">
-                {store.creatorName.slice(0, 2).toUpperCase()}
+                {(store.creatorName ?? "ST").slice(0, 2).toUpperCase()}
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">Creator store</p>

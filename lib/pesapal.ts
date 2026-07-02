@@ -1,3 +1,5 @@
+import { captureException } from "@sentry/nextjs";
+
 type PesapalToken = {
   token: string;
   expiryDate: string;
@@ -293,7 +295,10 @@ export async function verifyPesapalPayment(
       .single();
     payment = result.data;
     if (result.error) return { ok: false, error: "Payment not found", raw: {} };
-  } catch {
+  } catch (e) {
+    const err = e instanceof Error ? e : new Error("Database error while looking up payment");
+    console.error("[verifyPesapalPayment] Failed to look up payment:", err.message, "ref:", merchantReference);
+    captureException(err, { tags: { rpc: "payment_lookup" }, extra: { merchantReference } });
     return { ok: false, error: "Database error while looking up payment", raw: {} };
   }
 
@@ -337,8 +342,8 @@ export async function verifyPesapalPayment(
         payment_merchant_reference: merchantReference,
         failure_payload: transactionStatus.raw
       });
-    } catch {
-      // Log but continue — the payment is already failed
+    } catch (e) {
+      console.error("[verifyPesapalPayment] fail_pesapal_payment RPC failed:", e instanceof Error ? e.message : e, "ref:", merchantReference);
     }
     return { ok: false, error: "Payment is not completed", raw: transactionStatus.raw };
   }
@@ -368,10 +373,14 @@ export async function verifyPesapalPayment(
       status_payload: transactionStatus.raw,
       payment_currency: currency,
     });
-    if (finalizeError) return { ok: false, error: finalizeError.message, raw: {} };
+    if (finalizeError) {
+      console.error("[verifyPesapalPayment] finalize_pesapal_payment RPC returned error:", finalizeError.message, "ref:", merchantReference);
+      return { ok: false, error: finalizeError.message, raw: {} };
+    }
     finalized = data;
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Payment finalization failed";
+    console.error("[verifyPesapalPayment] finalize_pesapal_payment RPC threw:", msg, "ref:", merchantReference);
     return { ok: false, error: msg, raw: {} };
   }
 
@@ -391,8 +400,8 @@ export async function verifyPesapalPayment(
         event_type: "purchase",
         metadata: { order_id: result.order_id }
       });
-    } catch {
-      // Analytics insert failure must not block the download
+    } catch (e) {
+      console.warn("[verifyPesapalPayment] Analytics insert failed (non-blocking):", e instanceof Error ? e.message : e, "order:", result.order_id);
     }
   }
 

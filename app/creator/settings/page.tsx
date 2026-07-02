@@ -78,11 +78,14 @@ export default function CreatorSettingsPage() {
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
   const socialPlatforms = ["Instagram", "Twitter/X", "Facebook", "TikTok", "Website"];
 
-  // Extract tab from URL hash
+  // Extract tab from URL search params or hash
   useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
-    if (tabs.some((t) => t.id === hash)) {
-      setActiveTab(hash as Tab);
+    const params = new URLSearchParams(window.location.search);
+    const fromSearch = params.get("tab") as Tab | null;
+    const fromHash = window.location.hash.replace("#", "") as Tab;
+    const tab = fromSearch || fromHash;
+    if (tab && tabs.some((t) => t.id === tab)) {
+      setActiveTab(tab);
     }
   }, []);
 

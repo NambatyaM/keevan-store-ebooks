@@ -33,11 +33,6 @@ beforeEach(() => {
 describe("rate_limit_check_and_increment RPC", () => {
   it("is called with correct parameters by the rateLimit function", async () => {
     mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
-    const chain = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data: { count: 5 }, error: null }) };
-    chain.select.mockReturnValue(chain);
-    chain.eq.mockReturnValue(chain);
-    chain.eq.mockReturnValue(chain);
-    mockSupabase.from.mockReturnValue(chain);
 
     const { rateLimit } = await import("@/lib/api");
     const req = new (await import("next/server")).NextRequest(
@@ -57,10 +52,6 @@ describe("rate_limit_check_and_increment RPC", () => {
 
   it("falls back to x-real-ip when x-forwarded-for is absent", async () => {
     mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
-    const chain = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data: { count: 5 }, error: null }) };
-    chain.select.mockReturnValue(chain);
-    chain.eq.mockReturnValue(chain);
-    mockSupabase.from.mockReturnValue(chain);
 
     const { rateLimit } = await import("@/lib/api");
     const req = new (await import("next/server")).NextRequest(
@@ -80,10 +71,6 @@ describe("rate_limit_check_and_increment RPC", () => {
 
   it("uses 'local' when no IP headers are present", async () => {
     mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
-    const chain = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data: { count: 5 }, error: null }) };
-    chain.select.mockReturnValue(chain);
-    chain.eq.mockReturnValue(chain);
-    mockSupabase.from.mockReturnValue(chain);
 
     const { rateLimit } = await import("@/lib/api");
     const req = new (await import("next/server")).NextRequest(
@@ -103,7 +90,7 @@ describe("rate_limit_check_and_increment RPC", () => {
 
 describe("process_refund RPC", () => {
   it("is called with correct parameters from approve endpoint", async () => {
-    const chain = {
+    const chain: Record<string, ReturnType<typeof vi.fn>> = {
       select: vi.fn(),
       eq: vi.fn(),
       single: vi.fn(),
@@ -121,7 +108,7 @@ describe("process_refund RPC", () => {
       error: null,
     });
     chain.insert.mockResolvedValue({ data: null, error: null });
-    chain.update.mockResolvedValue({ data: null, error: null });
+    chain.update.mockReturnValue({ eq: vi.fn().mockResolvedValue({ data: null, error: null }) });
     mockSupabase.from.mockReturnValue(chain);
     mockSupabase.rpc.mockResolvedValue({ data: { id: "r1", status: "approved" }, error: null });
     mockSupabase.auth.getUser.mockResolvedValue({

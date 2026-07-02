@@ -138,29 +138,26 @@ export async function rateLimit(request: NextRequest, maxRequests = 60, windowSe
 
   try {
     const supabase = getSupabaseAdminClient();
-    await supabase.rpc("rate_limit_check_and_increment", {
+    const { error } = await supabase.rpc("rate_limit_check_and_increment", {
       p_key: ip,
       p_window_start: windowStart,
       p_max_requests: maxRequests,
       p_window_seconds: windowSeconds
     });
 
-    const { data: current } = await supabase
-      .from("rate_limits")
-      .select("count")
-      .eq("key", ip)
-      .eq("window_start", windowStart)
-      .maybeSingle();
-
-    if (current && current.count > maxRequests) {
-      return apiError("Too many requests. Please try again shortly.", 429);
+    if (error) {
+      if (error.message?.includes("Rate limit exceeded") || error.message?.includes("Too many requests")) {
+        return apiError("Too many requests. Please try again shortly.", 429);
+      }
+      console.warn("[RateLimit] RPC error:", error.message, "— allowing request");
+      return null;
     }
-  } catch {
-    console.warn("[RateLimit] DB call failed — allowing request");
+
+    return null;
+  } catch (e) {
+    console.warn("[RateLimit] DB call failed — allowing request:", e instanceof Error ? e.message : e);
     return null;
   }
-
-  return null;
 }
 
 export async function resolveUser(request: NextRequest) {

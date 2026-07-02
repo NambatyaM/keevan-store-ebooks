@@ -28,6 +28,7 @@ function OrderSuccessContent() {
   const [error, setError] = useState<string | null>(null);
   const [pollingExpired, setPollingExpired] = useState(false);
   const pollStartRef = useRef<number | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const checkOrder = useCallback(async () => {
     if (!orderId) { setError("No order ID provided."); return; }
@@ -46,7 +47,7 @@ function OrderSuccessContent() {
           setPollingExpired(true);
           return;
         }
-        setTimeout(checkOrder, 3000);
+        timeoutRef.current = setTimeout(checkOrder, 3000);
       }
     } catch {
       setError("Unable to check order status.");
@@ -56,9 +57,13 @@ function OrderSuccessContent() {
   useEffect(() => {
     if (orderId) checkOrder();
     else setError("No order ID provided.");
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, [orderId, checkOrder]);
 
   const handleVerify = useCallback(async () => {
+    if (!orderId) { setError("No order ID provided."); return; }
     try {
       const res = await fetch(`/api/orders/${orderId}/status`);
       if (!res.ok) { setError("Unable to check order status."); return; }

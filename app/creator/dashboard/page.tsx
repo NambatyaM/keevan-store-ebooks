@@ -40,6 +40,7 @@ type Product = {
   title: string;
   slug: string;
   price: number;
+  status?: string;
   sales_count?: number;
   earnings?: number;
   cover_path?: string;
@@ -101,10 +102,12 @@ export default function CreatorDashboardPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
+    const daysParam = period === "All" ? "" : `days=${period === "90D" ? "90" : period === "7D" ? "7" : "30"}`;
+    const summaryUrl = `/api/analytics/summary${daysParam ? `?${daysParam}` : ""}`;
     try {
       const [ordersRes, summaryRes, profileRes, productsRes] = await Promise.all([
         fetch("/api/orders?limit=10").then((r) => { if (!r.ok) throw new Error("Failed to load orders"); return r.json(); }),
-        fetch("/api/analytics/summary?days=30").then((r) => { if (!r.ok) throw new Error("Failed to load summary"); return r.json(); }),
+        fetch(summaryUrl).then((r) => { if (!r.ok) throw new Error("Failed to load summary"); return r.json(); }),
         fetch("/api/auth/me").then((r) => { if (!r.ok) throw new Error("Failed to load profile"); return r.json(); }),
         fetch("/api/products").then((r) => { if (!r.ok) throw new Error("Failed to load products"); return r.json(); }),
       ]);
@@ -117,7 +120,7 @@ export default function CreatorDashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [period]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -386,7 +389,7 @@ export default function CreatorDashboardPage() {
               {topProducts.map((p, i) => (
                 <Link
                   key={p.id}
-                  href={`/product/${p.slug}`}
+                  href={p.status === "published" ? `/product/${p.slug}` : `/creator/products/${p.id}/edit`}
                   className="flex items-center gap-3 rounded-xl border border-border bg-surface-card p-4 shadow-card transition hover:shadow-soft"
                 >
                   <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-brand-mist text-sm font-bold text-brand-green">

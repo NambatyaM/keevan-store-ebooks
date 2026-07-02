@@ -3,10 +3,12 @@ import { apiError, json, readJson, requireUser, withErrorHandling } from "@/lib/
 import { creatorSchema } from "@/lib/schemas";
 
 export const PATCH = withErrorHandling(async (request: NextRequest, context?: unknown) => {
+  const { supabase, authUser, profile } = await requireUser(request);
+  if (!context) return apiError("Not found", 404);
   const { params } = context as { params: Promise<{ id: string }> };
   const { id } = await params;
+  if (!id) return apiError("Not found", 404);
   const input = await readJson(request, creatorSchema.partial());
-  const { supabase, authUser, profile } = await requireUser(request);
 
   if (profile.role !== "admin") {
     const { data: creator, error: creatorError } = await supabase.from("creators").select("user_id").eq("id", id).single();

@@ -73,6 +73,7 @@ beforeEach(() => {
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "test-key");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "test-anon-key");
   mockSupabase.from.mockReturnValue(rateLimitChain);
+  mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
 });
 
 function makeRequest(url: string, overrides: Partial<RequestInit & { headers?: Record<string, string> }> = {}): NextRequest {
@@ -176,21 +177,13 @@ describe("requireAdmin", () => {
 describe("rateLimit behaviour", () => {
   it("returns null when within limit", async () => {
     mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
-    const chain = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data: { count: 5 }, error: null }) };
-    chain.select.mockReturnValue(chain);
-    chain.eq.mockReturnValue(chain);
-    mockSupabase.from.mockReturnValue(chain);
     const req = makeRequest("/api/test");
     const result = await rateLimit(req, 10, 60);
     expect(result).toBeNull();
   });
 
-  it("returns 429 when count exceeds max", async () => {
-    mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
-    const chain = { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data: { count: 150 }, error: null }) };
-    chain.select.mockReturnValue(chain);
-    chain.eq.mockReturnValue(chain);
-    mockSupabase.from.mockReturnValue(chain);
+  it("returns 429 when RPC returns rate limit error", async () => {
+    mockSupabase.rpc.mockResolvedValue({ data: null, error: { message: "Rate limit exceeded" } });
     const req = makeRequest("/api/test");
     const result = await rateLimit(req, 100, 60);
     expect(result).not.toBeNull();
@@ -359,11 +352,11 @@ describe("Admin refund approval API", () => {
     return import("@/app/api/admin/refunds/[id]/approve/route").then((m) => m.POST);
   }
 
-  it("returns 404 when refund not found (tested via 500 from params destructure)", async () => {
+  it("returns 404 when refund not found (no context passed)", async () => {
     const POST = await importRefundApprove();
     const req = makeAdminRequest("/api/admin/refunds/r1/approve", { id: "u1", email: "admin@test.com", role: "admin" }, { body: JSON.stringify({}) });
     const res = await POST(req);
-    expect(res.status === 404 || res.status === 500).toBe(true);
+    expect(res.status).toBe(404);
   });
 
   it("approves refund successfully", async () => {

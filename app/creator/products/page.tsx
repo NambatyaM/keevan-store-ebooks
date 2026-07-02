@@ -64,8 +64,11 @@ export default function CreatorProductsPage() {
     setLoading(true);
     setError(null);
     fetch("/api/products?limit=200")
-      .then((r) => r.json())
-      .then((d) => setProducts(d.products ?? []))
+      .then(async (r) => {
+        if (!r.ok) throw new Error("Failed to load products");
+        const d = await r.json();
+        setProducts(d.products ?? []);
+      })
       .catch((err) => { console.error("Failed to load products:", err); setError("Failed to load products."); })
       .finally(() => setLoading(false));
   };
@@ -133,9 +136,13 @@ export default function CreatorProductsPage() {
     }
   };
 
-  const handleCopyLink = (slug: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/product/${slug}`);
-    toast("success", "Product link copied to clipboard");
+  const handleCopyLink = async (slug: string) => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/product/${slug}`);
+      toast("success", "Product link copied to clipboard");
+    } catch {
+      toast("error", "Failed to copy link. Please copy it manually.");
+    }
   };
 
   const formatLabel = (mime?: string) => {
@@ -275,7 +282,7 @@ export default function CreatorProductsPage() {
               className="group relative overflow-hidden rounded-xl border border-border bg-surface-card shadow-card transition-all duration-200 hover:shadow-lift"
             >
               {/* Cover image */}
-              <Link href={`/product/${product.slug}`} className="block">
+              <Link href={`/creator/products/${product.id}/edit`} className="block">
                 <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-brand-green/20 to-brand-green/5">
                   {getCoverUrl(product.cover_path ?? null) ? (
                     <div className="h-full w-full bg-cover bg-center" style={{ backgroundImage: `url(${getCoverUrl(product.cover_path ?? null, 400) ?? ''})` }} />
@@ -292,7 +299,7 @@ export default function CreatorProductsPage() {
 
               {/* Product info */}
               <div className="p-4">
-                <Link href={`/product/${product.slug}`}>
+                <Link href={`/creator/products/${product.id}/edit`}>
                   <h3 className="line-clamp-2 font-bold text-brand-black group-hover:text-brand-green">
                     {product.title}
                   </h3>
@@ -328,12 +335,14 @@ export default function CreatorProductsPage() {
                 >
                   <Edit3 size={14} className="mx-auto" />
                 </Link>
-                <Link
-                  href={`/product/${product.slug}`}
-                  className="flex-1 rounded-md px-2 py-1.5 text-center text-xs font-semibold text-muted transition hover:bg-neutral-50"
-                >
-                  <Eye size={14} className="mx-auto" />
-                </Link>
+                {product.status === "published" && (
+                  <Link
+                    href={`/product/${product.slug}`}
+                    className="flex-1 rounded-md px-2 py-1.5 text-center text-xs font-semibold text-muted transition hover:bg-neutral-50"
+                  >
+                    <Eye size={14} className="mx-auto" />
+                  </Link>
+                )}
                 <button
                   onClick={() => handleCopyLink(product.slug)}
                   className="flex-1 rounded-md px-2 py-1.5 text-center text-xs font-semibold text-muted transition hover:bg-neutral-50"
@@ -392,7 +401,7 @@ export default function CreatorProductsPage() {
                             <FileText size={18} />
                           </div>
                           <div className="min-w-0">
-                            <Link href={`/product/${product.slug}`} className="font-semibold text-brand-black hover:text-brand-green">
+                            <Link href={`/creator/products/${product.id}/edit`} className="font-semibold text-brand-black hover:text-brand-green">
                               {product.title}
                             </Link>
                             <p className="text-xs text-muted">{formatLabel(product.file_mime)}</p>

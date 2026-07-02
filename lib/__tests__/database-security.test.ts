@@ -676,15 +676,8 @@ describe("Rate Limiting", () => {
     mockSupabase = makeMockSupabase();
   });
 
-  it("rateLimit returns 429 when count exceeds max", async () => {
-    mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: null });
-    mockSupabase.from = vi.fn(() => {
-      const chain = createFromChain(null);
-      chain.maybeSingle = vi.fn().mockResolvedValue({ data: { count: 150 }, error: null });
-      chain.select = vi.fn(() => chain);
-      chain.eq = vi.fn(() => chain);
-      return chain;
-    });
+  it("rateLimit returns 429 when RPC returns rate limit error", async () => {
+    mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: { message: "Rate limit exceeded" } });
 
     const request = makeMockRequest({ headers: { "x-forwarded-for": "192.168.1.1" } });
     const result = await rateLimit(request, 120, 60);
@@ -693,15 +686,18 @@ describe("Rate Limiting", () => {
     expect(response.error.message).toContain("Too many requests");
   });
 
-  it("rateLimit passes when count is within limit", async () => {
+  it("rateLimit returns 429 when RPC returns other rate limit error", async () => {
+    mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: { message: "Too many requests, please slow down" } });
+
+    const request = makeMockRequest({ headers: { "x-forwarded-for": "192.168.1.1" } });
+    const result = await rateLimit(request, 120, 60);
+    expect(result).not.toBeNull();
+    const response = await result!.json();
+    expect(response.error.message).toContain("Too many requests");
+  });
+
+  it("rateLimit passes when RPC succeeds", async () => {
     mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: null });
-    mockSupabase.from = vi.fn(() => {
-      const chain = createFromChain(null);
-      chain.maybeSingle = vi.fn().mockResolvedValue({ data: { count: 50 }, error: null });
-      chain.select = vi.fn(() => chain);
-      chain.eq = vi.fn(() => chain);
-      return chain;
-    });
 
     const request = makeMockRequest({ headers: { "x-forwarded-for": "192.168.1.1" } });
     const result = await rateLimit(request, 120, 60);
@@ -710,13 +706,6 @@ describe("Rate Limiting", () => {
 
   it("rateLimit uses x-real-ip when x-forwarded-for is absent", async () => {
     mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: null });
-    mockSupabase.from = vi.fn(() => {
-      const chain = createFromChain(null);
-      chain.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-      chain.select = vi.fn(() => chain);
-      chain.eq = vi.fn(() => chain);
-      return chain;
-    });
 
     const request = makeMockRequest({ headers: { "x-real-ip": "10.0.0.1" } });
     await rateLimit(request, 120, 60);
@@ -725,13 +714,6 @@ describe("Rate Limiting", () => {
 
   it("rateLimit falls back to 'local' when no IP headers are present", async () => {
     mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: null });
-    mockSupabase.from = vi.fn(() => {
-      const chain = createFromChain(null);
-      chain.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-      chain.select = vi.fn(() => chain);
-      chain.eq = vi.fn(() => chain);
-      return chain;
-    });
 
     const request = makeMockRequest();
     await rateLimit(request, 120, 60);
@@ -748,14 +730,7 @@ describe("Rate Limiting", () => {
   });
 
   it("withErrorHandling wraps rate limit and returns 429", async () => {
-    mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: null });
-    mockSupabase.from = vi.fn(() => {
-      const chain = createFromChain(null);
-      chain.maybeSingle = vi.fn().mockResolvedValue({ data: { count: 999 }, error: null });
-      chain.select = vi.fn(() => chain);
-      chain.eq = vi.fn(() => chain);
-      return chain;
-    });
+    mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: { message: "Rate limit exceeded" } });
 
     const handler = withErrorHandling(async () => new Response("ok"));
     const request = makeMockRequest({ headers: { "x-forwarded-for": "10.0.0.1" } });
@@ -765,13 +740,6 @@ describe("Rate Limiting", () => {
 
   it("uses x-forwarded-for first IP in chain", async () => {
     mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: null });
-    mockSupabase.from = vi.fn(() => {
-      const chain = createFromChain(null);
-      chain.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-      chain.select = vi.fn(() => chain);
-      chain.eq = vi.fn(() => chain);
-      return chain;
-    });
 
     const request = makeMockRequest({ headers: { "x-forwarded-for": "203.0.113.1, 10.0.0.1, 192.168.1.1" } });
     await rateLimit(request, 120, 60);

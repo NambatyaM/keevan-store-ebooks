@@ -28,12 +28,11 @@ export default function BuyerDashboardPage() {
 
   useEffect(() => {
     fetch("/api/buyer/purchases")
-      .then((r) => {
-        if (r.status === 401) { router.push("/login?role=buyer"); return null; }
-        return r.json();
-      })
-      .then((data) => {
-        if (data) setPurchases(data.purchases ?? []);
+      .then(async (r) => {
+        if (r.status === 401) { router.push("/login?role=buyer"); return; }
+        if (!r.ok) throw new Error("Unable to load purchases.");
+        const data = await r.json();
+        setPurchases(data.purchases ?? []);
       })
       .catch(() => setError("Unable to load purchases."))
       .finally(() => setLoading(false));
@@ -105,7 +104,7 @@ export default function BuyerDashboardPage() {
                       </Link>
                     </p>
                     <p className="text-xs text-muted">
-                      {formatCurrency(p.amount, p.currency)} &middot; {new Date(p.paid_at).toLocaleDateString("en-UG")}
+                       {formatCurrency(p.amount, p.currency)} &middot; {p.paid_at ? new Date(p.paid_at).toLocaleDateString("en-UG") : "N/A"}
                     </p>
                   </div>
                 </div>

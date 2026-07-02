@@ -21,6 +21,9 @@ export const storeSchema = z.object({
   name: z.string().min(2),
   slug: z.string().regex(/^[a-z0-9-]{3,64}$/),
   description: z.string().max(500).optional(),
+  tagline: z.string().max(120).optional(),
+  category: z.string().optional(),
+  social_links: z.record(z.string()).optional(),
   currency: z.enum(["UGX", "KES", "TZS", "RWF", "USD"]).default("UGX")
 });
 

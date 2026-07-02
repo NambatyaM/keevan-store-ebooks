@@ -3,10 +3,12 @@ import { apiError, json, logAdminAction, readJson, requireAdmin, withErrorHandli
 import { withdrawalDecisionSchema } from "@/lib/schemas";
 
 export const POST = withErrorHandling(async (request: NextRequest, context?: unknown) => {
-  const input = await readJson(request, withdrawalDecisionSchema);
+  const { supabase, authUser } = await requireAdmin(request);
+  if (!context) return apiError("Not found", 404);
   const { params } = context as { params: Promise<{ id: string }> };
   const { id } = await params;
-  const { supabase, authUser } = await requireAdmin(request);
+  if (!id) return apiError("Not found", 404);
+  const input = await readJson(request, withdrawalDecisionSchema);
   const { data, error } = await supabase.rpc("transition_withdrawal_request", {
     withdrawal_id: id,
     new_status: "paid",

@@ -57,10 +57,10 @@ export default function Home() {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(statsSchema) }} />
 
         <section className="bg-white">
-          <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 md:grid-cols-2 lg:px-8 lg:py-20">
+          <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-10 sm:px-6 sm:py-16 md:grid-cols-2 lg:px-8 lg:py-20">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">East African creator commerce</p>
-              <h1 className="mt-4 max-w-3xl text-4xl font-black leading-tight text-brand-black sm:text-5xl lg:text-6xl">
+              <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight text-brand-black sm:text-5xl lg:text-6xl">
                 Sell E-books Online. Keep 90% of Every Sale.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-neutral-700">
@@ -77,22 +77,22 @@ export default function Home() {
               <p className="mt-3 text-sm text-neutral-500">
                 No credit card required. Your store is live the moment you sign up.
               </p>
-              <div className="mt-8 grid max-w-xl grid-cols-3 gap-3 text-sm">
-                <div className="rounded-lg bg-brand-mist p-4">
+              <div className="mt-8 grid max-w-xl grid-cols-3 gap-2 text-xs sm:gap-3 sm:text-sm">
+                <div className="rounded-lg bg-brand-mist p-3 sm:p-4">
                   <p className="font-bold">10%</p>
                   <p className="text-neutral-600">Platform fee</p>
                 </div>
-                <div className="rounded-lg bg-neutral-100 p-4">
+                <div className="rounded-lg bg-neutral-100 p-3 sm:p-4">
                   <p className="font-bold">{formatCurrency(50000)}</p>
                   <p className="text-neutral-600">Min withdrawal</p>
                 </div>
-                <div className="rounded-lg bg-neutral-100 p-4">
+                <div className="rounded-lg bg-neutral-100 p-3 sm:p-4">
                   <p className="font-bold">4 MB</p>
                   <p className="text-neutral-600">File upload limit</p>
                 </div>
               </div>
             </div>
-            <div className="relative min-h-[400px] overflow-hidden rounded-lg bg-neutral-950 sm:min-h-[520px]">
+            <div className="relative min-h-[280px] overflow-hidden rounded-lg bg-neutral-950 sm:min-h-[400px] lg:min-h-[520px]">
               <Image
                 src="/hero.webp"
                 alt="African author reading an e-book on a laptop surrounded by books in a library"
@@ -122,7 +122,7 @@ export default function Home() {
                 { icon: LockKeyhole, title: "Protected file storage", text: "Files are stored securely with signed download URLs and server-side payment verification. No leaks." },
                 { icon: ShieldCheck, title: "Withdrawal to mobile money", text: "Request withdrawals directly to your MTN or Airtel Money account. Minimum thresholds start at 50,000 UGX." }
               ].map(({ icon: Icon, title, text }) => (
-                <div key={title} className="rounded-lg border border-neutral-200 bg-white p-5">
+                <div key={title} className="rounded-lg border border-neutral-200 bg-white p-4 sm:p-5">
                   <Icon className="text-brand-green" aria-hidden />
                   <h3 className="mt-4 text-lg font-bold">{title}</h3>
                   <p className="mt-2 text-sm leading-6 text-neutral-600">{text}</p>
@@ -160,7 +160,7 @@ export default function Home() {
               ["Share your store", "Your branded store link goes live immediately. Share it anywhere."],
               ["Get paid", "Keevan Store collects payments. You keep 90%. Request withdrawal anytime."]
             ].map(([step, detail], index) => (
-              <div key={step} className="rounded-lg border border-neutral-200 p-6">
+              <div key={step} className="rounded-lg border border-neutral-200 p-4 sm:p-6">
                 <p className="text-sm font-bold text-brand-green">Step {index + 1}</p>
                 <h3 className="mt-2 text-xl font-bold">{step}</h3>
                 <p className="mt-2 text-sm leading-6 text-neutral-600">{detail}</p>
@@ -198,7 +198,7 @@ export default function Home() {
                 ["Can I edit my product after publishing?", "Yes. Your creator dashboard lets you update product titles, descriptions, prices, and files anytime."],
                 ["What if someone buys my product and wants a refund?", "Because digital products are delivered instantly, refunds are handled case by case. Contact support if there is an issue with delivery or payment."]
               ].map(([q, a]) => (
-                <section key={q} className="rounded-lg border border-neutral-200 bg-white p-5">
+                <section key={q} className="rounded-lg border border-neutral-200 bg-white p-4 sm:p-5">
                   <h3 className="text-lg font-bold text-brand-black">{q}</h3>
                   <p className="mt-2 text-sm leading-6 text-neutral-600">{a}</p>
                 </section>

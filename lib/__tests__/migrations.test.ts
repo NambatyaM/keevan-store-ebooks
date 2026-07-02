@@ -13,13 +13,17 @@ function listMigrations(): string[] {
 }
 
 describe("Migration files", () => {
-  it("all 22 migrations exist and are in order", () => {
+  it("all 26 migrations exist and are in order", () => {
     const migrations = listMigrations();
-    expect(migrations).toHaveLength(22);
+    expect(migrations).toHaveLength(26);
     expect(migrations[0]).toBe("001_initial_schema.sql");
     expect(migrations[19]).toBe("020_fix_currency_constraint_and_production_issues.sql");
     expect(migrations[20]).toBe("021_fix_product_slug_uniqueness.sql");
     expect(migrations[21]).toBe("022_fix_email_queue_duplicate_triggers_and_processing.sql");
+    expect(migrations[22]).toBe("023_missing_creator_store_fields.sql");
+    expect(migrations[23]).toBe("024_fix_populate_buyer_purchase.sql");
+    expect(migrations[24]).toBe("025_cleanup_orphan_rpc_overloads.sql");
+    expect(migrations[25]).toBe("026_fix_fail_pesapal_for_update.sql");
   });
 
   it("each migration has a sequential number prefix", () => {

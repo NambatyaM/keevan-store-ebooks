@@ -4,10 +4,14 @@ import { refundDecisionSchema } from "@/lib/schemas";
 import { refundPesapalOrder, getPesapalTransactionStatus } from "@/lib/pesapal";
 
 export const POST = withErrorHandling(async (request: NextRequest, context?: unknown) => {
-  const input = await readJson(request, refundDecisionSchema);
+  const { supabase, authUser } = await requireAdmin(request);
+
+  if (!context) return apiError("Not found", 404);
   const { params } = context as { params: Promise<{ id: string }> };
   const { id } = await params;
-  const { supabase, authUser } = await requireAdmin(request);
+  if (!id) return apiError("Not found", 404);
+
+  const input = await readJson(request, refundDecisionSchema);
 
   const { data: refund } = await supabase
     .from("refunds")
