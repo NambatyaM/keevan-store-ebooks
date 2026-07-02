@@ -1,4 +1,7 @@
 import { captureException } from "@sentry/nextjs";
+import { sendEmail } from "@/lib/email";
+import { orderConfirmationHtml } from "@/lib/email-templates";
+import type { Currency } from "@/lib/constants";
 
 type PesapalToken = {
   token: string;
@@ -515,5 +518,69 @@ export async function verifyPesapalPayment(
     }
   }
 
+  // Send confirmation email asynchronously (fire-and-forget).
+  // This runs after the payment is finalized so the user gets the download
+  // link even if the success page didn't load or they closed the browser.
+  if (result.order_id) {
+    sendOrderConfirmationEmail(supabase, result.order_id).catch(() => {});
+  }
+
   return { ok: true, downloadToken: result.download_token ?? "", alreadyVerified: result.already_processed };
+}
+
+async function sendOrderConfirmationEmail(
+  supabase: import("@supabase/supabase-js").SupabaseClient,
+  orderId: string,
+): Promise<void> {
+  try {
+    const { data: order } = await supabase
+      .from("orders")
+      .select("*, products!inner(title), creators!inner(display_name)")
+      .eq("id", orderId)
+      .single();
+
+    if (!order) {
+      console.warn("[sendOrderConfirmationEmail] Order not found:", orderId);
+      return;
+    }
+
+    const { data: download } = await supabase
+      .from("downloads")
+      .select("token")
+      .eq("order_id", orderId)
+      .maybeSingle();
+
+    if (!download) {
+      console.warn("[sendOrderConfirmationEmail] Download token not found for order:", orderId);
+      return;
+    }
+
+    const productTitle = Array.isArray(order.products)
+      ? order.products[0]?.title
+      : (order.products as { title?: string } | undefined)?.title ?? "Product";
+    const creatorName = Array.isArray(order.creators)
+      ? order.creators[0]?.display_name
+      : (order.creators as { display_name?: string } | undefined)?.display_name ?? "Creator";
+
+    const html = orderConfirmationHtml({
+      buyerName: order.buyer_name ?? "Customer",
+      productTitle: String(productTitle),
+      creatorName: String(creatorName),
+      amount: Number(order.amount),
+      currency: (order.currency as Currency) ?? "UGX",
+      downloadToken: download.token,
+    });
+
+    const result = await sendEmail({
+      to: order.buyer_email,
+      subject: `Order Confirmed — ${String(productTitle)}`,
+      html,
+    });
+
+    if (!result.ok) {
+      console.warn("[sendOrderConfirmationEmail] Failed to send:", result.error, "order:", orderId);
+    }
+  } catch (e) {
+    console.warn("[sendOrderConfirmationEmail] Error:", e instanceof Error ? e.message : e, "order:", orderId);
+  }
 }
