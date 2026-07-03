@@ -528,7 +528,7 @@ export async function verifyPesapalPayment(
   return { ok: true, downloadToken: result.download_token ?? "", alreadyVerified: result.already_processed };
 }
 
-async function sendOrderConfirmationEmail(
+export async function sendOrderConfirmationEmail(
   supabase: import("@supabase/supabase-js").SupabaseClient,
   orderId: string,
 ): Promise<void> {

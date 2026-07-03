@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { apiError, json, resolveUser, withErrorHandling } from "@/lib/api";
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { getPesapalTransactionStatus, normalizePesapalStatus, extractCurrency } from "@/lib/pesapal";
+import { getPesapalTransactionStatus, normalizePesapalStatus, extractCurrency, sendOrderConfirmationEmail } from "@/lib/pesapal";
 
 export const GET = withErrorHandling(async (request: NextRequest, context?: unknown) => {
   const { params } = context as { params: Promise<{ orderId: string }> };
@@ -131,6 +131,8 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
               });
 
             if (finalized?.ok) {
+              sendOrderConfirmationEmail(adminSupabase, orderId).catch(() => {});
+
               const { data: updatedOrder } = await adminSupabase
                 .from("orders")
                 .select(`
