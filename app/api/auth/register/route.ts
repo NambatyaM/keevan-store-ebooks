@@ -7,6 +7,16 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const input = await readJson(request, registerSchema);
   const supabase = getSupabaseAdminClient();
 
+  const { data: existingSlug } = await supabase
+    .from("stores")
+    .select("slug")
+    .eq("slug", input.storeHandle)
+    .maybeSingle();
+
+  if (existingSlug) {
+    return apiError("This store URL handle is already taken. Please choose another one.", 409);
+  }
+
   const { data, error } = await supabase.auth.admin.createUser({
     email: input.email,
     password: input.password,

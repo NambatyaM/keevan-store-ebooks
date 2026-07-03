@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { SimplePage } from "@/components/simple-page";
 import { PasswordInput } from "@/components/password-input";
-import { Check, X, AlertTriangle, Store, Banknote, Download, ShieldCheck } from "lucide-react";
+import { Check, X, AlertTriangle, Store, Banknote, Download, ShieldCheck, Loader2 } from "lucide-react";
 
 const passwordChecks = (pw: string) => ({
   length: pw.length >= 8,
@@ -28,9 +28,12 @@ export default function SignupForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [storeHandle, setStoreHandle] = useState("");
+  const [handleAvailable, setHandleAvailable] = useState<boolean | null>(null);
+  const [checkingHandle, setCheckingHandle] = useState(false);
   const [currency, setCurrency] = useState("UGX");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const checkTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const checks = useMemo(() => passwordChecks(password), [password]);
   const strength = useMemo(() => strengthLabel(checks), [checks]);
@@ -43,6 +46,36 @@ export default function SignupForm() {
     { icon: Download, text: "Instant file delivery to buyers" },
     { icon: ShieldCheck, text: "Withdraw to MTN or Airtel Money" },
   ];
+
+  useEffect(() => {
+    if (checkTimeout.current) clearTimeout(checkTimeout.current);
+
+    const handle = storeHandle.trim();
+    if (handle.length < 3) {
+      setHandleAvailable(null);
+      setCheckingHandle(false);
+      return;
+    }
+
+    setCheckingHandle(true);
+    setHandleAvailable(null);
+
+    checkTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/auth/check-handle?handle=${encodeURIComponent(handle)}`);
+        const data = await res.json();
+        setHandleAvailable(data.available);
+      } catch {
+        setHandleAvailable(null);
+      } finally {
+        setCheckingHandle(false);
+      }
+    }, 400);
+
+    return () => {
+      if (checkTimeout.current) clearTimeout(checkTimeout.current);
+    };
+  }, [storeHandle]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -138,7 +171,25 @@ export default function SignupForm() {
               Your store will be at: <span className="font-mono font-semibold text-brand-green">keevanstore.in/store/{storeHandle}</span>
             </p>
           )}
-          <p className="mt-1 text-xs text-neutral-500">Lowercase letters, numbers, and hyphens only.</p>
+          {checkingHandle && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-neutral-500">
+              <Loader2 size={13} className="animate-spin" />
+              Checking availability...
+            </p>
+          )}
+          {!checkingHandle && handleAvailable === true && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-green-600">
+              <Check size={13} />
+              This handle is available!
+            </p>
+          )}
+          {!checkingHandle && handleAvailable === false && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
+              <X size={13} />
+              This handle is already taken. Please choose a different one.
+            </p>
+          )}
+          <p className="mt-1 text-xs text-neutral-500">Lowercase letters, numbers, and hyphens only. Must be unique.</p>
         </div>
         <div>
           <label htmlFor="currency" className="text-sm font-semibold">Store currency</label>
