@@ -1,7 +1,7 @@
 "use client";
 
 import { Component } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2, CheckCircle } from "lucide-react";
 import { SimplePage } from "@/components/simple-page";
@@ -30,16 +30,31 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Er
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
+  const orderId = searchParams.get("order_id");
+  const trackingId = searchParams.get("OrderTrackingId") ?? "";
   const [state, setState] = useState<"loading" | "confirming" | "completed" | "failed" | "error">("loading");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  useEffect(() => {
+  const doConfirm = useCallback(async () => {
     setState("completed");
   }, []);
+
+  useEffect(() => {
+    doConfirm();
+  }, [doConfirm]);
 
   if (state === "loading" || state === "confirming") {
     return (
       <SimplePage title="Confirming" eyebrow="Order">
         <p>Loading state: {state}</p>
+      </SimplePage>
+    );
+  }
+
+  if (state === "error") {
+    return (
+      <SimplePage title="Error" eyebrow="Uh oh">
+        <p>{errorMsg}</p>
       </SimplePage>
     );
   }
