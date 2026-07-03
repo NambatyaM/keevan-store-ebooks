@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MessageCircle } from "lucide-react";
@@ -43,6 +44,9 @@ export function MobileNav() {
   }, [open]);
 
   const toggle = useCallback(() => setOpen((v) => !v), []);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const role = profile?.role ?? null;
 
@@ -96,30 +100,34 @@ export function MobileNav() {
         </span>
       </button>
 
-      {/* Backdrop overlay — always mounted for smooth opacity transition */}
-      <div
-        className={cn(
-          "fixed inset-0 z-40 bg-black/40 motion-safe:transition-opacity duration-[250ms] md:hidden",
-          open ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}
-        onClick={() => setOpen(false)}
-        aria-hidden="true"
-      />
-
-      {/* Side drawer — slides in from right */}
-      <div
-        id="mobile-menu-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Navigation menu"
-        aria-hidden={!open}
-        inert={!open || undefined}
-        className={cn(
-          "fixed inset-y-0 right-0 z-50 flex w-[85vw] max-w-[360px] flex-col bg-white shadow-xl md:hidden",
-          "motion-safe:transition-transform duration-[250ms]",
-          open ? "translate-x-0" : "translate-x-full"
-        )}
-      >
+      {/* Backdrop + drawer are portaled to document.body to escape the
+          backdrop-filter containing block on the <header>. Without this,
+          position:fixed elements would be positioned relative to the header
+          instead of the viewport, causing the menu to appear only within
+          the header area. */}
+      {mounted && createPortal(
+        <>
+          <div
+            className={cn(
+              "fixed inset-0 z-40 bg-black/40 motion-safe:transition-opacity duration-[250ms] md:hidden",
+              open ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            id="mobile-menu-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+            aria-hidden={!open}
+            inert={!open || undefined}
+            className={cn(
+              "fixed inset-y-0 right-0 z-50 flex w-[85vw] max-w-[360px] flex-col bg-white shadow-xl md:hidden",
+              "motion-safe:transition-transform duration-[250ms]",
+              open ? "translate-x-0" : "translate-x-full"
+            )}
+          >
         {/* Drawer header */}
         <div className="flex shrink-0 items-center justify-between border-b border-neutral-100 px-5 py-4">
           <Link
@@ -280,6 +288,9 @@ export function MobileNav() {
           </div>
         </nav>
       </div>
+    </>,
+    document.body
+  )}
     </>
   );
 }
