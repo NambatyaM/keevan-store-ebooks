@@ -32,6 +32,11 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   const currency = extractCurrency(normalized.raw);
 
+  const { error: apiKeyError } = await adminSupabase.rpc("set_app_api_key");
+  if (apiKeyError) {
+    console.warn("[payments/confirm] set_app_api_key warning:", apiKeyError.message);
+  }
+
   const { data: finalized, error: rpcError } = await adminSupabase
     .rpc("finalize_pesapal_payment", {
       payment_reference: payment.merchant_reference,
