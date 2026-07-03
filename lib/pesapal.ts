@@ -463,21 +463,6 @@ export async function verifyPesapalPayment(
 
   const currency = extractCurrency(transactionStatus.raw);
 
-  // Set the app API key required by the SECURITY DEFINER RPC.
-  // This is only needed for non-admin (authenticated-user) callers — admin
-  // clients (service_role) pass auth in finalize_pesapal_payment via
-  // is_admin().  Failure is non-fatal because the function might not exist
-  // yet in environments where migration 027 hasn't been applied; the
-  // finalization RPC enforces its own auth regardless.
-  try {
-    const { error: apiKeyError } = await supabase.rpc("set_app_api_key");
-    if (apiKeyError) {
-      console.warn("[verifyPesapalPayment] set_app_api_key warning:", apiKeyError.message);
-    }
-  } catch (e) {
-    console.warn("[verifyPesapalPayment] set_app_api_key warning:", e instanceof Error ? e.message : e);
-  }
-
   let finalized: unknown;
   try {
     const { data, error: finalizeError } = await supabase.rpc("finalize_pesapal_payment", {

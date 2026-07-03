@@ -9,25 +9,29 @@ import { CheckCircle, Loader2, Download, XCircle } from "lucide-react";
 import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
 
-class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
+class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: { name: string; message: string } | null }> {
   constructor(props: { children: React.ReactNode }) {
     super(props);
     this.state = { error: null };
   }
-  static getDerivedStateFromError(error: Error) {
-    return { error };
+  static getDerivedStateFromError(error: unknown) {
+    return {
+      error: {
+        name: error instanceof Error ? error.name : "Error",
+        message: error instanceof Error ? error.message : String(error),
+      },
+    };
   }
   render() {
     if (this.state.error) {
       const err = this.state.error;
       return (
-        <SimplePage title="Order Error" eyebrow="Uh oh">
-          <div className="rounded-lg border border-red-200 p-6 text-center">
-            <XCircle className="mx-auto text-red-500" size={48} aria-hidden />
-            <h2 className="mt-4 text-xl font-bold">Something went wrong</h2>
-            <p className="mt-2 text-sm text-red-700 font-mono break-all">
-              {err.name}: {err.message}
-            </p>
+        <div className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-6 lg:px-8">
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-500">Uh oh</p>
+          <h1 className="mt-3 text-3xl font-black text-neutral-900 sm:text-4xl">Order Error</h1>
+          <div className="mt-7 rounded-lg border border-red-200 p-6">
+            <h2 className="text-xl font-bold">Something went wrong</h2>
+            <p className="mt-2 break-all text-sm font-mono text-red-700">{err.name}: {err.message}</p>
             <p className="mt-4 text-neutral-600">
               Please contact support with the error above. You can also{" "}
               <button onClick={() => { this.setState({ error: null }); window.location.reload(); }} className="text-brand-green underline">
@@ -36,7 +40,7 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Er
               to try again.
             </p>
           </div>
-        </SimplePage>
+        </div>
       );
     }
     return this.props.children;
@@ -91,12 +95,12 @@ function OrderSuccessContent() {
 
       if (res.status === 402) {
         setState("confirming");
-        setErrorMsg(body?.error ?? "Payment is still being confirmed. Please wait.");
+        setErrorMsg(body?.error?.message ?? (typeof body?.error === "string" ? body.error : "Payment is still being confirmed. Please wait."));
         return;
       }
 
       setState("error");
-      setErrorMsg(body?.error ?? "An error occurred.");
+      setErrorMsg(body?.error?.message ?? (typeof body?.error === "string" ? body.error : "An error occurred."));
     } catch {
       setState("error");
       setErrorMsg("Unable to reach payment verification. Please try again.");
