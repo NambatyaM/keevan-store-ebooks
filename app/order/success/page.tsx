@@ -1,12 +1,46 @@
 "use client";
 
-import { Suspense } from "react";
+import { Component, Suspense } from "react";
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, Loader2, Download, XCircle } from "lucide-react";
 import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
+
+class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  render() {
+    if (this.state.error) {
+      const err = this.state.error;
+      return (
+        <SimplePage title="Order Error" eyebrow="Uh oh">
+          <div className="rounded-lg border border-red-200 p-6 text-center">
+            <XCircle className="mx-auto text-red-500" size={48} aria-hidden />
+            <h2 className="mt-4 text-xl font-bold">Something went wrong</h2>
+            <p className="mt-2 text-sm text-red-700 font-mono break-all">
+              {err.name}: {err.message}
+            </p>
+            <p className="mt-4 text-neutral-600">
+              Please contact support with the error above. You can also{" "}
+              <button onClick={() => { this.setState({ error: null }); window.location.reload(); }} className="text-brand-green underline">
+                reload the page
+              </button>{" "}
+              to try again.
+            </p>
+          </div>
+        </SimplePage>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
@@ -218,14 +252,16 @@ function OrderSuccessContent() {
 
 export default function OrderSuccessPage() {
   return (
-    <Suspense fallback={
-      <SimplePage title="Loading..." eyebrow="Order">
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="animate-spin text-brand-green" size={32} />
-        </div>
-      </SimplePage>
-    }>
-      <OrderSuccessContent />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={
+        <SimplePage title="Loading..." eyebrow="Order">
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="animate-spin text-brand-green" size={32} />
+          </div>
+        </SimplePage>
+      }>
+        <OrderSuccessContent />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
