@@ -121,7 +121,7 @@ describe("POST /api/payments/create", () => {
       if (table === "stores") return queryChain({ status: "active", currency: "UGX" });
       if (table === "orders") {
         orderCallCount++;
-        if (orderCallCount <= 2) {
+        if (orderCallCount <= 1) {
           return queryChain(null);
         }
         return mockFromChain({ id: "o1", amount: 50000, platform_fee: 5000, creator_earnings: 45000 });
@@ -192,7 +192,7 @@ describe("POST /api/payments/create", () => {
       if (table === "stores") return queryChain({ status: "active", currency: "UGX" });
       if (table === "orders") {
         orderCallCount++;
-        if (orderCallCount <= 2) return queryChain(null);
+        if (orderCallCount <= 1) return queryChain(null);
         return mockFromChain({ id: "o1", amount: 50000, platform_fee: 5000, creator_earnings: 45000 });
       }
       if (table === "discounts") return queryChain(null);
@@ -213,7 +213,7 @@ describe("POST /api/payments/create", () => {
       if (table === "stores") return queryChain({ status: "active", currency: "UGX" });
       if (table === "orders") {
         orderCallCount++;
-        if (orderCallCount <= 2) return queryChain(null);
+        if (orderCallCount <= 1) return queryChain(null);
         return mockFromChain({ id: "o1", amount: 50000, platform_fee: 5000, creator_earnings: 45000 });
       }
       if (table === "discounts") return queryChain(null);

@@ -1,150 +1,139 @@
 "use client";
 
 import { Suspense } from "react";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, Loader2, Download, XCircle } from "lucide-react";
 import { SimplePage } from "@/components/simple-page";
 import { site } from "@/lib/constants";
 
-const POLLING_TIMEOUT_MS = 300000;
-
-type OrderStatus = {
-  ok: boolean;
-  status: "pending" | "completed" | "failed";
-  productTitle?: string;
-  creatorName?: string;
-  storeSlug?: string;
-  productSlug?: string;
-  downloadUrl?: string;
-  buyerId?: string;
-};
-
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
-  const merchantRef = searchParams.get("OrderMerchantReference") ?? searchParams.get("ref") ?? "";
   const trackingId = searchParams.get("OrderTrackingId") ?? "";
-  const [status, setStatus] = useState<OrderStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [pollingExpired, setPollingExpired] = useState(false);
-  const pollStartRef = useRef<number | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [state, setState] = useState<"loading" | "confirming" | "completed" | "failed" | "error">("loading");
+  const [productTitle, setProductTitle] = useState("");
+  const [creatorName, setCreatorName] = useState("");
+  const [storeSlug, setStoreSlug] = useState("");
+  const [productSlug, setProductSlug] = useState("");
+  const [downloadToken, setDownloadToken] = useState("");
+  const [buyerId, setBuyerId] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  function statusUrl() {
-    let url = `/api/orders/${orderId}/status`;
-    const params: string[] = [];
-    if (merchantRef) params.push(`ref=${encodeURIComponent(merchantRef)}`);
-    if (trackingId) params.push(`trackingId=${encodeURIComponent(trackingId)}`);
-    if (params.length) url += `?${params.join("&")}`;
-    return url;
-  }
+  const confirm = useCallback(async () => {
+    if (!orderId) { setState("error"); setErrorMsg("No order ID provided."); return; }
+    if (!trackingId) { setState("error"); setErrorMsg("No payment tracking ID found in URL."); return; }
 
-  const checkOrder = useCallback(async () => {
-    if (!orderId) { setError("No order ID provided."); return; }
+    setState("confirming");
 
     try {
-      const res = await fetch(statusUrl());
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setError(body?.error?.message ?? body?.error ?? "Order not found.");
+      const res = await fetch("/api/payments/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, trackingId }),
+      });
+
+      const body = await res.json().catch(() => ({}));
+
+      if (res.ok && body.ok) {
+        setDownloadToken(body.downloadToken);
+        setState("completed");
+
+        fetch(`/api/orders/${orderId}/status`).then(async (r) => {
+          if (r.ok) {
+            const data = await r.json();
+            if (data.productTitle) setProductTitle(data.productTitle);
+            if (data.creatorName) setCreatorName(data.creatorName);
+            if (data.storeSlug) setStoreSlug(data.storeSlug);
+            if (data.productSlug) setProductSlug(data.productSlug);
+            if (data.buyerId) setBuyerId(data.buyerId);
+          }
+        }).catch(() => {});
+
         return;
       }
-      const data = await res.json();
-      setStatus(data);
 
-      if (data.status === "pending") {
-        if (!pollStartRef.current) {
-          pollStartRef.current = Date.now();
-        }
-        if (Date.now() - pollStartRef.current >= POLLING_TIMEOUT_MS) {
-          setPollingExpired(true);
-          return;
-        }
-        timeoutRef.current = setTimeout(checkOrder, 3000);
+      if (res.status === 402) {
+        setState("confirming");
+        setErrorMsg(body?.error ?? "Payment is still being confirmed. Please wait.");
+        return;
       }
+
+      setState("error");
+      setErrorMsg(body?.error ?? "An error occurred.");
     } catch {
-      setError("Unable to check order status.");
+      setState("error");
+      setErrorMsg("Unable to reach payment verification. Please try again.");
     }
-  }, [orderId, merchantRef, trackingId]);
+  }, [orderId, trackingId]);
 
   useEffect(() => {
-    if (orderId) checkOrder();
-    else setError("No order ID provided.");
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [orderId, merchantRef, trackingId, checkOrder]);
+    confirm();
+  }, [confirm]);
 
-  const handleVerify = useCallback(async () => {
-    if (!orderId) { setError("No order ID provided."); return; }
-    try {
-      const res = await fetch(statusUrl());
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setError(body?.error?.message ?? body?.error ?? "Unable to check order status.");
-        return;
-      }
-      window.location.reload();
-    } catch {
-      setError("Unable to reach payment verification. Please try again.");
-    }
-  }, [orderId, merchantRef, trackingId]);
-
-  if (error) {
+  if (state === "error") {
     return (
       <SimplePage title="Order Error" eyebrow="Uh oh">
         <div className="rounded-lg border border-neutral-200 p-6 text-center">
           <XCircle className="mx-auto text-red-500" size={48} aria-hidden />
           <h2 className="mt-4 text-xl font-bold">Something went wrong</h2>
-          <p className="mt-2 text-neutral-600">{error}</p>
-          <Link href="/" className="mt-4 inline-block text-brand-green hover:underline">Return to home</Link>
+          <p className="mt-2 text-neutral-600">{errorMsg}</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              onClick={confirm}
+              className="inline-flex items-center gap-2 rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-[#006f43]"
+            >
+              Try again
+            </button>
+            <a
+              href={site.supportWhatsApp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+            >
+              Contact support on WhatsApp
+            </a>
+          </div>
         </div>
       </SimplePage>
     );
   }
 
-  if (!status || status.status === "pending") {
+  if (state === "loading" || state === "confirming") {
     return (
       <SimplePage title="Confirming Your Payment" eyebrow="Order processing">
         <div className="rounded-lg border border-neutral-200 p-6 text-center">
           <Loader2 className="mx-auto animate-spin text-brand-green" size={48} aria-hidden />
           <h2 className="mt-4 text-xl font-bold">Confirming your payment...</h2>
           <p className="mt-2 text-neutral-600">
-            We are verifying your payment with Pesapal. This usually takes a few seconds.
+            We are verifying your payment with Pesapal.
           </p>
-          {!pollingExpired ? (
-            <p className="mt-4 text-sm text-neutral-500">This page will update automatically when confirmed.</p>
-          ) : (
-            <div className="mt-6 space-y-3">
-              <p className="text-sm text-amber-600">
-                Your payment is taking longer than expected. This can happen with mobile money delays.
-              </p>
-              <div className="flex flex-wrap justify-center gap-3">
-                <button
-                  onClick={handleVerify}
-                  className="inline-flex items-center gap-2 rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-[#006f43]"
-                >
-                  Check payment status
-                </button>
-                <a
-                  href={site.supportWhatsApp}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
-                >
-                  Contact support on WhatsApp
-                </a>
-              </div>
-            </div>
+          {errorMsg && (
+            <p className="mt-4 text-sm text-amber-600">{errorMsg}</p>
           )}
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              onClick={confirm}
+              className="inline-flex items-center gap-2 rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-[#006f43]"
+            >
+              Check again
+            </button>
+            <a
+              href={site.supportWhatsApp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+            >
+              Contact support on WhatsApp
+            </a>
+          </div>
         </div>
       </SimplePage>
     );
   }
 
-  if (status.status === "failed") {
+  if (state === "failed") {
     return (
       <SimplePage title="Payment Failed" eyebrow="Payment unsuccessful">
         <div className="rounded-lg border border-neutral-200 p-6 text-center">
@@ -154,9 +143,9 @@ function OrderSuccessContent() {
             Your payment was not completed. Please try again or contact support.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            {status.storeSlug ? (
+            {storeSlug ? (
               <Link
-                href={`/store/${status.storeSlug}`}
+                href={`/store/${storeSlug}`}
                 className="inline-flex items-center gap-2 rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-[#006f43]"
               >
                 Try again
@@ -187,15 +176,13 @@ function OrderSuccessContent() {
     <SimplePage title="Purchase Successful!" eyebrow="Thank you for your order">
       <div className="rounded-lg border border-neutral-200 p-6">
         <CheckCircle className="text-brand-green" size={48} aria-hidden />
-        <h2 className="mt-4 text-2xl font-bold">{status.productTitle}</h2>
-        <p className="mt-2 text-neutral-600">
-          by {status.creatorName}
-        </p>
+        <h2 className="mt-4 text-2xl font-bold">{productTitle || "Your purchase"}</h2>
+        {creatorName && <p className="mt-2 text-neutral-600">by {creatorName}</p>}
 
-        {status.downloadUrl && (
+        {downloadToken && (
           <div className="mt-6">
             <a
-              href={status.downloadUrl}
+              href={`/api/downloads/${downloadToken}`}
               className="inline-flex items-center gap-2 rounded-md bg-brand-green px-6 py-3 text-sm font-semibold text-white hover:bg-[#006f43]"
             >
               <Download size={18} aria-hidden />
@@ -208,17 +195,17 @@ function OrderSuccessContent() {
         )}
 
         <div className="mt-8 flex flex-wrap gap-3">
-          {status.storeSlug && (
-            <Link href={`/store/${status.storeSlug}`} className="text-sm text-brand-green hover:underline">
+          {storeSlug && (
+            <Link href={`/store/${storeSlug}`} className="text-sm text-brand-green hover:underline">
               Visit creator store
             </Link>
           )}
-          {!status.buyerId && (
+          {!buyerId && (
             <Link href="/signup-buyer" className="text-sm text-brand-green hover:underline">
               Create an account to re-access your purchases anytime
             </Link>
           )}
-          {status.buyerId && (
+          {buyerId && (
             <Link href="/buyer/dashboard" className="text-sm text-brand-green hover:underline">
               View your purchases
             </Link>

@@ -58,22 +58,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     );
   }
 
-  const { data: existingPaid } = await supabase
-    .from("orders")
-    .select("id")
-    .eq("buyer_email", input.buyerEmail)
-    .eq("product_id", input.productId)
-    .eq("status", "paid")
-    .limit(1)
-    .maybeSingle();
-
-  if (existingPaid) {
-    return apiError(
-      "You already purchased this product. Visit your purchases at /buyer/dashboard or contact support if you need help.",
-      409
-    );
-  }
-
   let discountPrice = product.price;
   let discountId: string | null = null;
 
