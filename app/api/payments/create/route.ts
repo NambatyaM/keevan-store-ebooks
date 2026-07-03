@@ -42,20 +42,26 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   const { data: existingPending } = await supabase
     .from("orders")
-    .select("id")
+    .select("id, created_at")
     .eq("buyer_email", input.buyerEmail)
     .eq("product_id", input.productId)
     .eq("status", "pending")
-    .gte("created_at", fifteenMinAgo)
     .limit(1)
     .maybeSingle();
 
   if (existingPending) {
-    return apiError(
-      "You have a payment still in progress. Please complete it on Pesapal, or wait 15 minutes for it to expire. " +
-      "Need help? Contact us on WhatsApp. If you already paid, check your order status.",
-      409
-    );
+    const isRecent = existingPending.created_at >= fifteenMinAgo;
+    if (isRecent) {
+      return apiError(
+        "You have a payment still in progress. Please complete it on Pesapal, or wait 15 minutes for it to expire. " +
+        "Need help? Contact us on WhatsApp. If you already paid, check your order status.",
+        409
+      );
+    }
+    await supabase
+      .from("orders")
+      .update({ status: "expired" })
+      .eq("id", existingPending.id);
   }
 
   let discountPrice = product.price;

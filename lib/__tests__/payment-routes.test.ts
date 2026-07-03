@@ -175,7 +175,7 @@ describe("POST /api/payments/create", () => {
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === "products") return queryChain({ id: "prod-1", slug: "my-ebook", title: "E-Book", price: 50000, creator_id: "c1", status: "published", store_id: "s1", file_path: "products/file.pdf", currency: "UGX" });
       if (table === "stores") return queryChain({ status: "active", currency: "UGX" });
-      if (table === "orders") return queryChain({ id: "existing-order" });
+      if (table === "orders") return queryChain({ id: "existing-order", created_at: new Date().toISOString() });
       if (table === "discounts") return queryChain(null);
       if (table === "buyers") return mockFromChain({ id: "b1" });
       return rateLimitChain;
