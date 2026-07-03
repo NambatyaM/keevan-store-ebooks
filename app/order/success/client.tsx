@@ -35,19 +35,27 @@ function OrderSuccessContent() {
   const [state, setState] = useState<"loading" | "confirming" | "completed" | "error">("loading");
   const [downloadToken, setDownloadToken] = useState("");
 
+  const [apiDebug, setApiDebug] = useState("");
   const doConfirm = useCallback(async () => {
-    if (!orderId || !trackingId) { setState("error"); return; }
+    if (!orderId) { setApiDebug("missing order_id"); setState("error"); return; }
+    if (!trackingId) { setApiDebug("missing OrderTrackingId"); setState("error"); return; }
     setState("confirming");
-    const res = await fetch("/api/payments/confirm", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId, trackingId }),
-    });
-    const body = await res.json().catch(() => ({}));
-    if (res.ok && body.ok) {
-      setDownloadToken(body.downloadToken);
-      setState("completed");
-    } else {
+    try {
+      const res = await fetch("/api/payments/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, trackingId }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body.ok) {
+        setDownloadToken(body.downloadToken);
+        setState("completed");
+      } else {
+        setApiDebug(`status=${res.status} body=${JSON.stringify(body)}`);
+        setState("error");
+      }
+    } catch (e) {
+      setApiDebug(`fetch error: ${e}`);
       setState("error");
     }
   }, [orderId, trackingId]);
@@ -59,7 +67,7 @@ function OrderSuccessContent() {
   if (state === "error") {
     return (
       <SimplePage title="Order Error" eyebrow="Uh oh">
-        <p>Payment could not be verified.</p>
+        <p className="text-neutral-600">{apiDebug}</p>
       </SimplePage>
     );
   }
