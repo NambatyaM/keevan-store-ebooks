@@ -11,7 +11,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   const { data: payment } = await adminSupabase
     .from("payments")
-    .select("merchant_reference, pesapal_tracking_id")
+    .select("merchant_reference, tracking_id")
     .eq("order_id", orderId)
     .maybeSingle();
 

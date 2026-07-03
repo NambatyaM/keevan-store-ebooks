@@ -189,10 +189,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       try {
         await supabase
           .from("payments")
-          .update({ pesapal_tracking_id: trackingId })
+          .update({ tracking_id: trackingId })
           .eq("merchant_reference", merchantReference);
       } catch (e) {
-        console.error("[payments/create] Failed to save pesapal_tracking_id:", e);
+        console.error("[payments/create] Failed to save tracking_id:", e);
       }
     }
 

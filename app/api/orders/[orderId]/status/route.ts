@@ -102,11 +102,11 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
     try {
       const { data: payment } = await adminSupabase
         .from("payments")
-        .select("merchant_reference, pesapal_tracking_id")
+        .select("merchant_reference, tracking_id")
         .eq("order_id", orderId)
         .maybeSingle();
 
-      const resolvedTrackingId = (payment?.pesapal_tracking_id as string | undefined) ?? (trackingIdFromUrl || null);
+      const resolvedTrackingId = (payment?.tracking_id as string | undefined) ?? (trackingIdFromUrl || null);
 
       if (payment?.merchant_reference && resolvedTrackingId) {
         let statusPayload: unknown;
