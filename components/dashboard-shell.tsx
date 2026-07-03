@@ -29,6 +29,7 @@ import {
   ClipboardList,
   UserCheck,
   Ban,
+  Rocket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
@@ -50,6 +51,7 @@ const creatorNav: NavSection[] = [
     label: "Main",
     items: [
       { href: "/creator/dashboard", label: "Overview", icon: <Gauge size={18} /> },
+      { href: "/creator/first-sale", label: "Get Your First Sale", icon: <Rocket size={18} /> },
       { href: "/creator/products", label: "Products", icon: <Package size={18} /> },
       { href: "/creator/orders", label: "Orders", icon: <ShoppingCart size={18} /> },
       { href: "/creator/analytics", label: "Analytics", icon: <BarChart3 size={18} /> },
