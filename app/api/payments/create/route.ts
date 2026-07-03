@@ -60,7 +60,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
     await supabase
       .from("orders")
-      .update({ status: "expired" })
+      .update({ status: "failed" })
       .eq("id", existingPending.id);
   }
 
