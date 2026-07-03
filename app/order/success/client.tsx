@@ -3,7 +3,7 @@
 import { Component } from "react";
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle, Download } from "lucide-react";
 import { SimplePage } from "@/components/simple-page";
 
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
@@ -32,38 +32,58 @@ function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
   const trackingId = searchParams.get("OrderTrackingId") ?? "";
-  const [state, setState] = useState<"loading" | "confirming" | "completed" | "failed" | "error">("loading");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [state, setState] = useState<"loading" | "confirming" | "completed" | "error">("loading");
+  const [downloadToken, setDownloadToken] = useState("");
 
   const doConfirm = useCallback(async () => {
-    setState("completed");
-  }, []);
+    if (!orderId || !trackingId) { setState("error"); return; }
+    setState("confirming");
+    const res = await fetch("/api/payments/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId, trackingId }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok && body.ok) {
+      setDownloadToken(body.downloadToken);
+      setState("completed");
+    } else {
+      setState("error");
+    }
+  }, [orderId, trackingId]);
 
   useEffect(() => {
     doConfirm();
   }, [doConfirm]);
 
-  if (state === "loading" || state === "confirming") {
+  if (state === "error") {
     return (
-      <SimplePage title="Confirming" eyebrow="Order">
-        <p>Loading state: {state}</p>
+      <SimplePage title="Order Error" eyebrow="Uh oh">
+        <p>Payment could not be verified.</p>
       </SimplePage>
     );
   }
 
-  if (state === "error") {
+  if (state === "loading" || state === "confirming") {
     return (
-      <SimplePage title="Error" eyebrow="Uh oh">
-        <p>{errorMsg}</p>
+      <SimplePage title="Confirming" eyebrow="Order">
+        <p>Verifying payment...</p>
       </SimplePage>
     );
   }
 
   return (
-    <SimplePage title="Done" eyebrow="Success">
+    <SimplePage title="Purchase Successful!" eyebrow="Thank you">
       <div>
         <CheckCircle size={48} />
-        <p>Completed!</p>
+        <h2>Your purchase</h2>
+        {downloadToken && (
+          <div>
+            <a href={`/api/downloads/${downloadToken}`}>
+              <Download size={18} /> Download Now
+            </a>
+          </div>
+        )}
       </div>
     </SimplePage>
   );
