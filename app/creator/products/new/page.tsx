@@ -57,7 +57,7 @@ export default function NewProductPage() {
       } else {
         setCoverPath(data.path); setCoverSize(data.size); setCoverMime(data.mime); setCoverName(data.originalName);
       }
-    } catch { setMessage("Network error during upload."); }
+    } catch { setMessage("Network error during upload. Check your connection and try again."); }
     finally {
       if (kind === "ebook") setUploadingFile(false);
       else setUploadingCover(false);
@@ -71,9 +71,9 @@ export default function NewProductPage() {
     e.preventDefault();
     setMessage("");
     const numPrice = Number(price);
-    if (isNaN(numPrice) || numPrice < 0) { setMessage("Enter a valid price (0 or more)."); return; }
+    if (isNaN(numPrice) || numPrice <= 0) { setMessage("Enter a valid price (must be greater than 0)."); return; }
     if (!filePath) { setMessage("Upload the product file first."); return; }
-    if (!slug) { setMessage("Enter a slug."); return; }
+    if (!slug || slug.length < 3) { setMessage("Slug must be at least 3 characters."); return; }
 
     setLoading(true);
     try {
@@ -95,9 +95,16 @@ export default function NewProductPage() {
         })
       });
       const data = await res.json();
-      if (!res.ok) { setMessage(data.error?.message ?? "Creation failed."); }
-      else { router.push("/creator/products"); }
-    } catch { setMessage("Network error."); }
+      if (!res.ok) {
+        const err = data.error;
+        if (err?.details?.fieldErrors) {
+          const msgs = Object.entries(err.details.fieldErrors).map(([field, msgs]) => `${field}: ${(msgs as string[]).join(", ")}`);
+          setMessage(msgs.join("; "));
+        } else {
+          setMessage(err?.message ?? "Creation failed.");
+        }
+      } else { router.push("/creator/products"); }
+    } catch { setMessage("Network error. Check your connection and try again."); }
     finally { setLoading(false); }
   };
 
@@ -124,7 +131,7 @@ export default function NewProductPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-neutral-700">Price (UGX)</label>
-              <input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} className="focus-ring mt-1 w-full rounded-md border border-neutral-300 px-4 py-3" placeholder="25000" required />
+              <input type="number" min="1" value={price} onChange={(e) => setPrice(e.target.value)} className="focus-ring mt-1 w-full rounded-md border border-neutral-300 px-4 py-3" placeholder="25000" required />
             </div>
             <div>
               <label className="block text-sm font-semibold text-neutral-700">Status</label>
