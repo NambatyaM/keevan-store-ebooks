@@ -4,7 +4,7 @@ import { json, requireAdmin, withErrorHandling } from "@/lib/api";
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const { supabase } = await requireAdmin(request);
 
-  const smtpConfigured = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+  const smtpConfigured = !!process.env.RESEND_API_KEY;
   const cronConfigured = !!process.env.CRON_SECRET;
 
   const [{ count: pending }, { count: sent }, { count: failed }] = await Promise.all([

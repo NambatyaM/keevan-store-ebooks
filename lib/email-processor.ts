@@ -1,5 +1,5 @@
 import { sendEmail } from "@/lib/email";
-import { orderConfirmationHtml, withdrawalStatusHtml, refundStatusHtml } from "@/lib/email-templates";
+import { orderConfirmationHtml, withdrawalStatusHtml, refundStatusHtml, creatorSaleNotificationHtml } from "@/lib/email-templates";
 import { getOptionalSupabaseAdminClient } from "@/lib/supabase";
 import type { Currency } from "@/lib/constants";
 
@@ -11,6 +11,7 @@ export type QueueItem = {
   reference_type: string;
   reference_id: string;
   metadata: Record<string, unknown>;
+  retry_count?: number;
 };
 
 export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -19,6 +20,22 @@ export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { o
 
   switch (item.type) {
     case "order_confirmation": {
+      if (item.metadata?.type === "creator_sale") {
+        const meta = item.metadata as Record<string, unknown>;
+        const html = creatorSaleNotificationHtml({
+          creatorName: item.to_name ?? "Creator",
+          productTitle: String(meta.product_title ?? "Product"),
+          amount: Number(meta.amount ?? 0),
+          currency: "UGX" as Currency,
+          buyerEmail: String(meta.buyer_email ?? ""),
+        });
+        return sendEmail({
+          to: item.to_email,
+          subject: `Sale Confirmed — ${String(meta.product_title ?? "Product")}`,
+          html,
+        });
+      }
+
       const { data: order } = await supabase
         .from("orders")
         .select("*, products!inner(title), creators!inner(display_name)")

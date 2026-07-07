@@ -108,6 +108,28 @@ export function refundStatusHtml(input: {
 </html>`;
 }
 
+export function creatorSaleNotificationHtml(input: {
+  creatorName: string;
+  productTitle: string;
+  amount: number;
+  currency: Currency;
+  buyerEmail: string;
+}): string {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:sans-serif;padding:24px;max-width:560px;margin:0 auto;">
+  <h1 style="color:#111;font-size:24px;">You made a sale!</h1>
+  <p>Hi ${escapeHtml(input.creatorName)},</p>
+  <p>Your product <strong>${escapeHtml(input.productTitle)}</strong> was purchased for ${formatCurrency(input.amount, input.currency)}.</p>
+  <p style="font-size:14px;color:#666;">Buyer: ${escapeHtml(input.buyerEmail)}</p>
+  <p style="font-size:14px;color:#666;">Your share (90%) will be added to your available balance.</p>
+  <hr style="margin-top:32px;">
+  <p style="font-size:12px;color:#999;">${site.name} &mdash; ${site.url}</p>
+</body>
+</html>`;
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")

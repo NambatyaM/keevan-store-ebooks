@@ -88,7 +88,7 @@ export default function AdminEmailsPage() {
                   </div>
                   {!status?.smtp_configured && (
                     <p className="mt-2 text-xs text-muted">
-                      Set SMTP_HOST, SMTP_USER, and SMTP_PASS in environment variables.
+                      Set RESEND_API_KEY in environment variables for transactional emails.
                     </p>
                   )}
                 </div>
