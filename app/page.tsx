@@ -134,8 +134,19 @@ export default function Home() {
 
         <section className="content-visibility-auto bg-white">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold text-brand-black">Trusted by creators across East Africa</h2>
-            <p className="mt-4 text-xl font-bold text-brand-green">Growing fast</p>
+            <h2 className="text-3xl font-bold text-brand-black">Sell digital products like an e-book in minutes</h2>
+            <div className="mt-8 grid gap-6 sm:grid-cols-3">
+              {[
+                ["One link in bio", "Your branded store link works everywhere — Instagram, TikTok, WhatsApp, or your website"],
+                ["Multi-currency", "Price and get paid in UGX, KES, TZS, RWF, or USD"],
+                ["Keep 90%", "No monthly fees. Just 10% per sale. Withdraw to mobile money or bank."]
+              ].map(([stat, label]) => (
+                <div key={stat} className="rounded-lg border border-neutral-200 bg-white p-6">
+                  <p className="text-xl font-black text-brand-green">{stat}</p>
+                  <p className="mt-2 text-sm text-neutral-600">{label}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
