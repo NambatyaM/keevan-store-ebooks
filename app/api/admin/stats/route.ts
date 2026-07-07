@@ -12,7 +12,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     { count: suspendedStores },
     { count: pendingWithdrawals },
     { count: newRegistrations },
-    { count: totalBuyers }
+    { count: totalBuyers },
+    { count: pendingRefunds }
   ] = await Promise.all([
     supabase.from("creators").select("*", { count: "exact", head: true }),
     supabase.from("stores").select("*", { count: "exact", head: true }),
@@ -21,7 +22,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     supabase.from("stores").select("*", { count: "exact", head: true }).eq("status", "suspended"),
     supabase.from("withdrawal_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("users").select("*", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
-    supabase.from("buyers").select("*", { count: "exact", head: true })
+    supabase.from("buyers").select("*", { count: "exact", head: true }),
+    supabase.from("refunds").select("*", { count: "exact", head: true }).eq("status", "pending")
   ]);
 
   const { count: paidOrders } = await supabase
@@ -50,6 +52,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       suspendedStores: suspendedStores ?? 0,
       totalBuyers: totalBuyers ?? 0,
       pendingWithdrawals: pendingWithdrawals ?? 0,
+      pendingRefunds: pendingRefunds ?? 0,
       newRegistrations: newRegistrations ?? 0
     }
   });

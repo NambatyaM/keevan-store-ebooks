@@ -8,16 +8,22 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
   const limit = Math.min(Number(url.searchParams.get("limit")) || 50, 200);
   const offset = (page - 1) * limit;
+  const since = url.searchParams.get("since");
+  const until = url.searchParams.get("until");
 
-  const { count: total } = await supabase
-    .from("creators")
-    .select("*", { count: "exact", head: true });
+  let countQuery = supabase.from("creators").select("*", { count: "exact", head: true });
+  if (since) countQuery = countQuery.gte("created_at", since);
+  if (until) countQuery = countQuery.lte("created_at", until);
+  const { count: total } = await countQuery;
 
-  const { data } = await supabase
+  let dataQuery = supabase
     .from("creators")
     .select("*,users(full_name,email),stores(id,slug,name,status)")
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
+  if (since) dataQuery = dataQuery.gte("created_at", since);
+  if (until) dataQuery = dataQuery.lte("created_at", until);
+  const { data } = await dataQuery;
 
   const creators = (data ?? []).map((creator) => {
     const userData = Array.isArray(creator.users) ? creator.users[0] : creator.users;

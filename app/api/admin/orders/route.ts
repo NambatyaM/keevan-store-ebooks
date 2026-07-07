@@ -7,6 +7,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const url = new URL(request.url);
   const status = url.searchParams.get("status");
   const limit = Math.min(Number(url.searchParams.get("limit")) || 100, 500);
+  const since = url.searchParams.get("since");
+  const until = url.searchParams.get("until");
 
   let query = supabase
     .from("orders")
@@ -14,6 +16,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     .order("created_at", { ascending: false })
     .limit(limit);
 
+  if (since) query = query.gte("created_at", since);
+  if (until) query = query.lte("created_at", until);
   if (status && ["pending", "paid", "failed", "refunded"].includes(status)) {
     query = query.eq("status", status);
   }
