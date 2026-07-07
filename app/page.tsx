@@ -135,18 +135,7 @@ export default function Home() {
         <section className="content-visibility-auto bg-white">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold text-brand-black">Trusted by creators across East Africa</h2>
-            <div className="mt-8 grid gap-6 sm:grid-cols-3">
-              {[
-                ["50+", "Active creators selling digital products"],
-                ["5,000+", "Digital products delivered to buyers"],
-                ["UGX, KES, TZS, RWF, USD", "Multi-currency support for any market"]
-              ].map(([stat, label]) => (
-                <div key={stat} className="rounded-lg border border-neutral-200 bg-white p-6">
-                  <p className="text-3xl font-black text-brand-green">{stat}</p>
-                  <p className="mt-2 text-sm text-neutral-600">{label}</p>
-                </div>
-              ))}
-            </div>
+            <p className="mt-4 text-xl font-bold text-brand-green">Growing fast</p>
           </div>
         </section>
 
