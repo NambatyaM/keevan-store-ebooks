@@ -4,6 +4,9 @@ import { ebookUpload, imageUpload } from "@/lib/constants";
 import { validateUploadFile } from "@/lib/file-validation";
 import { randomUUID } from "crypto";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const { supabase, authUser } = await requireUser(request);
 
@@ -47,7 +50,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     upsert: false
   });
 
-  if (uploadError) return apiError(uploadError.message, 400);
+  if (uploadError) {
+    console.error(JSON.stringify({ level: "error", message: "Supabase storage upload failed", path: storagePath, bucket, error: uploadError.message }));
+    return apiError("Failed to save file to storage. Please try again.", 500);
+  }
 
   return json({
     path: storagePath,

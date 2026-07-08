@@ -49,11 +49,11 @@ export const productSchema = z.object({
 });
 
 export const productUpdateSchema = z.object({
-  slug: z.string().regex(/^[a-z0-9-]{3,96}$/),
-  title: z.string().min(2),
-  description: z.string().min(10),
-  price: z.number().int().positive(),
-  status: z.enum(["draft", "published", "disabled"]).default("draft"),
+  slug: z.string().regex(/^[a-z0-9-]{3,96}$/).optional(),
+  title: z.string().min(2).optional(),
+  description: z.string().min(10).optional(),
+  price: z.number().int().positive().optional(),
+  status: z.enum(["draft", "published", "disabled"]).optional(),
   filePath: z.string().min(1).optional(),
   fileSize: z.number().int().max(4 * 1024 * 1024).optional(),
   fileMime: z.enum(["application/pdf", "application/epub+zip", "application/x-mobipocket-ebook", "application/zip"]).optional(),

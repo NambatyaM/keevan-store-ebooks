@@ -2,6 +2,9 @@ import { NextRequest } from "next/server";
 import { json, logAdminAction, requireAdmin, withErrorHandling } from "@/lib/api";
 import { type QueueItem, renderAndSend } from "@/lib/email-processor";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const { supabase, authUser } = await requireAdmin(request);
 

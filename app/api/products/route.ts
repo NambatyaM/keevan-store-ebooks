@@ -52,6 +52,14 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     if (!coverExists) return apiError("Uploaded cover image not found in storage. Please re-upload.", 400);
   }
 
+  // Read the store's currency so products are priced in the correct currency
+  const { data: storeData } = await supabase
+    .from("stores")
+    .select("currency")
+    .eq("id", input.storeId)
+    .single();
+  const productCurrency = storeData?.currency ?? "UGX";
+
   // Default new products to "draft" regardless of client input to enforce moderation
   const { data, error } = await supabase
     .from("products")
@@ -62,6 +70,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       title: input.title,
       description: input.description,
       price: input.price,
+      currency: productCurrency,
       status: "draft",
       file_path: input.filePath,
       file_size: input.fileSize,
@@ -73,6 +82,11 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     .select("*")
     .single();
 
-  if (error) return apiError(error.message, 400);
+  if (error) {
+    // Clean up orphaned storage files when DB insert fails
+    supabase.storage.from("products").remove([input.filePath]).catch(() => {});
+    if (input.coverPath) supabase.storage.from("covers").remove([input.coverPath]).catch(() => {});
+    return apiError(error.message, 400);
+  }
   return json({ product: data }, { status: 201 });
 });

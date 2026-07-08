@@ -62,6 +62,14 @@ export default function EditProductPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const maxBytes = kind === "ebook" ? 4 * 1024 * 1024 : 2 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      const maxMB = maxBytes / 1024 / 1024;
+      setMessage(`${kind === "ebook" ? "Product file" : "Cover image"} exceeds the ${maxMB} MB limit. Please choose a smaller file.`);
+      e.target.value = "";
+      return;
+    }
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("kind", kind);
@@ -81,7 +89,11 @@ export default function EditProductPage() {
         setCoverPath(data.path); setCoverSize(data.size); setCoverMime(data.mime); setCoverName(data.originalName);
         setNewCoverUploaded(true);
       }
-    } catch { setMessage("Network error during upload. Check your connection and try again."); }
+    } catch (err) {
+      const msg = err instanceof TypeError ? "Connection lost during upload. The file may be too large or your connection may be unstable." : "Upload failed. Please try again.";
+      setMessage(msg);
+      console.error("Upload error:", err);
+    }
     finally {
       if (kind === "ebook") setUploadingFile(false);
       else setUploadingCover(false);
@@ -123,7 +135,11 @@ export default function EditProductPage() {
           setMessage(err?.message ?? "Save failed.");
         }
       } else { router.push("/creator/products"); }
-    } catch { setMessage("Network error. Check your connection and try again."); }
+    } catch (err) {
+      const msg = err instanceof TypeError ? "Connection lost. Please check your internet and try again." : "An unexpected error occurred. Please try again.";
+      setMessage(msg);
+      console.error("Product save error:", err);
+    }
     finally { setSaving(false); }
   };
 

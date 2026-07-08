@@ -3,6 +3,9 @@ import { json, withOptionalCsrf } from "@/lib/api";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { renderAndSend } from "@/lib/email-processor";
 
+export const runtime = "nodejs";
+export const maxDuration = 120;
+
 async function authorizeCron(request: NextRequest): Promise<void> {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
