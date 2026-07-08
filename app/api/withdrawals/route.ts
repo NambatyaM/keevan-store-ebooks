@@ -1,5 +1,8 @@
 import { NextRequest } from "next/server";
 import { apiError, json, readJson, requireUser, withErrorHandling } from "@/lib/api";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 import { withdrawalSchema } from "@/lib/schemas";
 import { minimumWithdrawalByCurrency, type Currency } from "@/lib/constants";
 
@@ -45,6 +48,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       400
     );
   }
+
+  // Propagate user_id into session so reserve_withdrawal RPC can find the
+  // creator (auth.uid() returns NULL when called via service_role admin client)
+  await supabase.rpc("set_session_request_user_id", { user_id: authUser.id });
 
   const { data, error } = await supabase.rpc("reserve_withdrawal", {
     p_amount: input.amount,

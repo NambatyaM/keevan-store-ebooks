@@ -136,6 +136,9 @@ beforeEach(async () => {
   mockSupabase.auth.signInWithPassword.mockResolvedValue({ data: { user: { id: "u1", user_metadata: { role: "creator" } } }, error: null });
   mockResetPasswordForEmail.mockResolvedValue({ error: null });
   mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
+  mockServerSupabase.auth.signInWithPassword.mockResolvedValue({ data: { user: { id: "u1", user_metadata: { role: "creator" } } }, error: null });
+  const serverSupabase = await import("@/lib/supabase-server");
+  vi.mocked(serverSupabase.createServerSupabaseClient).mockImplementation(() => mockServerSupabase);
 });
 
 describe("POST /api/auth/register", () => {
@@ -183,6 +186,14 @@ describe("POST /api/auth/register", () => {
   });
 
   it("rejects when Supabase auth create fails", async () => {
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === "stores") {
+        const chain = mockFromChain(null);
+        chain.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+        return chain;
+      }
+      return rateLimitChain;
+    });
     mockSupabase.auth.admin.createUser.mockResolvedValue({ data: { user: null }, error: new Error("Email already registered") });
     const POST = await importRegister();
     const res = await POST(makeRequest("/api/auth/register", { body: validBody }));
@@ -191,6 +202,11 @@ describe("POST /api/auth/register", () => {
 
   it("rolls back user if creator insert fails", async () => {
     mockSupabase.from.mockImplementation((table: string) => {
+      if (table === "stores") {
+        const chain = mockFromChain(null);
+        chain.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+        return chain;
+      }
       if (table === "creators") return mockFromChain(null, new Error("Creator creation failed"));
       if (table === "users") return mockFromChain(null);
       return rateLimitChain;

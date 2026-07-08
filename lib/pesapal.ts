@@ -503,12 +503,9 @@ export async function verifyPesapalPayment(
     }
   }
 
-  // Send confirmation email asynchronously (fire-and-forget).
-  // This runs after the payment is finalized so the user gets the download
-  // link even if the success page didn't load or they closed the browser.
-  if (result.order_id) {
-    sendOrderConfirmationEmail(supabase, result.order_id).catch(() => {});
-  }
+  // Confirmation email is enqueued automatically by the DB trigger
+  // `trg_enqueue_order_confirmation` which fires on orders.status: pending → paid
+  // inside finalize_pesapal_payment and processed by the cron email processor.
 
   return { ok: true, downloadToken: result.download_token ?? "", alreadyVerified: result.already_processed };
 }

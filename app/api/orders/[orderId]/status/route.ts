@@ -1,7 +1,10 @@
 import { NextRequest } from "next/server";
 import { apiError, json, resolveUser, withErrorHandling } from "@/lib/api";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { getPesapalTransactionStatus, normalizePesapalStatus, extractCurrency, sendOrderConfirmationEmail } from "@/lib/pesapal";
+import { getPesapalTransactionStatus, normalizePesapalStatus, extractCurrency } from "@/lib/pesapal";
 
 export const GET = withErrorHandling(async (request: NextRequest, context?: unknown) => {
   const { params } = context as { params: Promise<{ orderId: string }> };
@@ -131,7 +134,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
               });
 
             if (finalized?.ok) {
-              sendOrderConfirmationEmail(adminSupabase, orderId).catch(() => {});
+              // Confirmation email is enqueued by the DB trigger; no manual send needed.
 
               const { data: updatedOrder } = await adminSupabase
                 .from("orders")

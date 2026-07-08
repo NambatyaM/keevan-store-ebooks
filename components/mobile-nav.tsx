@@ -166,29 +166,25 @@ export function MobileNav() {
         <nav className="flex-1 overflow-y-auto px-5 py-5">
           <div className="flex flex-col gap-0.5">
             {/* -- Group 1: Primary CTA — conversion action -- */}
-            <Link
-              href="/"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 rounded-lg bg-brand-green px-5 py-3 text-[16px] font-semibold text-white min-h-[48px]"
-              tabIndex={open ? 0 : -1}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
+            {role ? (
+              <Link
+                href={role === "admin" ? "/admin/dashboard" : role === "buyer" ? "/buyer/dashboard" : "/creator/dashboard"}
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-center rounded-lg bg-brand-green px-5 py-3 text-[16px] font-semibold text-white min-h-[48px]"
+                tabIndex={open ? 0 : -1}
               >
-                <circle cx="9" cy="21" r="1" />
-                <circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-              </svg>
-              Browse Products
-            </Link>
+                Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-center rounded-lg bg-brand-green px-5 py-3 text-[16px] font-semibold text-white min-h-[48px]"
+                tabIndex={open ? 0 : -1}
+              >
+                Log in
+              </Link>
+            )}
 
             {/* -- Divider -- */}
             <div className="my-4 border-t border-neutral-100" />

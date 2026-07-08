@@ -1,5 +1,8 @@
 import { NextRequest } from "next/server";
 import { apiError, json, logAdminAction, readJson, requireAdmin, withErrorHandling } from "@/lib/api";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 import { refundDecisionSchema } from "@/lib/schemas";
 import { refundPesapalOrder, getPesapalTransactionStatus } from "@/lib/pesapal";
 

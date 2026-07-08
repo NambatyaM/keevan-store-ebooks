@@ -6,6 +6,9 @@ import { calculateSaleSplit, site, currencyPhoneRegex, type Currency } from "@/l
 import { createPesapalOrder } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 function validatePesapalConfig(): string | null {
   if (!process.env.PESAPAL_CONSUMER_KEY) return "PESAPAL_CONSUMER_KEY is not configured";
   if (!process.env.PESAPAL_CONSUMER_SECRET) return "PESAPAL_CONSUMER_SECRET is not configured";
@@ -107,6 +110,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
   }
 
+  if (!discountPrice || discountPrice <= 0) {
+    return apiError("Invalid product price", 400);
+  }
+
   const split = calculateSaleSplit(discountPrice);
   const orderInsert: Record<string, unknown> = {
     product_id: product.id,
@@ -158,14 +165,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   if (!callbackBase) {
     console.error("[payments/create] Cannot determine callback base URL — NEXT_PUBLIC_SITE_URL is not set and no fallback available");
     return apiError("Payment configuration error. Please contact support.", 500);
-  }
-
-  if (!discountPrice || discountPrice <= 0) {
-    await Promise.all([
-      supabase.from("payments").delete().eq("order_id", order.id),
-      supabase.from("orders").delete().eq("id", order.id),
-    ]);
-    return apiError("Invalid product price", 400);
   }
 
   try {

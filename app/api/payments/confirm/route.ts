@@ -1,7 +1,10 @@
 import { NextRequest } from "next/server";
 import { apiError, json, withErrorHandling } from "@/lib/api";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 import { getSupabaseAdminClient } from "@/lib/supabase";
-import { getPesapalTransactionStatus, normalizePesapalStatus, extractCurrency, sendOrderConfirmationEmail } from "@/lib/pesapal";
+import { getPesapalTransactionStatus, normalizePesapalStatus, extractCurrency } from "@/lib/pesapal";
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const { orderId, trackingId } = await request.json().catch(() => ({}));
@@ -45,7 +48,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     return apiError(rpcError?.message ?? finalized?.error ?? "Payment finalization failed", 500);
   }
 
-  sendOrderConfirmationEmail(adminSupabase, orderId).catch(() => {});
+  // Confirmation email is enqueued by the DB trigger; no manual send needed.
 
   const { data: download } = await adminSupabase
     .from("downloads")

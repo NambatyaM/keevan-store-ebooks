@@ -13,9 +13,9 @@ function listMigrations(): string[] {
 }
 
 describe("Migration files", () => {
-  it("all 29 migrations exist and are in order", () => {
+  it("all 30 migrations exist and are in order", () => {
     const migrations = listMigrations();
-    expect(migrations).toHaveLength(29);
+    expect(migrations).toHaveLength(30);
     expect(migrations[0]).toBe("001_initial_schema.sql");
     expect(migrations[19]).toBe("020_fix_currency_constraint_and_production_issues.sql");
     expect(migrations[20]).toBe("021_fix_product_slug_uniqueness.sql");
@@ -27,6 +27,7 @@ describe("Migration files", () => {
     expect(migrations[26]).toBe("027_fix_rate_limit_expires_at.sql");
     expect(migrations[27]).toBe("028_inline_set_config_in_finalize_pesapal.sql");
     expect(migrations[28]).toBe("029_fix_email_triggers_and_add_creator_order_email.sql");
+    expect(migrations[29]).toBe("030_fix_reserve_withdrawal_auth_uid.sql");
   });
 
   it("each migration has a sequential number prefix", () => {

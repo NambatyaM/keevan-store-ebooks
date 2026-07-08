@@ -3,6 +3,8 @@ import { getPesapalToken, getPesapalTransactionStatus, verifyPesapalPayment } fr
 import { getSupabaseAdminClient } from "@/lib/supabase";
 import { withOptionalCsrf } from "@/lib/api";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 type PesapalIpnResponse = {

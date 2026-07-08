@@ -1,5 +1,8 @@
 import { NextRequest } from "next/server";
 import { json, withOptionalCsrf } from "@/lib/api";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 import { normalizePesapalStatus, verifyPesapalPayment } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
 

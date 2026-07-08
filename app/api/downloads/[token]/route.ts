@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { apiError, withErrorHandling } from "@/lib/api";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export const GET = withErrorHandling(async (_request: NextRequest, context?: unknown) => {

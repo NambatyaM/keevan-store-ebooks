@@ -1,5 +1,8 @@
 import { NextRequest } from "next/server";
 import { apiError, json, readJson, withErrorHandling, requireUser } from "@/lib/api";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 import { paymentVerifySchema } from "@/lib/schemas";
 import { verifyPesapalPayment } from "@/lib/pesapal";
 import { getSupabaseAdminClient } from "@/lib/supabase";
