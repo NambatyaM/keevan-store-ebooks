@@ -30,6 +30,7 @@ import {
   UserCheck,
   Ban,
   Rocket,
+  Percent,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
@@ -53,6 +54,7 @@ const creatorNav: NavSection[] = [
       { href: "/creator/dashboard", label: "Overview", icon: <Gauge size={18} /> },
       { href: "/creator/first-sale", label: "Get Your First Sale", icon: <Rocket size={18} /> },
       { href: "/creator/products", label: "Products", icon: <Package size={18} /> },
+      { href: "/creator/discounts", label: "Discounts", icon: <Percent size={18} /> },
       { href: "/creator/orders", label: "Orders", icon: <ShoppingCart size={18} /> },
       { href: "/creator/analytics", label: "Analytics", icon: <BarChart3 size={18} /> },
       { href: "/creator/earnings", label: "Earnings & Withdrawals", icon: <Wallet size={18} /> },
