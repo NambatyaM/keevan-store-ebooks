@@ -2,10 +2,11 @@ import { NextRequest } from "next/server";
 import { apiError, json, requireUser, withErrorHandling } from "@/lib/api";
 import { z } from "zod";
 
-export const PATCH = withErrorHandling(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+export const PATCH = withErrorHandling(async (request: NextRequest, context?: unknown) => {
   const { supabase, authUser, profile } = await requireUser(request);
   if (profile.role !== "creator") return apiError("Only creators can manage discounts", 403);
-
+  if (!context) return apiError("Not found", 404);
+  const { params } = context as { params: Promise<{ id: string }> };
   const { id } = await params;
 
   const { data: creator } = await supabase.from("creators").select("id").eq("user_id", authUser.id).single();
@@ -25,10 +26,11 @@ export const PATCH = withErrorHandling(async (request: NextRequest, { params }: 
   return json({ ok: true });
 });
 
-export const DELETE = withErrorHandling(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+export const DELETE = withErrorHandling(async (request: NextRequest, context?: unknown) => {
   const { supabase, authUser, profile } = await requireUser(request);
   if (profile.role !== "creator") return apiError("Only creators can manage discounts", 403);
-
+  if (!context) return apiError("Not found", 404);
+  const { params } = context as { params: Promise<{ id: string }> };
   const { id } = await params;
 
   const { data: creator } = await supabase.from("creators").select("id").eq("user_id", authUser.id).single();
