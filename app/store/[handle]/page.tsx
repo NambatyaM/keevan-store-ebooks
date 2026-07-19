@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { TrackView } from "@/components/track-view";
 import Image from "next/image";
 import { formatCurrency, site, type Currency } from "@/lib/constants";
-import { getCoverUrl, getPublishedStoreByHandle } from "@/lib/storefront";
+import { getCoverUrl, getAvatarUrl, getPublishedStoreByHandle } from "@/lib/storefront";
 
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
@@ -106,9 +106,22 @@ export default async function StorePage({ params }: { params: Promise<{ handle: 
         <section className="relative overflow-hidden bg-gradient-to-br from-brand-green/10 via-white to-brand-mist">
           <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
-              <div className="grid h-24 w-24 shrink-0 place-items-center rounded-2xl bg-brand-green text-3xl font-black text-white shadow-soft ring-4 ring-white">
-                {(store.creatorName ?? "ST").slice(0, 2).toUpperCase()}
-              </div>
+              {(() => {
+                const avatarUrl = getAvatarUrl(store.avatarPath);
+                return avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={store.creatorName}
+                    width={96}
+                    height={96}
+                    className="h-24 w-24 shrink-0 rounded-2xl object-cover ring-4 ring-white shadow-soft"
+                  />
+                ) : (
+                  <div className="grid h-24 w-24 shrink-0 place-items-center rounded-2xl bg-brand-green text-3xl font-black text-white shadow-soft ring-4 ring-white">
+                    {(store.creatorName ?? "ST").slice(0, 2).toUpperCase()}
+                  </div>
+                );
+              })()}
               <div className="min-w-0">
                 <p className="text-sm font-bold uppercase tracking-[0.18em] text-brand-green">Creator store</p>
                 <h1 className="mt-1 text-4xl font-black text-brand-black sm:text-5xl">{store.creatorName}</h1>

@@ -9,6 +9,14 @@ export function getCoverUrl(coverPath: string | null, _width?: number): string |
   return `${supabaseUrl}/storage/v1/object/public/covers/${encodedPath}`;
 }
 
+export function getAvatarUrl(avatarPath: string | null): string | null {
+  if (!avatarPath) return null;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) return null;
+  const encodedPath = avatarPath.split("/").map((s) => encodeURIComponent(s)).join("/");
+  return `${supabaseUrl}/storage/v1/object/public/avatars/${encodedPath}`;
+}
+
 export type StorefrontProduct = {
   id: string;
   slug: string;
@@ -31,6 +39,7 @@ export type StorefrontStore = {
   name: string;
   description: string | null;
   creatorName: string;
+  avatarPath: string | null;
   products: StorefrontProduct[];
 };
 
@@ -145,7 +154,7 @@ export async function getPublishedStoreByHandle(handle: string): Promise<Storefr
   const storeResult = await withTimeout(
     supabase
       .from("stores")
-      .select("id,creator_id,slug,name,description,status")
+      .select("id,creator_id,slug,name,description,avatar_path,status")
       .eq("slug", handle)
       .maybeSingle()
   );
@@ -188,6 +197,7 @@ export async function getPublishedStoreByHandle(handle: string): Promise<Storefr
       name: store.name,
       description: store.description,
       creatorName,
+      avatarPath: store.avatar_path ?? null,
       products: (products ?? []).map((product) => ({
         id: product.id,
         slug: product.slug,

@@ -18,7 +18,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     if (creator) {
       const { data: store } = await supabase
         .from("stores")
-        .select("id,slug,name,description,status,tagline,category,social_links")
+        .select("id,slug,name,description,status,tagline,category,social_links,avatar_path")
         .eq("creator_id", creator.id)
         .single();
       storeData = store;
@@ -69,7 +69,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
         store_status: storeData.status,
         store_tagline: storeData.tagline,
         store_category: storeData.category,
-        social_links: storeData.social_links
+        social_links: storeData.social_links,
+        avatar_path: storeData.avatar_path
       }),
       ...(buyerData && {
         buyer_id: buyerData.id,

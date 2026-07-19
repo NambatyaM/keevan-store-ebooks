@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { useToast } from "@/components/ui/toast";
 import { Modal } from "@/components/ui/modal";
@@ -18,8 +18,11 @@ import {
   ExternalLink,
   Save,
   Check,
+  Camera,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 type Tab = "store" | "account" | "payout" | "security" | "notifications";
 
@@ -45,6 +48,9 @@ export default function CreatorSettingsPage() {
   const [storeTagline, setStoreTagline] = useState("");
   const [storeDescription, setStoreDescription] = useState("");
   const [storeCategory, setStoreCategory] = useState("E-books");
+  const [avatarPath, setAvatarPath] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Account fields
   const [displayName, setDisplayName] = useState("");
@@ -105,6 +111,7 @@ export default function CreatorSettingsPage() {
           setStoreTagline(p.store_tagline ?? "");
           setStoreDescription(p.store_description ?? "");
           setStoreCategory(p.store_category ?? "E-books");
+          setAvatarPath(p.avatar_path ?? null);
           setPreferredMethod(p.payout_method ?? "mtn");
           setMtnNumber(p.mtn_number ?? "");
           setAirtelNumber(p.airtel_number ?? "");
@@ -246,6 +253,55 @@ export default function CreatorSettingsPage() {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile?.store_id) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast("error", "Avatar must be 2 MB or less.");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast("error", "Avatar must be a JPEG, PNG, or WebP image.");
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`/api/stores/${profile.store_id}/avatar`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data?.error?.message || "Failed to upload avatar");
+      }
+      const data = await res.json();
+      setAvatarPath(data.avatarPath);
+      toast("success", "Avatar uploaded successfully");
+    } catch (err) {
+      toast("error", err instanceof Error ? err.message : "Failed to upload avatar");
+    } finally {
+      setUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    if (!profile?.store_id) return;
+    setUploadingAvatar(true);
+    try {
+      const res = await fetch(`/api/stores/${profile.store_id}/avatar`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to remove avatar");
+      setAvatarPath(null);
+      toast("success", "Avatar removed");
+    } catch {
+      toast("error", "Failed to remove avatar");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   if (loading) {
     return (
       <DashboardShell title="Settings" subtitle="Manage your account and store" role="creator">
@@ -285,6 +341,65 @@ export default function CreatorSettingsPage() {
           <div className="space-y-5">
             <div className="rounded-xl border border-border bg-surface-card p-5 shadow-card">
               <h3 className="font-bold text-brand-black">Store Profile</h3>
+
+              {/* Avatar upload */}
+              <div className="mt-4 flex items-center gap-4">
+                <div className="relative">
+                  {(() => {
+                    const avatarUrl = avatarPath
+                      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${avatarPath}`
+                      : null;
+                    return avatarUrl ? (
+                      <Image
+                        src={avatarUrl}
+                        alt={storeName || "Store avatar"}
+                        width={80}
+                        height={80}
+                        className="h-20 w-20 rounded-xl object-cover"
+                      />
+                    ) : (
+                      <div className="grid h-20 w-20 place-items-center rounded-xl bg-brand-green text-2xl font-bold text-white">
+                        {(storeName || "S").charAt(0).toUpperCase()}
+                      </div>
+                    );
+                  })()}
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 grid place-items-center rounded-xl bg-black/40">
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                  <button
+                    type="button"
+                    disabled={uploadingAvatar}
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-brand-black transition hover:bg-surface disabled:opacity-50"
+                  >
+                    <Camera size={14} />
+                    {avatarPath ? "Change photo" : "Upload photo"}
+                  </button>
+                  {avatarPath && (
+                    <button
+                      type="button"
+                      disabled={uploadingAvatar}
+                      onClick={handleAvatarDelete}
+                      className="ml-2 inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-50 disabled:opacity-50"
+                    >
+                      <Trash2 size={14} />
+                      Remove
+                    </button>
+                  )}
+                  <p className="mt-1 text-xs text-muted">JPEG, PNG, or WebP. Max 2 MB.</p>
+                </div>
+              </div>
 
               <div className="mt-4 space-y-4">
                 <div>
@@ -403,9 +518,24 @@ export default function CreatorSettingsPage() {
               <div className="rounded-xl border border-border overflow-hidden">
                 <div className="h-32 bg-gradient-to-br from-brand-green/20 to-brand-green/5" />
                 <div className="px-4 pb-4 -mt-8">
-                  <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-brand-green text-2xl font-bold text-white ring-4 ring-white">
-                    {(storeName || "S").charAt(0).toUpperCase()}
-                  </div>
+                  {(() => {
+                    const previewAvatarUrl = avatarPath
+                      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${avatarPath}`
+                      : null;
+                    return previewAvatarUrl ? (
+                      <Image
+                        src={previewAvatarUrl}
+                        alt="Store avatar preview"
+                        width={64}
+                        height={64}
+                        className="mx-auto h-16 w-16 rounded-full object-cover ring-4 ring-white"
+                      />
+                    ) : (
+                      <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-brand-green text-2xl font-bold text-white ring-4 ring-white">
+                        {(storeName || "S").charAt(0).toUpperCase()}
+                      </div>
+                    );
+                  })()}
                   <h4 className="mt-2 text-center font-bold">{storeName || "Your Store Name"}</h4>
                   <p className="text-center text-xs text-muted">{storeTagline || "Your store tagline"}</p>
                   <div className="mt-4 grid grid-cols-2 gap-3">
