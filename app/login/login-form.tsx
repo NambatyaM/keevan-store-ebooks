@@ -24,7 +24,7 @@ function LoginFormInner() {
         body: JSON.stringify({ email, password }),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error(body.error || "Login failed");
+      if (!res.ok) throw new Error(typeof body.error === "string" ? body.error : body.error?.message || "Login failed");
       const redirectParam = searchParams.get("redirect");
       const target = redirectParam && /^\/(?!\/)/.test(redirectParam)
         ? redirectParam

@@ -1,10 +1,16 @@
 import { NextRequest } from "next/server";
 import { apiError, json, requireUser, withErrorHandling } from "@/lib/api";
-import { validateUploadFile } from "@/lib/file-validation";
 import { randomUUID } from "crypto";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_EXTENSIONS: Record<string, string[]> = {
+  "image/jpeg": ["jpg", "jpeg"],
+  "image/png": ["png"],
+  "image/webp": ["webp"],
+};
 
 export const POST = withErrorHandling(async (request: NextRequest, context?: unknown) => {
   if (!context) return apiError("Not found", 404);
@@ -28,18 +34,20 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
   const file = formData.get("file") as File | null;
   if (!file) return apiError("File is required", 400);
 
+  if (file.size === 0) return apiError("File is empty.", 400);
   if (file.size > 2 * 1024 * 1024) {
     return apiError("Avatar must be 2 MB or less.", 400);
   }
 
-  const validation = await validateUploadFile(file);
-  if (!validation.ok) {
-    return apiError(validation.message, 400);
+  const mime = file.type;
+  if (!ALLOWED_TYPES.has(mime)) {
+    return apiError("Avatar must be a JPEG, PNG, or WebP image.", 400);
   }
 
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  if (!allowedTypes.includes(validation.mime)) {
-    return apiError("Avatar must be a JPEG, PNG, or WebP image.", 400);
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const allowedExts = ALLOWED_EXTENSIONS[mime] ?? [];
+  if (!allowedExts.includes(ext)) {
+    return apiError(`File extension must be one of: ${allowedExts.join(", ")}.`, 400);
   }
 
   // Delete old avatar if one exists
@@ -51,12 +59,12 @@ export const POST = withErrorHandling(async (request: NextRequest, context?: unk
     }
   }
 
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const storagePath = `${authUser.id}/${randomUUID()}.${ext}`;
+  const storageExt = file.name.split(".").pop() ?? "jpg";
+  const storagePath = `${authUser.id}/${randomUUID()}.${storageExt}`;
 
   const arrayBuffer = await file.arrayBuffer();
   const { error: uploadError } = await supabase.storage.from("avatars").upload(storagePath, new Uint8Array(arrayBuffer), {
-    contentType: validation.mime,
+    contentType: mime,
     upsert: false
   });
 

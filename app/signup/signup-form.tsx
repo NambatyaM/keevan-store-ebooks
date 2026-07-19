@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { SimplePage } from "@/components/simple-page";
 import { PasswordInput } from "@/components/password-input";
-import { Check, X, AlertTriangle, Store, Banknote, Download, ShieldCheck, Loader2 } from "lucide-react";
+import { Check, X, AlertTriangle, Store, Banknote, Download, ShieldCheck, Loader2, BookOpen } from "lucide-react";
 
 const passwordChecks = (pw: string) => ({
   length: pw.length >= 8,
@@ -100,7 +100,7 @@ export default function SignupForm() {
       });
       if (!loginRes.ok) {
         const loginBody = await loginRes.json().catch(() => ({}));
-        throw new Error(loginBody.error || "Auto-login failed. Please log in manually.");
+        throw new Error(typeof loginBody.error === "string" ? loginBody.error : loginBody.error?.message || "Auto-login failed. Please log in manually.");
       }
       window.location.href = "/creator/dashboard";
     } catch (err) {
@@ -232,6 +232,18 @@ export default function SignupForm() {
             </ul>
             <hr className="my-4 border-neutral-200" />
             <p className="text-xs text-neutral-500">No monthly fees · Pay only 10% per sale</p>
+            <div className="mt-4 rounded-lg border border-brand-green/30 bg-brand-mist p-4">
+              <div className="flex items-start gap-2">
+                <BookOpen size={16} className="mt-0.5 shrink-0 text-brand-green" />
+                <div>
+                  <p className="text-xs font-bold text-brand-black">New to selling digital products?</p>
+                  <p className="mt-1 text-xs text-neutral-600">Learn how to create, price, and market your products — using free AI tools.</p>
+                  <Link href="/guide" className="mt-2 inline-block text-xs font-semibold text-brand-green hover:underline">
+                    Read the free guide &rarr;
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
