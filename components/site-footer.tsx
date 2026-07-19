@@ -8,6 +8,9 @@ const links: [string, { href: string; label: string }[]][] = [
     { href: "/about", label: "About" },
     { href: "/faq", label: "FAQ" }
   ]],
+  ["Resources", [
+    { href: "/guide", label: "Selling Digital Products Guide" },
+  ]],
   ["Support", [
     { href: "/contact", label: "Contact" },
     { href: "/faq", label: "Help Center" },
