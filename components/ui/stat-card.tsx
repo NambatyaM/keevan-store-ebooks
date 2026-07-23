@@ -49,12 +49,13 @@ export function StatCard({
   amount?: boolean;
 }) {
   const numericValue = (() => {
+    if (value.includes("/")) return 0;
     const cleaned = value.replace(/[^0-9.]/g, "");
     return parseFloat(cleaned) || 0;
   })();
 
   const animValue = useCountUp(numericValue);
-  const shouldAnimate = value.length > 0 && /[0-9]/.test(value);
+  const shouldAnimate = numericValue > 0 && value.length > 0 && /[0-9]/.test(value);
   const displayValue = shouldAnimate ? String(animValue) : value;
   const formattedDisplay = amount
     ? `${value.startsWith("UGX") ? "UGX " : ""}${Number(displayValue).toLocaleString()}`
