@@ -11,7 +11,10 @@ export async function sendEmail(input: {
   subject: string;
   html: string;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const from = process.env.SMTP_FROM ?? "noreply@keevanstore.in";
+  const rawFrom = process.env.SMTP_FROM ?? "noreply@keevanstore.in";
+  const from = rawFrom.includes("@")
+    ? rawFrom
+    : `Keevan Store <noreply@${rawFrom.replace(/^https?:\/\//, "").replace(/\/+$/, "")}>`;
   const resend = getResend();
 
   if (!resend) {
