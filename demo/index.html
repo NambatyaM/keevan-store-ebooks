@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keevan Store — Interactive Demo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--green:#059669;--green-dark:#047857;--green-light:#d1fae5;--green-50:#ecfdf5;--dark:#111827;--muted:#6b7280;--light:#f3f4f6;--white:#fff;--border:#e5e7eb;--red:#ef4444;--blue:#3b82f6;--orange:#f97316;--purple:#8b5cf6}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8fafc;color:var(--dark);line-height:1.6;overflow-x:hidden}
+a{color:var(--green);text-decoration:none}
+button{cursor:pointer;font-family:inherit;border:none;outline:none}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-size:22px;font-weight:800;color:var(--green)}
+.nav-logo span{color:var(--dark)}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{font-size:14px;font-weight:500;color:var(--muted);transition:color .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--green)}
+.nav-cta{background:var(--green);color:#fff;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;transition:all .2s}
+.nav-cta:hover{background:var(--green-dark)}
+
+/* SECTIONS */
+.page{display:none;padding-top:60px;min-height:100vh;animation:fadeIn .4s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+
+/* HERO */
+.hero{display:flex;align-items:center;gap:48px;padding:60px 0 40px}
+.hero-text{flex:1}
+.hero-text h1{font-size:42px;font-weight:800;line-height:1.15;color:var(--dark)}
+.hero-text h1 span{color:var(--green)}
+.hero-text p{font-size:17px;color:var(--muted);margin:16px 0 28px;max-width:480px}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;transition:all .2s}
+.btn-primary{background:var(--green);color:#fff}.btn-primary:hover{background:var(--green-dark);transform:translateY(-1px)}
+.btn-secondary{background:var(--light);color:var(--dark)}.btn-secondary:hover{background:var(--border)}
+.btn-outline{border:2px solid var(--green);color:var(--green);background:transparent}.btn-outline:hover{background:var(--green);color:#fff}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{opacity:.9}
+.btn-sm{padding:8px 16px;font-size:13px}
+.btn-xs{padding:5px 12px;font-size:11px;border-radius:6px}
+.hero-visual{flex:1;display:flex;justify-content:center}
+.hero-mockup{width:380px;background:var(--white);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.12);padding:24px;border:1px solid var(--border)}
+.mockup-header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.mockup-dot{width:10px;height:10px;border-radius:50%}
+.mockup-title{font-size:14px;font-weight:700;color:var(--dark)}
+.mockup-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mockup-card{background:var(--light);border-radius:10px;padding:14px;text-align:center}
+.mockup-card .icon{font-size:28px;margin-bottom:6px}
+.mockup-card .name{font-size:12px;font-weight:600;color:var(--dark)}
+.mockup-card .price{font-size:11px;color:var(--green);font-weight:700}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:32px 0}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+.stat-value{font-size:28px;font-weight:800;color:var(--green)}
+.stat-label{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* FEATURE CARDS */
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0}
+.feature-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;transition:all .25s}
+.feature-card:hover{border-color:var(--green);box-shadow:0 4px 20px rgba(5,150,105,.1)}
+.feature-card .icon{font-size:32px;margin-bottom:10px}
+.feature-card h3{font-size:15px;font-weight:700;margin-bottom:6px}
+.feature-card p{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* HOW IT WORKS */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin:24px 0}
+.step{text-align:center;padding:20px}
+.step-num{width:40px;height:40px;border-radius:50%;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;margin-bottom:12px}
+.step h4{font-size:14px;font-weight:700;margin-bottom:6px}
+.step p{font-size:12px;color:var(--muted)}
+
+/* FORMS */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:var(--dark);margin-bottom:5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green);outline:none;box-shadow:0 0 0 3px rgba(5,150,105,.1)}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* CARDS */
+.card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:24px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-header h2{font-size:18px;font-weight:700}
+
+/* BADGE */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-yellow{background:#fef3c7;color:#d97706}
+.badge-red{background:#fee2e2;color:var(--red)}
+.badge-blue{background:#dbeafe;color:var(--blue)}
+.badge-purple{background:#ede9fe;color:var(--purple)}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 12px;font-size:12px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--border)}
+td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:hover{background:var(--green-50)}
+
+/* GRID LAYOUTS */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+/* PRODUCT CARDS */
+.product-card{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all .25s;cursor:pointer}
+.product-card:hover{border-color:var(--green);box-shadow:0 6px 24px rgba(5,150,105,.1);transform:translateY(-2px)}
+.product-thumb{height:160px;display:flex;align-items:center;justify-content:center;font-size:48px}
+.product-thumb.ebook{background:linear-gradient(135deg,#667eea,#764ba2)}
+.product-thumb.guide{background:linear-gradient(135deg,#f093fb,#f5576c)}
+.product-thumb.template{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+.product-thumb.course{background:linear-gradient(135deg,#43e97b,#38f9d7)}
+.product-info{padding:16px}
+.product-info h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.product-info .creator{font-size:12px;color:var(--muted);margin-bottom:8px}
+.product-info .price{font-size:16px;font-weight:800;color:var(--green)}
+.product-info .original-price{font-size:12px;color:var(--muted);text-decoration:line-through;margin-left:6px}
+.product-info .sales{font-size:11px;color:var(--muted);margin-top:4px}
+.discount-badge{position:absolute;top:10px;right:10px;background:var(--red);color:#fff;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700}
+
+/* STOREFRONT HEADER */
+.store-header{background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;padding:40px;border-radius:16px;margin-bottom:24px;display:flex;align-items:center;gap:24px}
+.store-avatar{width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800}
+.store-meta h2{font-size:24px;font-weight:800}
+.store-meta p{font-size:14px;opacity:.85;margin-top:4px}
+.store-stats{display:flex;gap:20px;margin-top:10px}
+.store-stats span{font-size:12px;opacity:.8}
+
+/* CHECKOUT */
+.checkout-box{max-width:480px;margin:0 auto}
+.checkout-item{display:flex;gap:14px;padding:16px;background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:16px}
+.checkout-item .thumb{width:60px;height:60px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.checkout-item .info h4{font-size:14px;font-weight:600}
+.checkout-item .info p{font-size:12px;color:var(--muted)}
+.checkout-item .info .price{font-size:15px;font-weight:700;color:var(--green)}
+.payment-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.payment-method{padding:14px;border:2px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:all .2s}
+.payment-method:hover{border-color:var(--green)}
+.payment-method.selected{border-color:var(--green);background:var(--green-50)}
+.payment-method .icon{font-size:24px;margin-bottom:4px}
+.payment-method .label{font-size:12px;font-weight:600}
+
+/* ADMIN SIDEBAR */
+.admin-layout{display:flex;gap:0;min-height:calc(100vh - 60px)}
+.admin-sidebar{width:220px;background:var(--white);border-right:1px solid var(--border);padding:20px 0}
+.admin-sidebar a{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:500;color:var(--muted);transition:all .2s}
+.admin-sidebar a:hover,.admin-sidebar a.active{background:var(--green-50);color:var(--green);font-weight:600}
+.admin-sidebar a .icon{width:18px;text-align:center}
+.admin-content{flex:1;padding:24px;background:#f8fafc}
+
+/* DASHBOARD CARDS */
+.dash-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px}
+.dash-card h3{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.dash-card .value{font-size:24px;font-weight:800;color:var(--dark)}
+.dash-card .change{font-size:11px;color:var(--green);margin-top:4px}
+.dash-card .change.negative{color:var(--red)}
+
+/* PROGRESS BAR */
+.progress-bar{height:8px;background:var(--light);border-radius:4px;overflow:hidden;margin:8px 0}
+.progress-fill{height:100%;border-radius:4px;transition:width .6s ease}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;animation:fadeIn .2s}
+.modal-overlay.show{display:flex}
+.modal{background:var(--white);border-radius:16px;padding:32px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h2{font-size:20px;font-weight:700;margin-bottom:16px}
+.modal-close{position:absolute;top:16px;right:16px;background:none;font-size:20px;color:var(--muted)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;padding:14px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:300;animation:slideUp .3s ease;display:none}
+.toast.show{display:block}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab{padding:10px 20px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab:hover{color:var(--dark)}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover{border-color:var(--green);background:var(--green-50)}
+.upload-zone .icon{font-size:40px;margin-bottom:8px}
+.upload-zone p{font-size:14px;color:var(--muted)}
+.upload-zone .formats{font-size:11px;color:var(--muted);margin-top:6px}
+
+/* TOGGLE */
+.toggle{width:40px;height:22px;background:var(--border);border-radius:11px;position:relative;cursor:pointer;transition:background .2s}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.toggle.on::after{transform:translateX(18px)}
+
+/* FOOTER */
+.footer{background:var(--dark);color:#fff;padding:40px 24px;margin-top:40px}
+.footer-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px}
+.footer h4{font-size:14px;font-weight:700;margin-bottom:12px}
+.footer p,.footer a{font-size:13px;color:#9ca3af;line-height:1.8}
+.footer a:hover{color:var(--green)}
+.footer-bottom{max-width:1100px;margin:24px auto 0;padding-top:16px;border-top:1px solid #374151;text-align:center;font-size:12px;color:#6b7280}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .hero{flex-direction:column;text-align:center;padding:30px 0}
+  .hero-text p{margin:16px auto 28px}
+  .hero-btns{justify-content:center}
+  .stats,.features,.steps,.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  .admin-sidebar{display:none}
+  .footer-grid{grid-template-columns:1fr}
+}
+
+/* ANIMATIONS */
+.fade-in{animation:fadeIn .5s ease}
+.slide-up{animation:slideUp .4s ease}
+
+/* SECTION TITLE */
+.section-title{font-size:28px;font-weight:800;text-align:center;margin:32px 0 8px}
+.section-sub{font-size:15px;color:var(--muted);text-align:center;margin-bottom:32px}
+
+/* SKELETON LOADER */
+.skeleton{background:linear-gradient(90deg,var(--light) 25%,var(--border) 50%,var(--light) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* CHART BARS */
+.chart-bars{display:flex;align-items:flex-end;gap:8px;height:120px;padding:16px 0}
+.chart-bar{flex:1;background:var(--green);border-radius:4px 4px 0 0;transition:height .6s ease;position:relative}
+.chart-bar:hover{opacity:.85}
+.chart-bar .tooltip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:4px 8px;border-radius:4px;font-size:10px;white-space:nowrap;display:none}
+.chart-bar:hover .tooltip{display:block}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════ NAV ════════════════════════════ -->
+<nav class="nav">
+  <a href="#" class="nav-logo" onclick="showPage('home')">Keevan<span>Store</span></a>
+  <div class="nav-links">
+    <a href="#" class="active" data-page="home" onclick="showPage('home')">Home</a>
+    <a href="#" data-page="browse" onclick="showPage('browse')">Browse</a>
+    <a href="#" data-page="creator" onclick="showPage('creator')">Creator</a>
+    <a href="#" data-page="admin" onclick="showPage('admin')">Admin</a>
+    <a href="#" class="nav-cta" onclick="showPage('signup')">Get Started</a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════ HOME ════════════════════════════ -->
+<div class="page active" id="page-home">
+  <div class="container">
+    <div class="hero">
+      <div class="hero-text">
+        <h1>Sell Your Digital <span>Creations</span> to <span>East Africa</span></h1>
+        <p>The all-in-one platform for creators to sell ebooks, guides, templates, and courses — with local payments via Pesapal (UGX/KES).</p>
+        <div class="hero-btns">
+          <button class="btn btn-primary" onclick="showPage('signup')">Start Selling — It's Free</button>
+          <button class="btn btn-secondary" onclick="showPage('browse')">Browse Products</button>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot" style="background:#ef4444"></div>
+            <div class="mockup-dot" style="background:#f59e0b"></div>
+            <div class="mockup-dot" style="background:#22c55e"></div>
+            <div class="mockup-title" style="margin-left:auto">keevanstore.in</div>
+          </div>
+          <div class="mockup-grid">
+            <div class="mockup-card"><div class="icon">📘</div><div class="name">React Mastery</div><div class="price">UGX 25,000</div></div>
+            <div class="mockup-card"><div class="icon">📋</div><div class="name">Budget Template</div><div class="price">UGX 8,000</div></div>
+            <div class="mockup-card"><div class="icon">📖</div><div class="name">Startup Guide</div><div class="price">UGX 15,000</div></div>
+            <div class="mockup-card"><div class="icon">🎓</div><div class="name">UI/UX Course</div><div class="price">UGX 45,000</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat"><div class="stat-value" id="stat-creators">14</div><div class="stat-label">Creators</div></div>
+      <div class="stat"><div class="stat-value" id="stat-products">19</div><div class="stat-label">Products</div></div>
+      <div class="stat"><div class="stat-value" id="stat-orders">16</div><div class="stat-label">Orders</div></div>
+      <div class="stat"><div class="stat-value" id="stat-stores">14</div><div class="stat-label">Stores</div></div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-sub">Go from idea to income in four simple steps</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><h4>Create Account</h4><p>Sign up with email and set up your creator profile in 2 minutes</p></div>
+      <div class="step"><div class="step-num">2</div><h4>Upload Products</h4><p>Upload ebooks, templates, or guides with cover images and pricing</p></div>
+      <div class="step"><div class="step-num">3</div><h4>Get Paid</h4><p>Receive payments via Pesapal — mobile money, cards, or bank transfer</p></div>
+      <div class="step"><div class="step-num">4</div><h4>Grow & Earn</h4><p>Track analytics, manage discounts, and grow your creator business</p></div>
+    </div>
+
+    <!-- FEATURES -->
+    <h2 class="section-title">Built for East African Creators</h2>
+    <p class="section-sub">Everything you need to sell digital products — zero technical skills required</p>
+    <div class="features">
+      <div class="feature-card"><div class="icon">💳</div><h3>Pesapal Payments</h3><p>Accept UGX and KES via mobile money, cards, and bank transfers. No international fees.</p></div>
+      <div class="feature-card"><div class="icon">📦</div><h3>Instant Delivery</h3><p>Buyers get instant download links after payment. No manual fulfillment needed.</p></div>
+      <div class="feature-card"><div class="icon">🏪</div><h3>Your Own Store</h3><p>Get a branded storefront at keevanstore.in/store/yourname. Share anywhere.</p></div>
+      <div class="feature-card"><div class="icon">📊</div><h3>Real-time Analytics</h3><p>Track views, sales, conversion rates, and earnings in your dashboard.</p></div>
+      <div class="feature-card"><div class="icon">🏷️</div><h3>Discount Codes</h3><p>Create percentage-based discounts with date ranges and usage limits.</p></div>
+      <div class="feature-card"><div class="icon">💰</div><h3>Creator Payouts</h3><p>Withdraw earnings to MTN Mobile Money, Airtel Money, or bank account.</p></div>
+      <div class="feature-card"><div class="icon">📧</div><h3>Email Automation</h3><p>Automatic order confirmations and download links sent via Resend.</p></div>
+      <div class="feature-card"><div class="icon">🛡️</div><h3>Secure Platform</h3><p>Row-Level Security, CSRF protection, rate limiting, and file validation.</p></div>
+      <div class="feature-card"><div class="icon">📱</div><h3>Mobile Optimized</h3><p>Fully responsive design — works perfectly on phones, tablets, and desktop.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ SIGNUP ════════════════════════════ -->
+<div class="page" id="page-signup">
+  <div class="container" style="max-width:520px">
+    <div class="card slide-up">
+      <h2 style="text-align:center;margin-bottom:4px">Create Your Account</h2>
+      <p style="text-align:center;color:var(--muted);font-size:14px;margin-bottom:24px">Join 14 creators already selling on Keevan Store</p>
+      <div id="signup-step-1">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="signup-name" placeholder="e.g. Sarah Nakamya">
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="signup-email" placeholder="sarah@example.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="signup-password" placeholder="Min. 8 characters">
+        </div>
+        <div class="form-group">
+          <label>I want to...</label>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <button class="btn btn-secondary" style="flex:1" onclick="this.classList.add('btn-primary');this.classList.remove('btn-secondary');document.getElementById('signup-buyer-btn').classList.add('btn-secondary');document.getElementById('signup-buyer-btn').classList.remove('btn-primary');document.getElementById('signup-role').value='creator'">🎨 Sell Products</button>
+            <button class="btn btn-secondary" id="signup-buyer-btn" style="flex:1" onclick="this.classList.add('btn-primary');this.classList.remove('btn-secondary');document.querySelector('#signup-step-1 .btn-primary:first-child').classList.add('btn-secondary');document.querySelector('#signup-step-1 .btn-primary:first-child').classList.remove('btn-primary');document.getElementById('signup-role').value='buyer'">🛒 Buy Products</button>
+          </div>
+          <input type="hidden" id="signup-role" value="creator">
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="handleSignup()">Continue</button>
+        <p style="text-align:center;margin-top:14px;font-size:13px;color:var(--muted)">Already have an account? <a href="#" onclick="showPage('creator')">Sign in</a></p>
+      </div>
+      <div id="signup-step-2" style="display:none;text-align:center;padding:20px 0">
+        <div style="font-size:48px;margin-bottom:12px">✅</div>
+        <h3 style="margin-bottom:6px">Welcome to Keevan Store!</h3>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:20px">Your creator account is ready. Let's set up your store.</p>
+        <button class="btn btn-primary" onclick="showPage('upload')">Set Up My Store →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ UPLOAD ════════════════════════════ -->
+<div class="page" id="page-upload">
+  <div class="container" style="max-width:640px">
+    <div class="card slide-up">
+      <div class="card-header">
+        <h2>Upload a Product</h2>
+        <span class="badge badge-green">Creator Dashboard</span>
+      </div>
+      <div class="form-group">
+        <label>Product Name</label>
+        <input type="text" id="upload-name" placeholder="e.g. The Complete Guide to React">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="upload-category">
+            <option value="ebook">📘 Ebook</option>
+            <option value="guide">📋 Guide</option>
+            <option value="template">📄 Template</option>
+            <option value="course">🎓 Course</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Price (UGX)</label>
+          <input type="number" id="upload-price" placeholder="e.g. 15000" min="500" step="500">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="upload-desc" placeholder="Describe what buyers will get..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Cover Image</label>
+        <div class="upload-zone" onclick="document.getElementById('cover-file').click()">
+          <div class="icon">🖼️</div>
+          <p id="cover-label">Click to upload cover image</p>
+          <p class="formats">PNG, JPG up to 5MB</p>
+          <input type="file" id="cover-file" accept="image/*" style="display:none" onchange="handleCoverUpload(this)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Product File</label>
+        <div class="upload-zone" onclick="document.getElementById('product-file').click()">
+          <div class="icon">📁</div>
+          <p id="product-label">Click to upload your digital product</p>
+          <p class="formats">PDF, EPUB, MOBI, ZIP up to 50MB</p>
+          <input type="file" id="product-file" accept=".pdf,.epub,.mobi,.zip" style="display:none" onchange="handleProductUpload(this)">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn btn-primary" style="flex:1" onclick="handlePublish()">Publish Product</button>
+        <button class="btn btn-secondary" onclick="showPage('creator')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ BROWSE / STOREFRONT ════════════════════════════ -->
+<div class="page" id="page-browse">
+  <div class="container">
+    <!-- STOREFRONT HEADER -->
+    <div class="store-header" id="store-header">
+      <div class="store-avatar">SN</div>
+      <div class="store-meta">
+        <h2>Sarah Nakamya's Store</h2>
+        <p>Creating ebooks, guides, and templates for East African entrepreneurs</p>
+        <div class="store-stats">
+          <span>📦 5 products</span>
+          <span>🛒 12 sales</span>
+          <span>⭐ 4.9 rating</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'tab-all')">All Products</div>
+      <div class="tab" onclick="switchTab(this,'tab-ebooks')">Ebooks</div>
+      <div class="tab" onclick="switchTab(this,'tab-guides')">Guides</div>
+      <div class="tab" onclick="switchTab(this,'tab-templates')">Templates</div>
+      <div class="tab" onclick="switchTab(this,'tab-courses')">Courses</div>
+    </div>
+
+    <!-- PRODUCTS GRID -->
+    <div class="tab-content active" id="tab-all">
+      <div class="grid-3" id="products-grid"></div>
+    </div>
+    <div class="tab-content" id="tab-ebooks"><div class="grid-3" id="ebooks-grid"></div></div>
+    <div class="tab-content" id="tab-guides"><div class="grid-3" id="guides-grid"></div></div>
+    <div class="tab-content" id="tab-templates"><div class="grid-3" id="templates-grid"></div></div>
+    <div class="tab-content" id="tab-courses"><div class="grid-3" id="courses-grid"></div></div>
+
+    <!-- FOOTER -->
+    <div class="footer" style="margin-top:40px;border-radius:16px">
+      <div class="footer-grid">
+        <div><h4>Keevan Store</h4><p>The all-in-one platform for East African creators to sell digital products with local payments.</p></div>
+        <div><h4>Platform</h4><a href="#">Browse Products</a><br><a href="#">Start Selling</a><br><a href="#">Pricing</a></div>
+        <div><h4>Support</h4><a href="#">Help Center</a><br><a href="#">Contact</a><br><a href="#">Status</a></div>
+        <div><h4>Legal</h4><a href="#">Terms</a><br><a href="#">Privacy</a><br><a href="#">Refunds</a></div>
+      </div>
+      <div class="footer-bottom">© 2026 Keevan Store. Built in Uganda 🇺🇬 for East African creators.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ CHECKOUT ════════════════════════════ -->
+<div class="page" id="page-checkout">
+  <div class="container" style="max-width:520px">
+    <h2 style="text-align:center;margin-bottom:20px">Checkout</h2>
+    <div class="checkout-box">
+      <div id="checkout-item" class="checkout-item">
+        <div class="thumb ebook">📘</div>
+        <div class="info">
+          <h4>React Mastery Ebook</h4>
+          <p>By Sarah Nakamya</p>
+          <div class="price">UGX 25,000</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="form-group" style="margin-bottom:10px">
+          <label>Full Name</label>
+          <input type="text" placeholder="Your name" value="James Okello">
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label>Email (for download link)</label>
+          <input type="email" placeholder="you@example.com" value="james@example.com">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Phone Number</label>
+          <input type="tel" placeholder="+256 7XX XXX XXX" value="+256 701 234 567">
+        </div>
+      </div>
+
+      <p style="font-size:13px;font-weight:600;margin-bottom:8px">Select Payment Method</p>
+      <div class="payment-methods">
+        <div class="payment-method selected" onclick="selectPayment(this,'mtn')">
+          <div class="icon">📱</div>
+          <div class="label">MTN Mobile Money</div>
+        </div>
+        <div class="payment-method" onclick="selectPayment(this,'airtel')">
+          <div class="icon">📱</div>
+          <div class="label">Airtel Money</div>
+        </div>
+        <div class="payment-method" onclick="selectPayment(this,'card')">
+          <div class="icon">💳</div>
+          <div class="label">Credit / Debit Card</div>
+        </div>
+        <div class="payment-method" onclick="selectPayment(this,'bank')">
+          <div class="icon">🏦</div>
+          <div class="label">Bank Transfer</div>
+        </div>
+      </div>
+
+      <!-- DISCOUNT CODE -->
+      <div class="card" style="margin-bottom:16px;padding:14px">
+        <div style="display:flex;gap:8px">
+          <input type="text" id="discount-input" placeholder="Discount code (optional)" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px">
+          <button class="btn btn-secondary btn-sm" onclick="applyDiscount()">Apply</button>
+        </div>
+        <div id="discount-msg" style="margin-top:6px;font-size:12px;display:none"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px">
+          <span>Subtotal</span><span id="checkout-subtotal">UGX 25,000</span>
+        </div>
+        <div id="checkout-discount-row" style="display:none;justify-content:space-between;margin-bottom:6px;font-size:13px;color:var(--green)">
+          <span>Discount (<span id="discount-pct">10</span>%)</span><span id="checkout-discount">- UGX 2,500</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;padding-top:6px;border-top:1px solid var(--border)">
+          <span>Total</span><span id="checkout-total">UGX 25,000</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%" onclick="processPayment()">
+        Pay with Pesapal
+      </button>
+      <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">Secured by Pesapal 🔒 Your payment info is encrypted</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ CREATOR DASHBOARD ════════════════════════════ -->
+<div class="page" id="page-creator">
+  <div class="container">
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <h2>Creator Dashboard</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="badge badge-green">Pro Creator</span>
+          <button class="btn btn-primary btn-sm" onclick="showPage('upload')">+ New Product</button>
+        </div>
+      </div>
+      <div class="grid-4">
+        <div class="dash-card"><h3>Total Revenue</h3><div class="value">UGX 45,000</div><div class="change">↑ 12% this month</div></div>
+        <div class="dash-card"><h3>Orders</h3><div class="value">12</div><div class="change">↑ 3 this week</div></div>
+        <div class="dash-card"><h3>Products</h3><div class="value">5</div><div class="change">+1 published today</div></div>
+        <div class="dash-card"><h3>Store Views</h3><div class="value">1,247</div><div class="change">↑ 8% this week</div></div>
+      </div>
+    </div>
+
+    <!-- REVENUE CHART -->
+    <div class="card" style="margin-bottom:20px">
+      <h3 style="margin-bottom:12px">Revenue (Last 7 Days)</h3>
+      <div class="chart-bars" id="revenue-chart"></div>
+    </div>
+
+    <!-- PRODUCTS TABLE -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <h3>My Products</h3>
+        <div style="display:flex;gap:8px">
+          <select style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <option>All</option><option>Ebooks</option><option>Guides</option><option>Templates</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Sales</th><th>Revenue</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="creator-products-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DISCOUNTS -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <h3>Discounts</h3>
+        <button class="btn btn-primary btn-sm" onclick="showDiscountModal()">+ Create Discount</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Code</th><th>Discount</th><th>Start</th><th>End</th><th>Usage</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="discounts-table">
+            <tr>
+              <td><strong>EARLYBIRD</strong></td>
+              <td>15%</td>
+              <td>Jan 1</td>
+              <td>Jan 31</td>
+              <td>8 / 50</td>
+              <td><span class="badge badge-green">Active</span></td>
+              <td><button class="btn btn-danger btn-xs" onclick="deleteDiscount(this)">Delete</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RECENT ORDERS -->
+    <div class="card">
+      <div class="card-header"><h3>Recent Orders</h3></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order ID</th><th>Buyer</th><th>Product</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody>
+            <tr><td>#ORD-016</td><td>James Okello</td><td>React Mastery Ebook</td><td>UGX 25,000</td><td><span class="badge badge-green">Completed</span></td><td>Today</td></tr>
+            <tr><td>#ORD-015</td><td>Mary Achieng</td><td>Startup Guide</td><td>UGX 15,000</td><td><span class="badge badge-green">Completed</span></td><td>Today</td></tr>
+            <tr><td>#ORD-014</td><td>David Ssempijja</td><td>Budget Template</td><td>UGX 8,000</td><td><span class="badge badge-yellow">Pending</span></td><td>Yesterday</td></tr>
+            <tr><td>#ORD-013</td><td>Grace Nambi</td><td>UI/UX Course</td><td>UGX 45,000</td><td><span class="badge badge-green">Completed</span></td><td>Yesterday</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ ADMIN DASHBOARD ════════════════════════════ -->
+<div class="page" id="page-admin">
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <a href="#" class="active" onclick="switchAdminTab(this,'admin-overview')"><span class="icon">📊</span> Overview</a>
+      <a href="#" onclick="switchAdminTab(this,'admin-users')"><span class="icon">👥</span> Users</a>
+      <a href="#" onclick="switchAdminTab(this,'admin-orders')"><span class="icon">🛒</span> Orders</a>
+      <a href="#" onclick="switchAdminTab(this,'admin-stores')"><span class="icon">🏪</span> Stores</a>
+      <a href="#" onclick="switchAdminTab(this,'admin-products')"><span class="icon">📦</span> Products</a>
+      <a href="#" onclick="switchAdminTab(this,'admin-payouts')"><span class="icon">💸</span> Payouts</a>
+      <a href="#" onclick="switchAdminTab(this,'admin-emails')"><span class="icon">📧</span> Email Queue</a>
+      <a href="#" onclick="switchAdminTab(this,'admin-logs')"><span class="icon">📝</span> Audit Logs</a>
+    </div>
+    <div class="admin-content">
+      <!-- OVERVIEW -->
+      <div class="tab-content active" id="admin-overview">
+        <h2 style="margin-bottom:16px">Platform Overview</h2>
+        <div class="grid-4" style="margin-bottom:20px">
+          <div class="dash-card"><h3>Users</h3><div class="value">16</div><div class="change">14 creators · 1 buyer · 1 admin</div></div>
+          <div class="dash-card"><h3>Products</h3><div class="value">19</div><div class="change">17 published · 2 draft</div></div>
+          <div class="dash-card"><h3>Orders</h3><div class="value">16</div><div class="change negative">10 pending · 2 failed · 4 completed</div></div>
+          <div class="dash-card"><h3>Revenue</h3><div class="value">UGX 87,996</div><div class="change">Platform commission: UGX 8,799</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3 style="margin-bottom:12px">Orders by Status</h3>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Pending</span><span>10 (62.5%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:62.5%;background:var(--orange)"></div></div></div>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Completed</span><span>4 (25%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:25%;background:var(--green)"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:13px"><span>Failed</span><span>2 (12.5%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:12.5%;background:var(--red)"></div></div></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom:12px">Product Categories</h3>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Ebooks</span><span>8 (42%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:42%;background:var(--purple)"></div></div></div>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Guides</span><span>5 (26%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:26%;background:var(--blue)"></div></div></div>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Templates</span><span>4 (21%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:21%;background:var(--green)"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:13px"><span>Courses</span><span>2 (11%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:11%;background:var(--orange)"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div class="tab-content" id="admin-users">
+        <h2 style="margin-bottom:16px">User Management</h2>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Store</th><th>Joined</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>Sarah Nakamya</td><td>sarah@example.com</td><td><span class="badge badge-green">Creator</span></td><td>Active</td><td>Jan 15</td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+                <tr><td>James Okello</td><td>james@example.com</td><td><span class="badge badge-blue">Buyer</span></td><td>—</td><td>Jan 18</td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+                <tr><td>Mary Achieng</td><td>mary@example.com</td><td><span class="badge badge-green">Creator</span></td><td>Active</td><td>Jan 20</td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+                <tr><td>David Ssempijja</td><td>david@example.com</td><td><span class="badge badge-green">Creator</span></td><td>Suspended</td><td>Feb 1</td><td><button class="btn btn-danger btn-xs">Suspend</button></td></tr>
+                <tr><td>Admin User</td><td>admin@keevanstore.in</td><td><span class="badge badge-purple">Admin</span></td><td>—</td><td>Jan 1</td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDERS -->
+      <div class="tab-content" id="admin-orders">
+        <h2 style="margin-bottom:16px">Order Management</h2>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Buyer</th><th>Creator</th><th>Product</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>#ORD-016</td><td>James Okello</td><td>Sarah Nakamya</td><td>React Mastery</td><td>UGX 25,000</td><td>Pesapal</td><td><span class="badge badge-green">Completed</span></td><td>Today</td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+                <tr><td>#ORD-015</td><td>Mary Achieng</td><td>Sarah Nakamya</td><td>Startup Guide</td><td>UGX 15,000</td><td>Pesapal</td><td><span class="badge badge-green">Completed</span></td><td>Today</td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+                <tr><td>#ORD-014</td><td>David Ssempijja</td><td>Grace Nambi</td><td>Budget Template</td><td>UGX 8,000</td><td>MTN MoMo</td><td><span class="badge badge-yellow">Pending</span></td><td>Yesterday</td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+                <tr><td>#ORD-013</td><td>Grace Nambi</td><td>Mary Achieng</td><td>UI/UX Course</td><td>UGX 45,000</td><td>Card</td><td><span class="badge badge-green">Completed</span></td><td>Yesterday</td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+                <tr><td>#ORD-012</td><td>Faith Nansubuga</td><td>David Ssempijja</td><td>Finance Guide</td><td>UGX 12,000</td><td>Airtel</td><td><span class="badge badge-red">Failed</span></td><td>2 days ago</td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- STORES -->
+      <div class="tab-content" id="admin-stores">
+        <h2 style="margin-bottom:16px">Store Management</h2>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Store</th><th>Creator</th><th>Products</th><th>Sales</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>Sarah Nakamya's Store</td><td>Sarah Nakamya</td><td>5</td><td>12</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-secondary btn-xs">View</button> <button class="btn btn-danger btn-xs">Suspend</button></td></tr>
+                <tr><td>Mary's Digital Shop</td><td>Mary Achieng</td><td>3</td><td>8</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-secondary btn-xs">View</button> <button class="btn btn-danger btn-xs">Suspend</button></td></tr>
+                <tr><td>David's Templates</td><td>David Ssempijja</td><td>4</td><td>3</td><td><span class="badge badge-yellow">Suspended</span></td><td><button class="btn btn-secondary btn-xs">View</button> <button class="btn btn-primary btn-xs">Reactivate</button></td></tr>
+                <tr><td>Grace's Academy</td><td>Grace Nambi</td><td>2</td><td>5</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-secondary btn-xs">View</button> <button class="btn btn-danger btn-xs">Suspend</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <div class="tab-content" id="admin-products">
+        <h2 style="margin-bottom:16px">All Products</h2>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Product</th><th>Creator</th><th>Category</th><th>Price</th><th>Sales</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>React Mastery Ebook</td><td>Sarah Nakamya</td><td>Ebook</td><td>UGX 25,000</td><td>8</td><td><span class="badge badge-green">Published</span></td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+                <tr><td>Startup Guide</td><td>Sarah Nakamya</td><td>Guide</td><td>UGX 15,000</td><td>4</td><td><span class="badge badge-green">Published</span></td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+                <tr><td>Budget Template</td><td>Mary Achieng</td><td>Template</td><td>UGX 8,000</td><td>12</td><td><span class="badge badge-green">Published</span></td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+                <tr><td>UI/UX Course</td><td>Grace Nambi</td><td>Course</td><td>UGX 45,000</td><td>3</td><td><span class="badge badge-green">Published</span></td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+                <tr><td>Marketing Playbook</td><td>David Ssempijja</td><td>Ebook</td><td>UGX 20,000</td><td>0</td><td><span class="badge badge-yellow">Draft</span></td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAYOUTS -->
+      <div class="tab-content" id="admin-payouts">
+        <h2 style="margin-bottom:16px">Creator Payouts</h2>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Creator</th><th>Method</th><th>Account</th><th>Amount</th><th>Status</th><th>Requested</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>Sarah Nakamya</td><td>MTN MoMo</td><td>+256 701 234 567</td><td>UGX 22,500</td><td><span class="badge badge-yellow">Pending</span></td><td>Today</td><td><button class="btn btn-primary btn-xs">Approve</button> <button class="btn btn-danger btn-xs">Reject</button></td></tr>
+                <tr><td>Mary Achieng</td><td>Airtel Money</td><td>+256 705 678 901</td><td>UGX 11,500</td><td><span class="badge badge-green">Paid</span></td><td>2 days ago</td><td><button class="btn btn-secondary btn-xs">View</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMAIL QUEUE -->
+      <div class="tab-content" id="admin-emails">
+        <h2 style="margin-bottom:16px">Email Queue</h2>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Type</th><th>Recipient</th><th>Subject</th><th>Status</th><th>Time</th></tr></thead>
+              <tbody>
+                <tr><td><span class="badge badge-green">Order Confirmation</span></td><td>james@example.com</td><td>Your order #ORD-016 is confirmed</td><td><span class="badge badge-green">Sent</span></td><td>2 min ago</td></tr>
+                <tr><td><span class="badge badge-blue">Download Link</span></td><td>james@example.com</td><td>Download: React Mastery Ebook</td><td><span class="badge badge-green">Sent</span></td><td>2 min ago</td></tr>
+                <tr><td><span class="badge badge-yellow">Admin Alert</span></td><td>admin@keevanstore.in</td><td>New order: UGX 25,000 from Sarah Nakamya</td><td><span class="badge badge-yellow">Queued</span></td><td>1 min ago</td></tr>
+                <tr><td><span class="badge badge-green">Order Confirmation</span></td><td>mary@example.com</td><td>Your order #ORD-015 is confirmed</td><td><span class="badge badge-green">Sent</span></td><td>15 min ago</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- AUDIT LOGS -->
+      <div class="tab-content" id="admin-logs">
+        <h2 style="margin-bottom:16px">Audit Logs</h2>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th><th>IP</th></tr></thead>
+              <tbody>
+                <tr><td>10:05 PM</td><td>james@example.com</td><td><span class="badge badge-green">order.created</span></td><td>Order #ORD-016 — UGX 25,000</td><td>192.168.1.1</td></tr>
+                <tr><td>10:05 PM</td><td>system</td><td><span class="badge badge-blue">email.queued</span></td><td>Order confirmation → james@example.com</td><td>—</td></tr>
+                <tr><td>10:04 PM</td><td>james@example.com</td><td><span class="badge badge-purple">auth.login</span></td><td>Login via email/password</td><td>192.168.1.1</td></tr>
+                <tr><td>09:58 PM</td><td>admin@keevanstore.in</td><td><span class="badge badge-yellow">store.suspend</span></td><td>Suspended David's Templates</td><td>10.0.0.1</td></tr>
+                <tr><td>09:45 PM</td><td>sarah@example.com</td><td><span class="badge badge-green">product.publish</span></td><td>Published "React Mastery Ebook"</td><td>192.168.1.2</td></tr>
+                <tr><td>09:30 PM</td><td>system</td><td><span class="badge badge-green">cron.run</span></td><td>Email queue processed — 3 emails sent</td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ SUCCESS MODAL ════════════════════════════ -->
+<div class="modal-overlay" id="success-modal">
+  <div class="modal" style="text-align:center">
+    <div style="font-size:64px;margin-bottom:12px">🎉</div>
+    <h2 id="modal-title">Payment Successful!</h2>
+    <p id="modal-body" style="color:var(--muted);margin-bottom:20px">Your order has been confirmed. A download link has been sent to your email.</p>
+    <button class="btn btn-primary" onclick="closeModal()">Continue</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════ DISCOUNT MODAL ════════════════════════════ -->
+<div class="modal-overlay" id="discount-modal">
+  <div class="modal">
+    <h2>Create Discount</h2>
+    <div class="form-group">
+      <label>Discount Percentage</label>
+      <input type="number" id="new-discount-pct" min="1" max="100" placeholder="e.g. 15">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" id="new-discount-start">
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" id="new-discount-end">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Max Uses (optional)</label>
+      <input type="number" id="new-discount-uses" placeholder="e.g. 50">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" style="flex:1" onclick="createDiscount()">Create Discount</button>
+      <button class="btn btn-secondary" onclick="closeDiscountModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════ DATA ════════════════════════════
+const products = [
+  { id:1, name:"React Mastery Ebook", creator:"Sarah Nakamya", category:"ebook", price:25000, sales:8, desc:"Master React from basics to advanced patterns", icon:"📘" },
+  { id:2, name:"Startup Guide", creator:"Sarah Nakamya", category:"guide", price:15000, sales:4, desc:"Launch your startup in East Africa", icon:"📋" },
+  { id:3, name:"Budget Template", creator:"Mary Achieng", category:"template", price:8000, sales:12, desc:"Professional budget spreadsheet for small businesses", icon:"📄" },
+  { id:4, name:"UI/UX Course", creator:"Grace Nambi", category:"course", price:45000, sales:3, desc:"Complete UI/UX design course with Figma", icon:"🎓" },
+  { id:5, name:"Finance Guide", creator:"David Ssempijja", category:"guide", price:12000, sales:6, desc:"Personal finance management for East Africans", icon:"📋" },
+  { id:6, name:"Python for Beginners", creator:"Sarah Nakamya", category:"ebook", price:18000, sales:5, desc:"Learn Python from scratch with real projects", icon:"📘" },
+  { id:7, name:"Social Media Kit", creator:"Mary Achieng", category:"template", price:5000, sales:15, desc:"100+ social media templates for Canva", icon:"📄" },
+  { id:8, name:"Business Plan Template", creator:"Grace Nambi", category:"template", price:10000, sales:7, desc:"Investor-ready business plan template", icon:"📄" },
+  { id:9, name:"Photography Guide", creator:"David Ssempijja", category:"guide", price:20000, sales:2, desc:"Mobile photography tips for content creators", icon:"📋" },
+  { id:10, name:"Digital Marketing 101", creator:"Sarah Nakamya", category:"course", price:35000, sales:4, desc:"Master digital marketing for African audiences", icon:"🎓" },
+  { id:11, name:"Writing Guide", creator:"Mary Achieng", category:"ebook", price:9000, sales:3, desc:"Write your first ebook in 30 days", icon:"📘" },
+  { id:12, name:"Resume Template", creator:"Grace Nambi", category:"template", price:3000, sales:20, desc:"ATS-friendly resume template pack", icon:"📄" },
+];
+
+let selectedProduct = products[0];
+let discountApplied = false;
+let discountPct = 0;
+
+// ════════════════════════════ NAVIGATION ════════════════════════════
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-links a[data-page]').forEach(a => {
+    a.classList.toggle('active', a.dataset.page === page);
+  });
+  window.scrollTo(0, 0);
+
+  if (page === 'browse') renderProducts();
+  if (page === 'creator') renderCreatorProducts();
+}
+
+function switchTab(el, tabId) {
+  el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const container = el.closest('.container') || el.closest('.page');
+  container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  container.querySelector('#' + tabId).classList.add('active');
+  renderProducts();
+}
+
+function switchAdminTab(el, tabId) {
+  el.closest('.admin-sidebar').querySelectorAll('a').forEach(a => a.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('#page-admin .tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+}
+
+// ════════════════════════════ RENDER PRODUCTS ════════════════════════════
+function renderProducts() {
+  const grids = {
+    'tab-all': products,
+    'tab-ebooks': products.filter(p => p.category === 'ebook'),
+    'tab-guides': products.filter(p => p.category === 'guide'),
+    'tab-templates': products.filter(p => p.category === 'template'),
+    'tab-courses': products.filter(p => p.category === 'course'),
+  };
+
+  Object.entries(grids).forEach(([tabId, items]) => {
+    const grid = document.getElementById(tabId.replace('tab-', '') + '-grid') || document.querySelector('#' + tabId + ' .grid-3');
+    if (!grid) return;
+    grid.innerHTML = items.map(p => `
+      <div class="product-card" onclick="openCheckout(${p.id})">
+        <div class="product-thumb ${p.category}" style="position:relative">
+          ${p.icon}
+        </div>
+        <div class="product-info">
+          <h3>${p.name}</h3>
+          <div class="creator">by ${p.creator}</div>
+          <div style="display:flex;align-items:baseline;gap:4px">
+            <div class="price">UGX ${p.price.toLocaleString()}</div>
+          </div>
+          <div class="sales">${p.sales} sales · ${p.desc.substring(0, 40)}...</div>
+        </div>
+      </div>
+    `).join('');
+  });
+}
+
+function renderCreatorProducts() {
+  const myProducts = products.filter(p => p.creator === 'Sarah Nakamya');
+  const tbody = document.getElementById('creator-products-table');
+  tbody.innerHTML = myProducts.map(p => `
+    <tr>
+      <td><strong>${p.name}</strong></td>
+      <td><span class="badge badge-${p.category==='ebook'?'purple':p.category==='guide'?'blue':p.category==='template'?'green':'yellow'}">${p.category}</span></td>
+      <td>UGX ${p.price.toLocaleString()}</td>
+      <td>${p.sales}</td>
+      <td>UGX ${(p.price * p.sales).toLocaleString()}</td>
+      <td><span class="badge badge-green">Published</span></td>
+      <td><button class="btn btn-secondary btn-xs">Edit</button></td>
+    </tr>
+  `).join('');
+
+  // Revenue chart
+  const chartEl = document.getElementById('revenue-chart');
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const values = [8000, 12000, 5000, 15000, 9000, 22000, 18000];
+  const max = Math.max(...values);
+  chartEl.innerHTML = days.map((d, i) => `
+    <div class="chart-bar" style="height:${(values[i]/max)*100}%">
+      <div class="tooltip">${d}: UGX ${values[i].toLocaleString()}</div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════ CHECKOUT ════════════════════════════
+function openCheckout(productId) {
+  selectedProduct = products.find(p => p.id === productId);
+  const item = document.getElementById('checkout-item');
+  const thumbClass = selectedProduct.category;
+  item.innerHTML = `
+    <div class="thumb ${thumbClass}">${selectedProduct.icon}</div>
+    <div class="info">
+      <h4>${selectedProduct.name}</h4>
+      <p>By ${selectedProduct.creator}</p>
+      <div class="price">UGX ${selectedProduct.price.toLocaleString()}</div>
+    </div>
+  `;
+  document.getElementById('checkout-subtotal').textContent = 'UGX ' + selectedProduct.price.toLocaleString();
+  document.getElementById('checkout-total').textContent = 'UGX ' + selectedProduct.price.toLocaleString();
+  discountApplied = false;
+  discountPct = 0;
+  document.getElementById('checkout-discount-row').style.display = 'none';
+  document.getElementById('discount-msg').style.display = 'none';
+  document.getElementById('discount-input').value = '';
+  showPage('checkout');
+}
+
+function selectPayment(el, method) {
+  document.querySelectorAll('.payment-method').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function applyDiscount() {
+  const code = document.getElementById('discount-input').value.trim().toUpperCase();
+  const msg = document.getElementById('discount-msg');
+  if (code === 'EARLYBIRD') {
+    discountApplied = true;
+    discountPct = 15;
+    msg.textContent = '✅ EARLYBIRD applied — 15% off!';
+    msg.style.color = 'var(--green)';
+    msg.style.display = 'block';
+  } else if (code === 'WELCOME10') {
+    discountApplied = true;
+    discountPct = 10;
+    msg.textContent = '✅ WELCOME10 applied — 10% off!';
+    msg.style.color = 'var(--green)';
+    msg.style.display = 'block';
+  } else {
+    discountApplied = false;
+    discountPct = 0;
+    msg.textContent = '❌ Invalid discount code';
+    msg.style.color = 'var(--red)';
+    msg.style.display = 'block';
+  }
+  updateCheckoutTotal();
+}
+
+function updateCheckoutTotal() {
+  const subtotal = selectedProduct.price;
+  const discountAmount = discountApplied ? Math.round(subtotal * discountPct / 100) : 0;
+  const total = subtotal - discountAmount;
+  document.getElementById('checkout-subtotal').textContent = 'UGX ' + subtotal.toLocaleString();
+  document.getElementById('checkout-discount-row').style.display = discountApplied ? 'flex' : 'none';
+  document.getElementById('discount-pct').textContent = discountPct;
+  document.getElementById('checkout-discount').textContent = '- UGX ' + discountAmount.toLocaleString();
+  document.getElementById('checkout-total').textContent = 'UGX ' + total.toLocaleString();
+}
+
+function processPayment() {
+  const btn = event.target;
+  btn.textContent = '⏳ Processing via Pesapal...';
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+
+  setTimeout(() => {
+    btn.textContent = '✅ Payment Confirmed!';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => {
+      document.getElementById('modal-title').textContent = 'Payment Successful!';
+      document.getElementById('modal-body').textContent = `Order confirmed! A download link for "${selectedProduct.name}" has been sent to your email. Thank you for supporting ${selectedProduct.creator}.`;
+      document.getElementById('success-modal').classList.add('show');
+      btn.textContent = 'Pay with Pesapal';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      showToast('Order placed successfully! Check your email for the download link.');
+    }, 600);
+  }, 2000);
+}
+
+function closeModal() {
+  document.getElementById('success-modal').classList.remove('show');
+  showPage('browse');
+}
+
+// ════════════════════════════ SIGNUP ════════════════════════════
+function handleSignup() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+
+  if (!name || !email || !password) {
+    showToast('Please fill in all fields');
+    return;
+  }
+  if (password.length < 8) {
+    showToast('Password must be at least 8 characters');
+    return;
+  }
+
+  document.getElementById('signup-step-1').style.display = 'none';
+  document.getElementById('signup-step-2').style.display = 'block';
+  showToast('Account created successfully!');
+}
+
+// ════════════════════════════ UPLOAD ════════════════════════════
+function handleCoverUpload(input) {
+  if (input.files.length) {
+    document.getElementById('cover-label').textContent = '✅ ' + input.files[0].name;
+  }
+}
+
+function handleProductUpload(input) {
+  if (input.files.length) {
+    document.getElementById('product-label').textContent = '✅ ' + input.files[0].name;
+  }
+}
+
+function handlePublish() {
+  const name = document.getElementById('upload-name').value.trim();
+  const price = document.getElementById('upload-price').value;
+  if (!name || !price) {
+    showToast('Please fill in product name and price');
+    return;
+  }
+  document.getElementById('modal-title').textContent = 'Product Published!';
+  document.getElementById('modal-body').textContent = `"${name}" is now live on your store at UGX ${parseInt(price).toLocaleString()}. Buyers can find and purchase it immediately.`;
+  document.getElementById('success-modal').classList.add('show');
+  showToast('Product published successfully!');
+}
+
+// ════════════════════════════ DISCOUNTS ════════════════════════════
+function showDiscountModal() {
+  document.getElementById('discount-modal').classList.add('show');
+}
+
+function closeDiscountModal() {
+  document.getElementById('discount-modal').classList.remove('show');
+}
+
+function createDiscount() {
+  const pct = document.getElementById('new-discount-pct').value;
+  const start = document.getElementById('new-discount-start').value;
+  const end = document.getElementById('new-discount-end').value;
+  if (!pct || !start || !end) {
+    showToast('Please fill in all fields');
+    return;
+  }
+  const tbody = document.getElementById('discounts-table');
+  const code = 'DISC' + Math.random().toString(36).substring(2,6).toUpperCase();
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td><strong>${code}</strong></td>
+    <td>${pct}%</td>
+    <td>${new Date(start).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</td>
+    <td>${new Date(end).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</td>
+    <td>0 / ${document.getElementById('new-discount-uses').value || '∞'}</td>
+    <td><span class="badge badge-green">Active</span></td>
+    <td><button class="btn btn-danger btn-xs" onclick="deleteDiscount(this)">Delete</button></td>
+  `;
+  tbody.appendChild(row);
+  closeDiscountModal();
+  showToast(`Discount ${pct}% created with code ${code}`);
+}
+
+function deleteDiscount(btn) {
+  btn.closest('tr').remove();
+  showToast('Discount deleted');
+}
+
+// ════════════════════════════ TOAST ════════════════════════════
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+// ════════════════════════════ INIT ════════════════════════════
+renderProducts();
+
+// Animate stats on scroll
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.stat, .feature-card, .step').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'all 0.5s ease';
+  observer.observe(el);
+});
+
+// Trigger initial animations
+setTimeout(() => {
+  document.querySelectorAll('.stat, .feature-card, .step').forEach((el, i) => {
+    setTimeout(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    }, i * 80);
+  });
+}, 100);
+</script>
+</body>
+</html>
