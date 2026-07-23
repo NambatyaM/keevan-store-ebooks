@@ -36,7 +36,7 @@ export default function ForgotPasswordForm() {
       {sent ? (
         <div className="rounded-lg border border-green-200 bg-green-50 p-5">
           <p className="font-semibold text-green-800">Check your email</p>
-          <p className="mt-2 text-sm text-green-700">If an account exists with that email, you will receive password reset instructions.</p>
+          <p className="mt-2 text-sm text-green-700">If an account exists with that email, you will receive password reset instructions within a few minutes. Check your spam folder if you don&apos;t see it.</p>
         </div>
       ) : (
         <>

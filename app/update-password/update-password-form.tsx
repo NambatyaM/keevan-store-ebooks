@@ -1,37 +1,36 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { createSupabaseBrowserClient } from "@/lib/auth";
-import { useAuth } from "@/components/auth-provider";
 import { SimplePage } from "@/components/simple-page";
 import { PasswordInput } from "@/components/password-input";
 
 export default function UpdatePasswordForm() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        setReady(true);
-      } else {
-        setError("Invalid or expired reset link. Please request a new password reset.");
-      }
+    if (!token) {
+      setError("Invalid or expired reset link. Please request a new password reset.");
     }
-  }, [user, loading]);
+  }, [token]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
 
+    if (!token) {
+      setError("Invalid or expired reset link. Please request a new password reset.");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -43,9 +42,13 @@ export default function UpdatePasswordForm() {
 
     setSubmitting(true);
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) throw updateError;
+      const res = await fetch("/api/auth/confirm-reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "Failed to update password.");
       setSuccess(true);
       setTimeout(() => router.push("/login"), 3000);
     } catch (err) {
@@ -77,7 +80,7 @@ export default function UpdatePasswordForm() {
               <label htmlFor="confirmPassword" className="text-sm font-semibold">Confirm new password</label>
               <PasswordInput id="confirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
-            <button type="submit" disabled={submitting || !ready} className="rounded-lg bg-brand-green px-6 py-3 text-sm font-bold text-white transition hover:bg-[#005C34] disabled:opacity-50">
+            <button type="submit" disabled={submitting || !token} className="rounded-lg bg-brand-green px-6 py-3 text-sm font-bold text-white transition hover:bg-[#005C34] disabled:opacity-50">
               {submitting ? "Updating..." : "Update Password"}
             </button>
             <p className="text-sm text-neutral-600">

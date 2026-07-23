@@ -17,6 +17,11 @@ export const resetPasswordSchema = z.object({
   email: z.string().email()
 });
 
+export const confirmResetPasswordSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8)
+});
+
 export const storeSchema = z.object({
   name: z.string().min(2),
   slug: z.string().regex(/^[a-z0-9-]{3,64}$/),

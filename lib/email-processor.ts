@@ -14,6 +14,29 @@ export type QueueItem = {
   retry_count?: number;
 };
 
+async function getCreatorNotificationPreference(
+  supabase: NonNullable<ReturnType<typeof getOptionalSupabaseAdminClient>>,
+  email: string,
+  prefField: "notif_sale" | "notif_withdrawal" | "notif_refund"
+): Promise<boolean> {
+  const { data: userData } = await supabase
+    .from("users")
+    .select("id")
+    .eq("email", email)
+    .single();
+
+  if (!userData) return true;
+
+  const { data } = await supabase
+    .from("creators")
+    .select("notif_sale, notif_withdrawal, notif_refund")
+    .eq("user_id", userData.id)
+    .maybeSingle();
+
+  if (!data) return true;
+  return Boolean(data[prefField]);
+}
+
 export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { ok: false; error: string }> {
   const supabase = getOptionalSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Server configuration error: admin client unavailable" };
@@ -21,6 +44,9 @@ export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { o
   switch (item.type) {
     case "order_confirmation": {
       if (item.metadata?.type === "creator_sale") {
+        const enabled = await getCreatorNotificationPreference(supabase, item.to_email, "notif_sale");
+        if (!enabled) return { ok: true };
+
         const meta = item.metadata as Record<string, unknown>;
         const html = creatorSaleNotificationHtml({
           creatorName: item.to_name ?? "Creator",
@@ -72,6 +98,9 @@ export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { o
     }
 
     case "withdrawal_status": {
+      const enabled = await getCreatorNotificationPreference(supabase, item.to_email, "notif_withdrawal");
+      if (!enabled) return { ok: true };
+
       const { data: withdrawal } = await supabase
         .from("withdrawal_requests")
         .select("*")

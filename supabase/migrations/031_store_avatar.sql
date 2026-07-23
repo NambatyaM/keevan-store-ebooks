@@ -18,25 +18,37 @@ values (
 on conflict (id) do nothing;
 
 -- Allow authenticated creators to upload avatars
-create policy "creators upload avatars"
-on storage.objects
-for insert
-to authenticated
-with check (bucket_id = 'avatars');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'creators upload avatars' AND tablename = 'objects') THEN
+    create policy "creators upload avatars"
+    on storage.objects
+    for insert
+    to authenticated
+    with check (bucket_id = 'avatars');
+  END IF;
+END $$;
 
 -- Allow authenticated creators to manage (update/delete) their avatars
-create policy "creators manage avatars"
-on storage.objects
-for all
-to authenticated
-using (bucket_id = 'avatars')
-with check (bucket_id = 'avatars');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'creators manage avatars' AND tablename = 'objects') THEN
+    create policy "creators manage avatars"
+    on storage.objects
+    for all
+    to authenticated
+    using (bucket_id = 'avatars')
+    with check (bucket_id = 'avatars');
+  END IF;
+END $$;
 
 -- Public can view avatars
-create policy "public view avatars"
-on storage.objects
-for select
-to public
-using (bucket_id = 'avatars');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'public view avatars' AND tablename = 'objects') THEN
+    create policy "public view avatars"
+    on storage.objects
+    for select
+    to public
+    using (bucket_id = 'avatars');
+  END IF;
+END $$;
 
 COMMIT;

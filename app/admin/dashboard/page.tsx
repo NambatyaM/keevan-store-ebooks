@@ -268,9 +268,9 @@ export default function AdminDashboardPage() {
           icon={<ShoppingCart size={20} />}
         />
         <StatCard
-          label="Active Creators"
-          value={String(stats.activeStores ?? stats.totalCreators ?? 0)}
-          sublabel="With published stores"
+          label="Active Stores"
+          value={String(stats.activeStores ?? 0)}
+          sublabel={`${stats.suspendedStores ?? 0} suspended`}
           icon={<Users size={20} />}
         />
         <StatCard

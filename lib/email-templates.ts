@@ -130,6 +130,25 @@ export function creatorSaleNotificationHtml(input: {
 </html>`;
 }
 
+export function passwordResetHtml(input: {
+  resetUrl: string;
+  expiresInMinutes: number;
+}): string {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:sans-serif;padding:24px;max-width:560px;margin:0 auto;">
+  <h1 style="color:#111;font-size:24px;">Reset Your Password</h1>
+  <p>You requested a password reset for your Keevan Store account.</p>
+  <p>Click the button below to set a new password:</p>
+  <a href="${input.resetUrl}" style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;font-size:16px;">Reset Password</a>
+  <p style="margin-top:24px;font-size:14px;color:#666;">This link expires in ${input.expiresInMinutes} minutes. If you didn't request a password reset, you can safely ignore this email.</p>
+  <hr style="margin-top:32px;">
+  <p style="font-size:12px;color:#999;">${site.name} &mdash; ${site.url}</p>
+</body>
+</html>`;
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
