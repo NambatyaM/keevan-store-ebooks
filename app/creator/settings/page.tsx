@@ -215,13 +215,14 @@ export default function CreatorSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
-      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "Failed to update password");
       toast("success", "Password updated successfully");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch {
-      toast("error", "Failed to update password");
+    } catch (err) {
+      toast("error", err instanceof Error ? err.message : "Failed to update password");
     } finally {
       setSaving(false);
     }
