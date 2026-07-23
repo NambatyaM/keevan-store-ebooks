@@ -66,7 +66,13 @@ export default function AdminWithdrawalsPage() {
   const pendingW = withdrawals.filter((w) => w.status === "pending");
   const approvedW = withdrawals.filter((w) => w.status === "approved");
   const paidW = withdrawals.filter((w) => w.status === "paid");
-  const totalPendingAmount = pendingW.reduce((s, w) => s + w.amount, 0);
+  const totalPendingByCurrency = pendingW.reduce<Record<string, number>>((acc, w) => {
+    acc[w.currency] = (acc[w.currency] ?? 0) + w.amount;
+    return acc;
+  }, {});
+  const totalPendingLabel = Object.entries(totalPendingByCurrency)
+    .map(([c, amt]) => formatCurrency(amt, c as Currency))
+    .join(" / ") || "—";
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -130,7 +136,7 @@ export default function AdminWithdrawalsPage() {
         <StatCard
           label="Pending"
           value={String(pendingW.length)}
-          sublabel={formatUgx(totalPendingAmount)}
+          sublabel={totalPendingLabel}
           icon={<AlertTriangle size={20} />}
           green={pendingW.length === 0}
         />
@@ -143,13 +149,25 @@ export default function AdminWithdrawalsPage() {
         <StatCard
           label="Paid This Period"
           value={String(paidW.length)}
-          sublabel={formatUgx(paidW.reduce((s, w) => s + w.amount, 0))}
+          sublabel={(() => {
+            const byCurrency = paidW.reduce<Record<string, number>>((acc, w) => {
+              acc[w.currency] = (acc[w.currency] ?? 0) + w.amount;
+              return acc;
+            }, {});
+            return Object.entries(byCurrency).map(([c, amt]) => formatCurrency(amt, c as Currency)).join(" / ") || "—";
+          })()}
           icon={<DollarSign size={20} />}
         />
         <StatCard
           label="Total Requests"
           value={String(withdrawals.length)}
-          sublabel={formatUgx(withdrawals.reduce((s, w) => s + w.amount, 0))}
+          sublabel={(() => {
+            const byCurrency = withdrawals.reduce<Record<string, number>>((acc, w) => {
+              acc[w.currency] = (acc[w.currency] ?? 0) + w.amount;
+              return acc;
+            }, {});
+            return Object.entries(byCurrency).map(([c, amt]) => formatCurrency(amt, c as Currency)).join(" / ") || "—";
+          })()}
           icon={<Wallet size={20} />}
         />
       </div>

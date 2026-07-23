@@ -18,7 +18,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   let dataQuery = supabase
     .from("creators")
-    .select("*,users(full_name,email),stores(id,slug,name,status)")
+    .select("*,users(full_name,email),stores(id,slug,name,status,products(count))")
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
   if (since) dataQuery = dataQuery.gte("created_at", since);
@@ -29,6 +29,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     const userData = Array.isArray(creator.users) ? creator.users[0] : creator.users;
     const storeData = Array.isArray(creator.stores) ? creator.stores : [creator.stores].filter(Boolean);
     const store = storeData?.[0] ?? null;
+    const productCount = Array.isArray(store?.products) ? store.products[0]?.count ?? 0 : 0;
 
     return {
       id: creator.id,
@@ -44,6 +45,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       store_slug: store?.slug ?? null,
       store_name: store?.name ?? null,
       store_status: store?.status ?? null,
+      product_count: productCount,
       created_at: creator.created_at
     };
   });

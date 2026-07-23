@@ -10,7 +10,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   let query = supabase
     .from("refunds")
-    .select("*,orders!inner(amount,product_id,products!inner(title)),admin_users:users!left(email)")
+    .select("*,orders!inner(amount,currency,product_id,products!inner(title)),admin_users:users!left(email)")
     .order("created_at", { ascending: false })
     .limit(limit);
 

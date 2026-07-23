@@ -93,11 +93,20 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    const days = dateRange === "Today" ? 1 : dateRange === "Yesterday" ? 2 : dateRange === "7D" ? 7 : dateRange === "30D" ? 30 : 30;
-    const since = dateRange === "Yesterday"
-      ? new Date(Date.now() - 86400000).toISOString().split("T")[0]
-      : new Date(Date.now() - days * 86400000).toISOString();
-    const until = dateRange === "Yesterday" ? new Date(Date.now() - 86400000).toISOString().split("T")[0] : undefined;
+    const now = new Date();
+    let since: string;
+    let until: string | undefined;
+    if (dateRange === "Today") {
+      since = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    } else if (dateRange === "Yesterday") {
+      const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      since = yesterday.toISOString();
+      until = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    } else if (dateRange === "7D") {
+      since = new Date(Date.now() - 7 * 86400000).toISOString();
+    } else {
+      since = new Date(Date.now() - 30 * 86400000).toISOString();
+    }
     const params = new URLSearchParams({ limit: "500", since });
     if (until) params.set("until", until);
     Promise.all([
@@ -129,17 +138,24 @@ export default function AdminDashboardPage() {
     return Array.from(map.entries()).map(([currency, data]) => ({ currency, ...data }));
   }, [paidOrders]);
 
-  // Revenue over time
+  // Revenue grouped by currency per day
   const revenueOverTime = useMemo(() => {
-    const map = new Map<string, { gross: number; fee: number }>();
+    const map = new Map<string, Record<string, number | string>>();
     paidOrders.forEach((o) => {
       const day = new Date(o.created_at).toLocaleDateString("en-UG", { month: "short", day: "numeric" });
-      const existing = map.get(day) ?? { gross: 0, fee: 0 };
-      existing.gross += o.amount;
-      existing.fee += o.platform_fee;
-      map.set(day, existing);
+      const c = o.currency ?? "UGX";
+      if (!map.has(day)) map.set(day, { date: day });
+      const entry = map.get(day)!;
+      entry[c] = (entry[c] as number ?? 0) + o.amount;
     });
-    return Array.from(map.entries()).map(([date, data]) => ({ date, ...data }));
+    return Array.from(map.entries()).map(([, data]) => data);
+  }, [paidOrders]);
+
+  // Unique currencies in paid orders
+  const currencies = useMemo(() => {
+    const set = new Set<string>();
+    paidOrders.forEach((o) => set.add(o.currency ?? "UGX"));
+    return Array.from(set);
   }, [paidOrders]);
 
   // New registrations over time
@@ -332,9 +348,11 @@ export default function AdminDashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                   <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
                   <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="gross" stroke="#00854A" strokeWidth={2} name="Gross Volume" dot={false} />
-                  <Line type="monotone" dataKey="fee" stroke="#F5A623" strokeWidth={2} name="Platform Fee" dot={false} />
+                  <Tooltip formatter={(value: number, name: string) => [formatCurrency(value, name as never), name]} />
+                  <Legend formatter={(value: string) => <span className="text-sm">{value}</span>} />
+                  {currencies.map((c, i) => (
+                    <Line key={c} type="monotone" dataKey={c} stroke={COLORS[i % COLORS.length]} strokeWidth={2} name={c} dot={false} />
+                  ))}
                 </LineChart>
               </ResponsiveContainer>
             </div>

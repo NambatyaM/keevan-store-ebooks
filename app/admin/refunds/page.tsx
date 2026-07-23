@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import { useToast } from "@/components/ui/toast";
-import { formatUgx } from "@/lib/constants";
+import { formatCurrency, type Currency } from "@/lib/constants";
 import {
   RotateCcw,
   Search,
@@ -29,7 +29,7 @@ type Refund = {
   status: string;
   reversed_amount: number | null;
   created_at: string;
-  orders: { amount: number; product_id: string; products: { title: string } | null } | null;
+  orders: { amount: number; currency: string; product_id: string; products: { title: string } | null } | null;
   admin_users: { email: string } | null;
 };
 
@@ -85,6 +85,8 @@ export default function AdminRefundsPage() {
   const rejectedR = refunds.filter((r) => r.status === "rejected");
   const totalReversed = approvedR.reduce((s, r) => s + (r.reversed_amount ?? 0), 0);
 
+  const fmt = (amount: number, currency?: string) => formatCurrency(amount, (currency as Currency) ?? "UGX");
+
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -128,26 +130,26 @@ export default function AdminRefundsPage() {
         <StatCard
           label="Pending"
           value={String(pendingR.length)}
-          sublabel={`${formatUgx(pendingR.reduce((s, r) => s + (r.orders?.amount ?? 0), 0))} at risk`}
+          sublabel={`${fmt(pendingR.reduce((s, r) => s + (r.orders?.amount ?? 0), 0))} at risk`}
           icon={<Clock size={20} />}
           green={pendingR.length === 0}
         />
         <StatCard
           label="Approved"
           value={String(approvedR.length)}
-          sublabel={`${formatUgx(totalReversed)} reversed`}
+          sublabel={`${fmt(totalReversed)} reversed`}
           icon={<CheckCircle size={20} />}
         />
         <StatCard
           label="Rejected"
           value={String(rejectedR.length)}
-          sublabel={formatUgx(rejectedR.reduce((s, r) => s + (r.orders?.amount ?? 0), 0))}
+          sublabel={fmt(rejectedR.reduce((s, r) => s + (r.orders?.amount ?? 0), 0))}
           icon={<XCircle size={20} />}
         />
         <StatCard
           label="Total Requests"
           value={String(refunds.length)}
-          sublabel={formatUgx(refunds.reduce((s, r) => s + (r.orders?.amount ?? 0), 0))}
+          sublabel={fmt(refunds.reduce((s, r) => s + (r.orders?.amount ?? 0), 0))}
           icon={<RotateCcw size={20} />}
         />
       </div>
@@ -224,7 +226,7 @@ export default function AdminRefundsPage() {
                         <p className="text-xs text-muted">{r.buyer_email}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-bold">{formatUgx(r.orders?.amount ?? 0)}</td>
+                    <td className="px-4 py-3 text-right font-bold">{fmt(r.orders?.amount ?? 0, r.orders?.currency)}</td>
                     <td className="max-w-[200px] truncate px-4 py-3 text-muted" title={r.reason}>
                       <div className="flex items-center gap-1.5">
                         <MessageSquare size={13} className="shrink-0 text-muted" />
@@ -302,9 +304,9 @@ export default function AdminRefundsPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase text-muted">Order Amount</p>
-                <p className="mt-1 text-2xl font-bold">{formatUgx(selectedRefund.orders?.amount ?? 0)}</p>
+                <p className="mt-1 text-2xl font-bold">{fmt(selectedRefund.orders?.amount ?? 0, selectedRefund.orders?.currency)}</p>
                 {selectedRefund.reversed_amount !== null && (
-                  <p className="text-sm text-success">Reversed: {formatUgx(selectedRefund.reversed_amount)}</p>
+                  <p className="text-sm text-success">Reversed: {fmt(selectedRefund.reversed_amount, selectedRefund.orders?.currency)}</p>
                 )}
               </div>
               <div className="sm:col-span-2">
@@ -336,7 +338,7 @@ export default function AdminRefundsPage() {
         {actionTarget && (
           <div className="space-y-4">
             <p className="text-sm text-muted">
-              Approve refund of <strong>{formatUgx(actionTarget.orders?.amount ?? 0)}</strong> for{' '}
+              Approve refund of <strong>{fmt(actionTarget.orders?.amount ?? 0, actionTarget.orders?.currency)}</strong> for{' '}
               <strong>{actionTarget.buyer_name}</strong> on{' '}
               <strong>{actionTarget.orders?.products?.title || "Unknown Product"}</strong>?
             </p>
@@ -380,7 +382,7 @@ export default function AdminRefundsPage() {
           <div className="space-y-4">
             <p className="text-sm text-muted">
               Reject refund request from <strong>{actionTarget.buyer_name}</strong> for{' '}
-              <strong>{formatUgx(actionTarget.orders?.amount ?? 0)}</strong>?
+              <strong>{fmt(actionTarget.orders?.amount ?? 0, actionTarget.orders?.currency)}</strong>?
             </p>
             <div>
               <label className="mb-1 block text-sm font-semibold">Rejection Reason *</label>
