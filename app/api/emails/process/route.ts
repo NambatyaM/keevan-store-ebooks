@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { json, logAdminAction, requireAdmin, withErrorHandling } from "@/lib/api";
-import { type QueueItem, renderAndSend } from "@/lib/email-processor";
+import { renderAndSend } from "@/lib/email-processor";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -11,16 +11,19 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const url = new URL(request.url);
   const limit = Math.min(Number(url.searchParams.get("limit")) || 50, 100);
 
-  const { data: queueItems, error: fetchError } = await supabase
+  // Reset items stuck in "processing" for more than 5 minutes (stale recovery)
+  await supabase
     .from("email_queue")
-    .select("*")
-    .eq("status", "pending")
-    .lt("retry_count", 3)
-    .order("created_at", { ascending: true })
-    .limit(limit);
+    .update({ status: "pending", error_message: null })
+    .eq("status", "processing")
+    .lt("updated_at", new Date(Date.now() - 5 * 60 * 1000).toISOString());
 
-  if (fetchError) {
-    return json({ ok: false, error: fetchError.message, processed: 0, failed: 0 }, { status: 500 });
+  // Use atomic claim to prevent race conditions with cron
+  const { data: queueItems, error: claimError } = await supabase
+    .rpc("claim_email_queue_items", { p_limit: limit });
+
+  if (claimError) {
+    return json({ ok: false, error: claimError.message, processed: 0, failed: 0 }, { status: 500 });
   }
 
   if (!queueItems || queueItems.length === 0) {
@@ -79,5 +82,3 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   return json({ ok: true, processed, failed, total: queueItems.length });
 });
-
-

@@ -52,7 +52,7 @@ export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { o
           creatorName: item.to_name ?? "Creator",
           productTitle: String(meta.product_title ?? "Product"),
           amount: Number(meta.amount ?? 0),
-          currency: "UGX" as Currency,
+          currency: (String(meta.currency ?? "UGX") as Currency),
           buyerEmail: String(meta.buyer_email ?? ""),
         });
         return sendEmail({

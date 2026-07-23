@@ -12,6 +12,7 @@ type EmailStatus = {
   cron_configured: boolean;
   queue_counts: {
     pending: number;
+    processing: number;
     sent: number;
     failed: number;
   };
@@ -124,11 +125,16 @@ export default function AdminEmailsPage() {
           </div>
 
           {/* Queue stats */}
-          <div className="mb-6 grid gap-4 sm:grid-cols-3">
+          <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Pending"
               value={String(status?.queue_counts.pending ?? 0)}
               icon={<Send size={20} />}
+            />
+            <StatCard
+              label="Processing"
+              value={String(status?.queue_counts.processing ?? 0)}
+              icon={<RefreshCw size={20} />}
             />
             <StatCard
               label="Sent"

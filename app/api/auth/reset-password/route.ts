@@ -10,18 +10,20 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const input = await readJson(request, resetPasswordSchema);
   const supabase = getSupabaseAdminClient();
 
-  // Look up user by email
-  const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
-  if (userError) return apiError("Failed to process request", 500);
+  // Look up user by email directly from the users table (avoids O(n) listUsers pagination)
+  const { data: userData } = await supabase
+    .from("users")
+    .select("id")
+    .eq("email", input.email.toLowerCase())
+    .maybeSingle();
 
-  const user = userData.users.find((u) => u.email?.toLowerCase() === input.email.toLowerCase());
-  if (!user) {
+  if (!userData) {
     // Return success even if user not found to prevent email enumeration
     return json({ ok: true });
   }
 
   // Generate a reset token
-  const { token } = await generateResetToken(user.id);
+  const { token } = await generateResetToken(userData.id);
 
   // Build reset URL
   const origin = process.env.NEXT_PUBLIC_SITE_URL || request.headers.get("origin") || new URL(request.url).origin;

@@ -30,6 +30,13 @@ async function processEmails(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
   const limit = Math.min(Number(url.searchParams.get("limit")) || 100, 500);
 
+  // Reset items stuck in "processing" for more than 5 minutes (stale recovery)
+  await supabase
+    .from("email_queue")
+    .update({ status: "pending", error_message: null })
+    .eq("status", "processing")
+    .lt("updated_at", new Date(Date.now() - 5 * 60 * 1000).toISOString());
+
   const { data: queueItems, error: claimError } = await supabase
     .rpc("claim_email_queue_items", { p_limit: limit });
 
