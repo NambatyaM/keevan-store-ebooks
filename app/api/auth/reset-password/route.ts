@@ -40,6 +40,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   });
 
   if (!result.ok) {
+    console.error(JSON.stringify({
+      level: "error",
+      timestamp: new Date().toISOString(),
+      path: "/api/auth/reset-password",
+      message: "Email send failed",
+      resendError: result.error,
+      hasApiKey: !!process.env.RESEND_API_KEY,
+      smtpFrom: process.env.SMTP_FROM,
+    }));
     return apiError("Failed to send reset email. Please try again.", 500);
   }
 
