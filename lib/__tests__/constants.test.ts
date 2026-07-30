@@ -123,8 +123,8 @@ describe("ebookUpload constants", () => {
 });
 
 describe("imageUpload constants", () => {
-  it("has maxBytes of 2MB", () => {
-    expect(imageUpload.maxBytes).toBe(2 * 1024 * 1024);
+  it("has maxBytes of 5MB", () => {
+    expect(imageUpload.maxBytes).toBe(5 * 1024 * 1024);
   });
 
   it("includes JPEG, PNG, WebP types", () => {

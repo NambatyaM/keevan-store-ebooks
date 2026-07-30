@@ -49,7 +49,7 @@ export const productSchema = z.object({
   fileSize: z.number().int().max(4 * 1024 * 1024),
   fileMime: z.enum(["application/pdf", "application/epub+zip", "application/x-mobipocket-ebook", "application/zip"]),
   coverPath: z.string().optional(),
-  coverSize: z.number().int().max(2 * 1024 * 1024).optional(),
+  coverSize: z.number().int().max(5 * 1024 * 1024).optional(),
   coverMime: z.enum(["image/jpeg", "image/png", "image/webp"]).optional()
 });
 
@@ -63,7 +63,7 @@ export const productUpdateSchema = z.object({
   fileSize: z.number().int().max(4 * 1024 * 1024).optional(),
   fileMime: z.enum(["application/pdf", "application/epub+zip", "application/x-mobipocket-ebook", "application/zip"]).optional(),
   coverPath: z.string().optional(),
-  coverSize: z.number().int().max(2 * 1024 * 1024).optional(),
+  coverSize: z.number().int().max(5 * 1024 * 1024).optional(),
   coverMime: z.enum(["image/jpeg", "image/png", "image/webp"]).optional()
 });
 

@@ -996,7 +996,7 @@ describe("File Upload Security", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects cover image exceeding 2MB limit", () => {
+  it("rejects cover image exceeding 5MB limit", () => {
     const result = productSchema.safeParse({
       storeId: "550e8400-e29b-41d4-a716-446655440000",
       slug: "my-ebook",
@@ -1007,7 +1007,7 @@ describe("File Upload Security", () => {
       fileSize: 1 * 1024 * 1024,
       fileMime: "application/pdf",
       coverPath: "covers/image.jpg",
-      coverSize: 3 * 1024 * 1024,
+      coverSize: 6 * 1024 * 1024,
       coverMime: "image/jpeg",
     });
     expect(result.success).toBe(false);

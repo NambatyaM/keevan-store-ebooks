@@ -189,11 +189,11 @@ describe("productSchema", () => {
     expect(() => productSchema.parse(withCover)).not.toThrow();
   });
 
-  it("rejects coverSize exceeding 2MB", () => {
+  it("rejects coverSize exceeding 5MB", () => {
     expect(() => productSchema.parse({
       ...valid,
       coverPath: "covers/image.jpg",
-      coverSize: 3 * 1024 * 1024,
+      coverSize: 6 * 1024 * 1024,
       coverMime: "image/jpeg"
     })).toThrow();
   });

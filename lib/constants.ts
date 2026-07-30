@@ -68,7 +68,7 @@ export const ebookUpload = {
 };
 
 export const imageUpload = {
-  maxBytes: 2 * 1024 * 1024,
+  maxBytes: 5 * 1024 * 1024,
   types: ["image/jpeg", "image/png", "image/webp"],
 };
 

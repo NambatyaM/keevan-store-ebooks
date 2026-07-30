@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { creatorNav } from "@/app/creator/nav";
+import { useToast } from "@/components/ui/toast";
+import { ebookUpload, imageUpload } from "@/lib/constants";
 
 export default function NewProductPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +18,7 @@ export default function NewProductPage() {
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [status, setStatus] = useState<"draft" | "published" | "disabled">("draft");
+  const [status] = useState<"draft">("draft");
 
   const [filePath, setFilePath] = useState("");
   const [fileSize, setFileSize] = useState(0);
@@ -40,7 +42,7 @@ export default function NewProductPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxBytes = kind === "ebook" ? 4 * 1024 * 1024 : 2 * 1024 * 1024;
+    const maxBytes = kind === "ebook" ? ebookUpload.maxBytes : imageUpload.maxBytes;
     if (file.size > maxBytes) {
       const maxMB = maxBytes / 1024 / 1024;
       setMessage(`${kind === "ebook" ? "Product file" : "Cover image"} exceeds the ${maxMB} MB limit. Please choose a smaller file.`);
@@ -115,7 +117,10 @@ export default function NewProductPage() {
         } else {
           setMessage(err?.message ?? "Creation failed.");
         }
-      } else { router.push("/creator/products"); }
+        } else {
+          toast("success", "Product created in draft. Publish it from your products page to make it visible.");
+          router.push("/creator/products");
+        }
     } catch (err) {
       const msg = err instanceof TypeError ? "Connection lost. Please check your internet and try again." : "An unexpected error occurred. Please try again.";
       setMessage(msg);
@@ -149,13 +154,8 @@ export default function NewProductPage() {
               <label className="block text-sm font-semibold text-neutral-700">Price (UGX)</label>
               <input type="number" min="1" value={price} onChange={(e) => setPrice(e.target.value)} className="focus-ring mt-1 w-full rounded-md border border-neutral-300 px-4 py-3" placeholder="25000" required />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-neutral-700">Status</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="focus-ring mt-1 w-full rounded-md border border-neutral-300 px-4 py-3">
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="disabled">Disabled</option>
-              </select>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              <strong>Note:</strong> New products are created as <strong>Draft</strong>. After creating, go to your products list to publish it and make it visible to customers.
             </div>
           </div>
         </div>
@@ -172,7 +172,7 @@ export default function NewProductPage() {
 
         <div className="rounded-lg border border-neutral-200 bg-white p-5">
           <h2 className="text-xl font-bold">Cover Image (optional)</h2>
-          <p className="mt-1 text-sm text-neutral-600">JPEG, PNG, or WebP — max 2 MB</p>
+          <p className="mt-1 text-sm text-neutral-600">JPEG, PNG, or WebP — max 5 MB</p>
           <div className="mt-4">
             <input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" onChange={(e) => handleUpload(e, "image")} className="block w-full text-sm file:mr-4 file:rounded file:border-0 file:bg-brand-green file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-green/90" />
             {uploadingCover && <p className="mt-2 text-sm text-neutral-500">Uploading...</p>}
