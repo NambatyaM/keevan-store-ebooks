@@ -35,6 +35,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
 import { NotificationsDropdown } from "@/components/notifications-dropdown";
+import { CreatorBanner } from "@/components/creator-banner";
 
 type NavItem = {
   href: string;
@@ -267,6 +268,7 @@ export function DashboardShell({
 
       {/* Main content */}
       <div className="flex flex-1 flex-col min-w-0">
+        {!isAdmin && <CreatorBanner show />}
         {/* Top header bar */}
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
           <div className="flex items-center gap-3">
