@@ -8,7 +8,7 @@ export function orderConfirmationHtml(input: {
   currency: Currency;
   downloadToken: string;
 }): string {
-  const downloadUrl = `${site.url}/download/${input.downloadToken}`;
+  const downloadUrl = `${site.url}/api/downloads/${input.downloadToken}`;
 
   return `<!DOCTYPE html>
 <html>

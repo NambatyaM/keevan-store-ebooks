@@ -119,7 +119,7 @@ describe("orderConfirmationHtml", () => {
       downloadToken: "tok_abc123",
     });
 
-    expect(html).toContain("https://keevanstore.in/download/tok_abc123");
+    expect(html).toContain("https://keevanstore.in/api/downloads/tok_abc123");
     expect(html).toContain("Order Confirmed");
     expect(html).toContain("Ebook Title");
     expect(html).toContain("UGX");
