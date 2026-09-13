@@ -584,9 +584,12 @@ export async function verifyPesapalPayment(
     }
   }
 
-  // Confirmation email is enqueued automatically by the DB trigger
-  // `trg_enqueue_order_confirmation` which fires on orders.status: pending → paid
-  // inside finalize_pesapal_payment and processed by the cron email processor.
+  if (!result.already_processed && result.order_id) {
+    // Deliver the confirmation email immediately (don't wait for the daily
+    // email cron). Fire-and-forget: the DB trigger also enqueued a copy, which
+    // we mark as sent on success so the cron won't resend a duplicate.
+    void deliverOrderConfirmationEmail(supabase, result.order_id);
+  }
 
   return { ok: true, downloadToken: result.download_token ?? "", alreadyVerified: result.already_processed };
 }
@@ -637,10 +640,14 @@ export async function processPesapalIpn(input: {
   return { action: "need_retry", error: result.error };
 }
 
+/**
+ * Sends the buyer's order confirmation email with a working download link.
+ * Returns true when the email was sent successfully.
+ */
 export async function sendOrderConfirmationEmail(
   supabase: import("@supabase/supabase-js").SupabaseClient,
   orderId: string,
-): Promise<void> {
+): Promise<boolean> {
   try {
     const { data: order } = await supabase
       .from("orders")
@@ -650,7 +657,7 @@ export async function sendOrderConfirmationEmail(
 
     if (!order) {
       console.warn("[sendOrderConfirmationEmail] Order not found:", orderId);
-      return;
+      return false;
     }
 
     const { data: download } = await supabase
@@ -661,7 +668,7 @@ export async function sendOrderConfirmationEmail(
 
     if (!download) {
       console.warn("[sendOrderConfirmationEmail] Download token not found for order:", orderId);
-      return;
+      return false;
     }
 
     const productTitle = Array.isArray(order.products)
@@ -688,8 +695,38 @@ export async function sendOrderConfirmationEmail(
 
     if (!result.ok) {
       console.warn("[sendOrderConfirmationEmail] Failed to send:", result.error, "order:", orderId);
+      return false;
     }
+
+    return true;
   } catch (e) {
     console.warn("[sendOrderConfirmationEmail] Error:", e instanceof Error ? e.message : e, "order:", orderId);
+    return false;
+  }
+}
+
+/**
+ * Sends the order confirmation email now and, on success, marks the DB-triggered
+ * duplicate queue entries as sent so the cron email processor skips them.
+ */
+async function deliverOrderConfirmationEmail(
+  supabase: import("@supabase/supabase-js").SupabaseClient,
+  orderId: string,
+): Promise<void> {
+  try {
+    const delivered = await sendOrderConfirmationEmail(supabase, orderId);
+    if (!delivered) return;
+
+    // Only the buyer's order_confirmation row(s) (metadata.type IS NULL) — never
+    // the creator_sale notification rows, which the cron still delivers.
+    await supabase
+      .from("email_queue")
+      .update({ status: "sent", sent_at: new Date().toISOString() })
+      .eq("reference_id", orderId)
+      .eq("type", "order_confirmation")
+      .is("metadata->>type", null)
+      .in("status", ["pending", "retrying"]);
+  } catch (e) {
+    console.warn("[deliverOrderConfirmationEmail] Failed to mark queue sent:", e instanceof Error ? e.message : e, "order:", orderId);
   }
 }
