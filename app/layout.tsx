@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { site } from "@/lib/constants";
 import { WhatsAppButton } from "@/components/whatsapp-button";
+import { SupportChat } from "@/components/support-chat";
 import { BackToTop } from "@/components/back-to-top";
 import { CookieConsent } from "@/components/cookie-consent";
 import { AuthProvider } from "@/components/auth-provider";
@@ -129,6 +130,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <AuthProvider>
             {children}
             <WhatsAppButton />
+            <SupportChat />
             <BackToTop />
             <CookieConsent />
             <Analytics />

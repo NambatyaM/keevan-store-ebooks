@@ -226,14 +226,13 @@ export function DashboardShell({
   }, []);
 
   useEffect(() => {
-    if (!isAdmin) return;
-    fetch("/api/admin/notifications")
+    fetch("/api/notifications")
       .then((r) => r.json())
       .then((data) => {
         if (typeof data.unreadCount === "number") setUnreadCount(data.unreadCount);
       })
       .catch(() => {});
-  }, [isAdmin]);
+  }, []);
 
   const nav = isAdmin ? adminNav : creatorNav;
   const storeSlug = (profile as any)?.store_slug;

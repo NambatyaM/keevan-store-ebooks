@@ -1,4 +1,5 @@
 import { sendEmail } from "@/lib/email";
+import { logOrderEmailDelivery } from "@/lib/email-delivery";
 import { orderConfirmationHtml, withdrawalStatusHtml, refundStatusHtml, creatorSaleNotificationHtml } from "@/lib/email-templates";
 import { getOptionalSupabaseAdminClient } from "@/lib/supabase";
 import type { Currency } from "@/lib/constants";
@@ -90,11 +91,28 @@ export async function renderAndSend(item: QueueItem): Promise<{ ok: true } | { o
         downloadToken: download.token,
       });
 
-      return sendEmail({
+      const result = await sendEmail({
         to: item.to_email,
         subject: `Order Confirmed — ${String(productTitle ?? "Product")}`,
         html,
       });
+
+      if (result.ok) {
+        await supabase
+          .from("email_queue")
+          .update({ resend_id: result.id, delivery_status: "sent", sent_at: new Date().toISOString() })
+          .eq("id", item.id);
+        await logOrderEmailDelivery({
+          supabase,
+          orderId: item.reference_id,
+          toEmail: item.to_email,
+          productTitle: String(productTitle ?? "Product"),
+          downloadToken: download.token,
+          resendId: result.id,
+        });
+      }
+
+      return result;
     }
 
     case "withdrawal_status": {

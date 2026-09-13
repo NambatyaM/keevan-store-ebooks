@@ -38,7 +38,7 @@ export function NotificationsDropdown({ open, onClose, onUnreadCountChange }: Pr
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/notifications");
+      const res = await fetch("/api/notifications");
       const data = await res.json();
       if (data.notifications) setNotifications(data.notifications);
       if (typeof data.unreadCount === "number") onUnreadCountChange(data.unreadCount);
@@ -74,7 +74,7 @@ export function NotificationsDropdown({ open, onClose, onUnreadCountChange }: Pr
   async function markAsRead(ids?: string[]) {
     setMarking(true);
     try {
-      await fetch("/api/admin/notifications", {
+      await fetch("/api/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(ids ? { ids } : {}),

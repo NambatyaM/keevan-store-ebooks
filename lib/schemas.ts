@@ -108,6 +108,34 @@ export const markNotificationsReadSchema = z.object({
   ids: z.array(z.string().uuid()).optional()
 });
 
+export const createSupportConversationSchema = z.object({
+  name: z.string().min(1).max(120).optional(),
+  email: z.string().email().optional(),
+  subject: z.string().min(2).max(200),
+  message: z.string().min(1).max(4000),
+  category: z.string().max(40).optional(),
+  orderId: z.string().uuid().nullish(),
+  productSlug: z.string().max(96).optional()
+});
+
+export const sendSupportMessageSchema = z.object({
+  token: z.string().min(16).optional(),
+  text: z.string().min(1).max(4000)
+});
+
+export const adminSupportReplySchema = z.object({
+  text: z.string().min(1).max(4000),
+  status: z.enum(["open", "awaiting_admin", "resolved", "closed"]).optional(),
+  notifyCreator: z.boolean().optional()
+});
+
+export const emailDeliveriesQuerySchema = z.object({
+  orderId: z.string().uuid().optional(),
+  status: z.string().max(40).optional(),
+  refresh: z.enum(["1", "true"]).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50)
+});
+
 export const analyticsEventSchema = z.object({
   storeId: z.string().uuid().optional(),
   productId: z.string().uuid().optional(),

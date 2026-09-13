@@ -3,13 +3,27 @@ import { renderAndSend } from "@/lib/email-processor";
 
 function createChain() {
   const eq = vi.fn(() => chain);
-  const chain = {
+  const chain: any = {
     select: vi.fn(() => chain),
     eq,
     single: vi.fn().mockResolvedValue({ data: null, error: null }),
     maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     order: vi.fn(() => chain),
     limit: vi.fn(() => chain),
+    update: vi.fn(() => {
+      const c: any = createChain();
+      c.eq = vi.fn(() => c);
+      c.select = vi.fn(() => c);
+      c.single = vi.fn().mockResolvedValue({ data: null, error: null });
+      return c;
+    }),
+    insert: vi.fn(() => {
+      const c: any = createChain();
+      c.select = vi.fn(() => c);
+      c.single = vi.fn().mockResolvedValue({ data: { id: "d-1" }, error: null });
+      return c;
+    }),
+    delete: vi.fn(() => chain),
   };
   return chain;
 }

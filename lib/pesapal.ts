@@ -1,6 +1,7 @@
 import { captureException } from "@sentry/nextjs";
 import { sendEmail } from "@/lib/email";
 import { orderConfirmationHtml } from "@/lib/email-templates";
+import { logOrderEmailDelivery } from "@/lib/email-delivery";
 import type { Currency } from "@/lib/constants";
 
 type PesapalToken = {
@@ -692,6 +693,17 @@ export async function sendOrderConfirmationEmail(
       subject: `Order Confirmed — ${String(productTitle)}`,
       html,
     });
+
+    if (result.ok) {
+      await logOrderEmailDelivery({
+        supabase,
+        orderId,
+        toEmail: order.buyer_email,
+        productTitle: String(productTitle ?? ""),
+        downloadToken: download.token,
+        resendId: result.id,
+      });
+    }
 
     if (!result.ok) {
       console.warn("[sendOrderConfirmationEmail] Failed to send:", result.error, "order:", orderId);
