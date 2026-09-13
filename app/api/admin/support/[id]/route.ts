@@ -23,13 +23,28 @@ export const GET = withErrorHandling(async (request: NextRequest, context?: unkn
     .eq("conversation_id", id)
     .order("created_at", { ascending: true });
 
-  // Extra context if the conversation references an order
+  // Extra context if the conversation references an order (or we can resolve
+  // the buyer's most relevant order from the conversation email).
   let orderContext = null;
-  if (conversation.order_id) {
+  let orderId: string | null = conversation.order_id as string | null;
+
+  if (!orderId && conversation.email) {
+    const { data: emailOrders } = await supabase
+      .from("orders")
+      .select("id, status, created_at")
+      .eq("buyer_email", (conversation.email as string).toLowerCase())
+      .order("created_at", { ascending: false })
+      .limit(10);
+    const list = (emailOrders ?? []) as { id: string; status: string }[];
+    orderId =
+      (list.find((o) => o.status === "paid") ?? list[0])?.id ?? null;
+  }
+
+  if (orderId) {
     const { data: order } = await supabase
       .from("orders")
       .select("id, status, amount, currency, buyer_email, buyer_name, created_at, paid_at, product_id, products(title, slug)")
-      .eq("id", conversation.order_id)
+      .eq("id", orderId)
       .maybeSingle();
 
     if (order) {

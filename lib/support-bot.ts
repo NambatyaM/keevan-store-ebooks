@@ -13,7 +13,7 @@ import {
 
 export type BotReply =
   | { kind: "text"; body: string; metadata?: Record<string, unknown> }
-  | { kind: "download"; body: string; metadata: { url: string; token: string } }
+  | { kind: "download"; body: string; metadata: { url: string; token: string; download_token?: string } }
   | { kind: "system"; body: string; metadata?: Record<string, unknown> };
 
 type OrderRow = {
@@ -197,7 +197,7 @@ async function handleFileDelivery(
       {
         kind: "download",
         body: "I confirmed your payment went through. Here's your instant download link:",
-        metadata: { url: `/api/downloads/${token}`, token },
+        metadata: { url: `/api/downloads/${token}`, token, download_token: token },
       },
     ];
     if (emailSent) {
@@ -234,7 +234,7 @@ async function handleFileDelivery(
         const emailSent = await resendOrderEmail(supabase, order.id);
         const replies: BotReply[] = [
           { kind: "text", body: "I double-checked with the payment provider — your payment did go through. Here is your download:" },
-          { kind: "download", body: "Your instant download link:", metadata: { url: `/api/downloads/${token}`, token } },
+          { kind: "download", body: "Your instant download link:", metadata: { url: `/api/downloads/${token}`, token, download_token: token } },
         ];
         if (emailSent) replies.push({ kind: "system", body: "A fresh confirmation email with the same link is on its way too." });
         if (order.product_id) await notifyCreatorResolved(supabase, order, "Payment verified — download link delivered.");

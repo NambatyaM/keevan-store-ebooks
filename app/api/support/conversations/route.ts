@@ -54,6 +54,25 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
   }
 
+  // If no explicit order was given, attach the customer's most relevant order
+  // so the support panel (and bot) have order context automatically.
+  if (!orderId) {
+    const { data: emailOrders } = await supabase
+      .from("orders")
+      .select("id, product_id, status, created_at")
+      .eq("buyer_email", email.toLowerCase())
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (emailOrders?.length) {
+      const matched =
+        (emailOrders as { id: string; product_id: string | null; status: string }[]).find((o) => o.status === "paid") ??
+        (emailOrders as { id: string; product_id: string | null; status: string }[])[0];
+      orderId = matched.id;
+      productId = matched.product_id ?? null;
+    }
+  }
+
   // Resume an existing conversation when possible (same user or same email, still recent)
   const { data: existing } = userId
     ? await supabase

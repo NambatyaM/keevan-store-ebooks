@@ -9,3 +9,6 @@ tsconfig.tsbuildinfo
 supabase/.temp/
 .vercel
 .env*
+
+# Playwright MCP QA snapshots
+.playwright-mcp/

@@ -431,10 +431,12 @@ export default function AdminSupportPage() {
                     >
                       {m.body}
                     </div>
-                  ) : m.kind === "download_action" ? (
+                  ) : m.kind === "download" || m.kind === "download_action" ? (
                     (() => {
+                      const meta = (m.metadata ?? {}) as { download_token?: string; token?: string };
                       const link = downloadUrl(
-                        (m.metadata as { download_token?: string } | null)?.download_token ??
+                        meta.download_token ??
+                          meta.token ??
                           orderContext?.download?.token,
                       );
                       return (

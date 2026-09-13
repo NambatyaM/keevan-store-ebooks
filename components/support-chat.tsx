@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import {
-  Bot,
+  LifeBuoy,
   Loader2,
-  MessageCircle,
   Send,
   X,
 } from "lucide-react";
@@ -195,27 +194,33 @@ export function SupportChat() {
 
   return (
     <>
-      {/* Launcher */}
+      {/* Launcher — distinct pill so it doesn't look like the WhatsApp button */}
       <button
         onClick={() => (open ? setOpen(false) : openWidget())}
         aria-label="Open support chat"
         title="Chat with support"
-        className="focus-ring fixed bottom-6 left-6 z-50 grid h-14 w-14 place-items-center rounded-full bg-brand-green text-white shadow-soft transition-all duration-200 hover:-translate-y-1 hover:bg-[#006f43] hover:shadow-lift animate-fade-in"
+        className="focus-ring fixed bottom-5 right-24 z-50 flex h-14 items-center gap-2 rounded-full bg-neutral-900 pl-4 pr-5 text-white shadow-lift transition-all duration-200 hover:-translate-y-1 hover:bg-black animate-fade-in"
       >
-        {open ? <X size={24} /> : <MessageCircle size={24} />}
+        {open ? <X size={22} /> : <LifeBuoy size={22} />}
+        {!open && (
+          <>
+            <span className="hidden text-sm font-semibold sm:inline">Support</span>
+            <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-brand-green ring-2 ring-neutral-900" />
+          </>
+        )}
       </button>
 
-      {/* Panel */}
+      {/* Panel — anchored to the same (right) side, above the buttons */}
       {open && (
-        <div className="fixed bottom-24 left-6 z-50 flex h-[520px] max-h-[80vh] w-[90vw] max-w-[380px] animate-scale-check flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-warm-lg">
+        <div className="fixed bottom-24 right-5 z-50 flex h-[520px] max-h-[80vh] w-[90vw] max-w-[360px] animate-scale-check flex-col overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-warm-lg">
           {/* Header */}
-          <div className="flex items-center gap-3 bg-brand-green px-4 py-3 text-white">
-            <div className="grid h-9 w-9 place-items-center rounded-full bg-white/15">
-              <Bot size={18} />
+          <div className="flex items-center gap-3 bg-neutral-900 px-4 py-3 text-white">
+            <div className="grid h-9 w-9 place-items-center rounded-2xl bg-white/10">
+              <LifeBuoy size={18} />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold">Keevan Support</p>
-              <p className="text-[11px] text-white/80">We usually reply within a few hours</p>
+              <p className="text-[11px] text-white/70">We usually reply within a few hours</p>
             </div>
             <span className="flex h-2.5 w-2.5 items-center justify-center">
               <span className="absolute h-2.5 w-2.5 animate-ping rounded-full bg-emerald-300 opacity-60" />
@@ -292,9 +297,11 @@ export function SupportChat() {
           ) : (
             <div className="flex-1 overflow-y-auto space-y-3 p-4">
               {messages.map((m) =>
-                m.kind === "download_action" ? (
+                m.kind === "download" || m.kind === "download_action" ? (
                   (() => {
-                    const link = (m.metadata as { download_url?: string } | null)?.download_url;
+                    const meta = (m.metadata ?? {}) as { url?: string; download_url?: string; download_token?: string };
+                    const raw = meta.url ?? meta.download_url;
+                    const link = raw ? new URL(raw, window.location.origin).href : undefined;
                     return (
                       <div key={m.id} className="rounded-2xl rounded-bl-sm bg-brand-green/5 border border-brand-green/30 p-3">
                         <p className="text-sm text-brand-black">{m.body}</p>
@@ -303,7 +310,7 @@ export function SupportChat() {
                             href={link}
                             target="_blank"
                             rel="noreferrer"
-                            className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-green px-3 py-2 text-sm font-bold text-white hover:bg-brand-green-deep"
+                            className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-green px-3 py-2.5 text-sm font-bold text-white hover:bg-brand-green-deep"
                           >
                             Download now
                           </a>
