@@ -241,19 +241,22 @@ describe("refundPesapalOrder", () => {
 });
 
 describe("verifyPesapalPayment", () => {
-  function makeMockSupabase(paymentData: unknown, finalizeResult: { data: unknown; error: unknown }) {
-    const chain = {
-      select: vi.fn(() => chain),
-      eq: vi.fn(() => chain),
-      single: vi.fn().mockResolvedValue({ data: paymentData, error: paymentData ? null : new Error("Not found") }),
+  function makeMockSupabase(paymentData: unknown, finalizeResult: { data: unknown; error: unknown }, orderData: unknown = { amount: 50000, status: "pending" }) {
+    const chain = (row: unknown, notFoundError: unknown = null) => ({
+      select: vi.fn(() => chain(row, notFoundError)),
+      eq: vi.fn(() => chain(row, notFoundError)),
+      limit: vi.fn(() => chain(row, notFoundError)),
+      maybeSingle: vi.fn().mockResolvedValue({ data: row, error: row ? null : notFoundError }),
       insert: vi.fn(() => ({
         select: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data: null, error: null }) })),
         then: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
       })),
       then: (resolve: (v: unknown) => void) => resolve({ data: paymentData, error: null }),
-    };
+    });
     return {
-      from: vi.fn(() => chain),
+      from: vi.fn((table: string) =>
+        table === "payments" ? chain(paymentData) : table === "orders" ? chain(orderData) : chain(null)
+      ),
       rpc: vi.fn().mockImplementation((rpcName: string) => {
         if (rpcName === "fail_pesapal_payment") return Promise.resolve({ data: null, error: null });
         if (rpcName === "finalize_pesapal_payment") return Promise.resolve(finalizeResult);

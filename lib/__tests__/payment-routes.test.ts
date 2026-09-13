@@ -50,12 +50,14 @@ vi.mock("@/lib/supabase", () => ({
 
 const mockCreatePesapalOrder = vi.fn();
 const mockVerifyPesapalPayment = vi.fn();
+const mockProcessPesapalIpn = vi.fn();
 const mockNormalizePesapalStatus = vi.fn();
 const mockCalculateSaleSplit = vi.fn();
 
 vi.mock("@/lib/pesapal", () => ({
   createPesapalOrder: (...args: unknown[]) => mockCreatePesapalOrder(...args),
   verifyPesapalPayment: (...args: unknown[]) => mockVerifyPesapalPayment(...args),
+  processPesapalIpn: (...args: unknown[]) => mockProcessPesapalIpn(...args),
   normalizePesapalStatus: (...args: unknown[]) => mockNormalizePesapalStatus(...args),
 }));
 
@@ -76,6 +78,7 @@ beforeEach(() => {
   mockCalculateSaleSplit.mockReturnValue({ grossAmount: 50000, platformFee: 5000, creatorEarnings: 45000 });
   mockCreatePesapalOrder.mockResolvedValue({ redirect_url: "https://pay.pesapal.com/order/123", order_tracking_id: "trk-1" });
   mockVerifyPesapalPayment.mockResolvedValue({ ok: true, downloadToken: "dt-1", alreadyVerified: false });
+  mockProcessPesapalIpn.mockResolvedValue({ action: "finalized", alreadyProcessed: false });
   mockNormalizePesapalStatus.mockReturnValue({
     merchantReference: "mr-1",
     trackingId: "trk-1",
@@ -317,10 +320,12 @@ describe("POST /api/webhooks/pesapal", () => {
     const body = await res.json();
     expect(body.ok).toBe(true);
     expect(body.finalized).toBe(true);
+    expect(mockProcessPesapalIpn).toHaveBeenCalledWith(
+      expect.objectContaining({ merchantReference: "mr-1", trackingId: "trk-1" })
+    );
   });
 
   it("accepts webhook with missing merchant reference", async () => {
-    mockNormalizePesapalStatus.mockReturnValue({ merchantReference: null, trackingId: null, amount: null, paymentStatus: null, raw: {} });
     const POST = await importWebhook();
     const res = await POST(makeRequest("/api/webhooks/pesapal", {
       body: JSON.stringify({}),
@@ -328,11 +333,11 @@ describe("POST /api/webhooks/pesapal", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
-    expect(mockVerifyPesapalPayment).not.toHaveBeenCalled();
+    expect(mockProcessPesapalIpn).not.toHaveBeenCalled();
   });
 
   it("handles webhook verification failure gracefully", async () => {
-    mockVerifyPesapalPayment.mockResolvedValue({ ok: false, error: "Payment not found", raw: {} });
+    mockProcessPesapalIpn.mockResolvedValue({ action: "transaction_failed" });
     const POST = await importWebhook();
     const res = await POST(makeRequest("/api/webhooks/pesapal", {
       body: JSON.stringify({ merchant_reference: "mr-1", order_tracking_id: "trk-1", amount: 50000, payment_status_description: "Completed" }),
@@ -340,5 +345,27 @@ describe("POST /api/webhooks/pesapal", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.finalized).toBe(false);
+    expect(body.outcome).toBe("transaction_failed");
+  });
+
+  it("returns 503 on transient verification failure so Pesapal retries", async () => {
+    mockProcessPesapalIpn.mockResolvedValue({ action: "need_retry", error: "Pesapal API timed out" });
+    const POST = await importWebhook();
+    const res = await POST(makeRequest("/api/webhooks/pesapal", {
+      body: JSON.stringify({ merchant_reference: "mr-1", order_tracking_id: "trk-1", amount: 50000, payment_status_description: "Completed" }),
+    }));
+    expect(res.status).toBe(503);
+  });
+
+  it("reads tracking reference from the query string (GET-style IPN)", async () => {
+    const GET = await import("@/app/api/webhooks/pesapal/route").then((m) => m.GET);
+    const res = await GET(makeRequest(
+      "/api/webhooks/pesapal?OrderMerchantReference=mr-2&OrderTrackingId=trk-2",
+      { method: "GET" }
+    ));
+    expect(res.status).toBe(200);
+    expect(mockProcessPesapalIpn).toHaveBeenCalledWith(
+      expect.objectContaining({ merchantReference: "mr-2", trackingId: "trk-2" })
+    );
   });
 });

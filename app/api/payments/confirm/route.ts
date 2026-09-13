@@ -8,7 +8,7 @@ import { getPesapalTransactionStatus, normalizePesapalStatus, extractCurrency } 
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const { orderId, trackingId } = await request.json().catch(() => ({}));
-  if (!orderId || !trackingId) return apiError("Missing orderId or trackingId", 400);
+  if (!orderId) return apiError("Missing orderId", 400);
 
   const adminSupabase = getSupabaseAdminClient();
 
@@ -20,9 +20,16 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
 
   if (!payment?.merchant_reference) return apiError("Payment not found for this order", 404);
 
+  // Prefer the tracking ID from the Pesapal redirect, but fall back to the one
+  // we stored at order creation — some Pesapal callback redirects omit it and
+  // the customer would otherwise be stuck at "pending" with no way to verify.
+  const resolvedTrackingId = (trackingId as string | undefined)?.trim() || (payment.tracking_id as string | undefined)?.trim() || "";
+
+  if (!resolvedTrackingId) return apiError("Payment is missing a tracking ID", 400);
+
   let statusPayload: unknown;
   try {
-    statusPayload = await getPesapalTransactionStatus(trackingId);
+    statusPayload = await getPesapalTransactionStatus(resolvedTrackingId);
   } catch {
     return apiError("Could not verify payment with Pesapal", 502);
   }
@@ -38,7 +45,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const { data: finalized, error: rpcError } = await adminSupabase
     .rpc("finalize_pesapal_payment", {
       payment_reference: payment.merchant_reference,
-      pesapal_tracking_id: normalized.trackingId ?? trackingId,
+      pesapal_tracking_id: normalized.trackingId ?? resolvedTrackingId,
       status_payload: normalized.raw,
       payment_currency: currency,
     });

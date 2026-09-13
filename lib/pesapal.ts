@@ -389,6 +389,31 @@ export type VerificationResult =
 
 type SupabaseClient = import("@supabase/supabase-js").SupabaseClient;
 
+/**
+ * Errors that will never resolve on retry. The IPN/webhook handlers return
+ * HTTP 200 for these (Pesapal stops retrying) and 5xx for everything else
+ * (transient network/DB failures that Pesapal SHOULD retry).
+ */
+export const PERMANENT_VERIFY_ERRORS = new Set([
+  "Payment not found",
+  "Payment is not completed",
+  "Pesapal merchant reference mismatch",
+  "Pesapal amount mismatch",
+  "Missing Pesapal tracking ID",
+]);
+
+export function isTransientPaymentError(error: string): boolean {
+  return !PERMANENT_VERIFY_ERRORS.has(error);
+}
+
+/**
+ * Pesapal statuses that are definitively terminal for the order. Everything
+ * else that isn't "completed" (e.g. "PENDING") must NOT fail the order —
+ * it just means the buyer hasn't finished paying yet and Pesapal will send
+ * another IPN when the status changes.
+ */
+const TERMINAL_FAILED_STATUSES = new Set(["failed", "voided", "reversed", "invalid", "expired"]);
+
 export async function verifyPesapalPayment(
   supabase: SupabaseClient,
   merchantReference: string,
@@ -399,15 +424,15 @@ export async function verifyPesapalPayment(
     return { ok: false, error: "Missing Pesapal tracking ID", raw: {} };
   }
 
-  let payment: Record<string, unknown> | null;
+  let payment: { id: string; order_id: string; status: string | null } | null = null;
   try {
     const result = await supabase
       .from("payments")
-      .select("id,merchant_reference,order_id,orders!inner(amount)")
+      .select("id,order_id,status")
       .eq("merchant_reference", merchantReference)
-      .single();
-    payment = result.data;
+      .maybeSingle();
     if (result.error) return { ok: false, error: "Payment not found", raw: {} };
+    payment = result.data;
   } catch (e) {
     const err = e instanceof Error ? e : new Error("Database error while looking up payment");
     console.error("[verifyPesapalPayment] Failed to look up payment:", err.message, "ref:", merchantReference);
@@ -417,8 +442,45 @@ export async function verifyPesapalPayment(
 
   if (!payment) return { ok: false, error: "Payment not found", raw: {} };
 
-  const paymentOrder = Array.isArray(payment.orders) ? payment.orders[0] : payment.orders;
-  if (!paymentOrder || typeof paymentOrder.amount !== "number") return { ok: false, error: "Payment not found", raw: {} };
+  // Look up the order amount explicitly instead of relying on a PostgREST
+  // embedded `orders!inner(amount)` relationship, which silently returns no
+  // rows → "Payment not found" — stranding orders as pending forever.
+  let orderAmount: number | null = null;
+  let orderStatus: string | null = null;
+  try {
+    const { data: order } = await supabase
+      .from("orders")
+      .select("amount,status")
+      .eq("id", payment.order_id)
+      .maybeSingle();
+    orderAmount = order && typeof order.amount === "number" ? (order.amount as number) : null;
+    orderStatus = order?.status ?? null;
+  } catch (e) {
+    const err = e instanceof Error ? e : new Error("Database error while looking up order");
+    console.error("[verifyPesapalPayment] Failed to look up order:", err.message, "order:", payment.order_id);
+    captureException(err, { tags: { rpc: "order_lookup" }, extra: { orderId: payment.order_id } });
+    return { ok: false, error: "Database error while looking up order", raw: {} };
+  }
+
+  if (orderAmount === null) return { ok: false, error: "Payment not found", raw: {} };
+
+  // Fast path: the order is already paid and has a token — return it without
+  // hammering the Pesapal API again (idempotent).
+  if (orderStatus === "paid" && payment.status === "completed") {
+    try {
+      const { data: existing } = await supabase
+        .from("downloads")
+        .select("token")
+        .eq("order_id", payment.order_id)
+        .limit(1)
+        .maybeSingle();
+      if (existing?.token) {
+        return { ok: true, downloadToken: existing.token as string, alreadyVerified: true };
+      }
+    } catch {
+      // fall through to the normal verification path
+    }
+  }
 
   let pesapalStatusPayload: unknown;
   try {
@@ -438,18 +500,11 @@ export async function verifyPesapalPayment(
     return { ok: false, error: "Pesapal tracking ID missing in response", raw: transactionStatus.raw };
   }
 
-  // Use rounded comparison to 2 decimal places to avoid floating-point drift
-  // (e.g. stored 1000.00 vs Pesapal returning 1000, or 0.3 vs 0.30000000000000004).
-  const roundedStored = Math.round(paymentOrder.amount * 100);
-  const roundedReturned = transactionStatus.amount !== null
-    ? Math.round(transactionStatus.amount * 100)
-    : null;
+  const completion = transactionStatus.paymentStatus?.toLowerCase() ?? "";
+  const isCompleted = completion === "completed";
+  const isTerminalFailure = TERMINAL_FAILED_STATUSES.has(completion);
 
-  if (roundedReturned === null || roundedReturned !== roundedStored) {
-    return { ok: false, error: "Pesapal amount mismatch", raw: transactionStatus.raw };
-  }
-
-  if (!isPesapalPaymentCompleted(transactionStatus.raw)) {
+  async function markPaymentFailed() {
     try {
       await supabase.rpc("fail_pesapal_payment", {
         payment_merchant_reference: merchantReference,
@@ -458,6 +513,32 @@ export async function verifyPesapalPayment(
     } catch (e) {
       console.error("[verifyPesapalPayment] fail_pesapal_payment RPC failed:", e instanceof Error ? e.message : e, "ref:", merchantReference);
     }
+  }
+
+  if (isCompleted) {
+    // Use rounded comparison to 2 decimal places to avoid floating-point drift
+    // (e.g. stored 1000.00 vs Pesapal returning 1000, or 0.3 vs 0.30000000000000004).
+    const roundedStored = Math.round(orderAmount * 100);
+    const roundedReturned = transactionStatus.amount !== null
+      ? Math.round(transactionStatus.amount * 100)
+      : null;
+
+    if (roundedReturned === null) {
+      // Completed but no amount returned — treat as transient so the webhook
+      // retries instead of stranding the order at pending.
+      return { ok: false, error: "Pesapal amount missing in response", raw: transactionStatus.raw };
+    }
+
+    if (roundedReturned !== roundedStored) {
+      await markPaymentFailed();
+      return { ok: false, error: "Pesapal amount mismatch", raw: transactionStatus.raw };
+    }
+  } else if (isTerminalFailure) {
+    await markPaymentFailed();
+    return { ok: false, error: "Payment is not completed", raw: transactionStatus.raw };
+  } else {
+    // PENDING / unknown: the order must stay pending (never fail an order
+    // that is simply still in progress).
     return { ok: false, error: "Payment is not completed", raw: transactionStatus.raw };
   }
 
@@ -508,6 +589,52 @@ export async function verifyPesapalPayment(
   // inside finalize_pesapal_payment and processed by the cron email processor.
 
   return { ok: true, downloadToken: result.download_token ?? "", alreadyVerified: result.already_processed };
+}
+
+export type IpnProcessResult =
+  | { action: "ignored"; reason: string }
+  | { action: "finalized"; alreadyProcessed: boolean }
+  | { action: "transaction_failed" }
+  | { action: "need_retry"; error: string };
+
+/**
+ * Single shared IPN handler used by both webhook routes (`/api/webhooks/pesapal`
+ * and `/api/pesapal/ipn`).
+ *
+ * Return values map to HTTP statuses at the route layer:
+ *  - ignored           → 200 — permanently ignorable payload
+ *  - finalized         → 200 — payment processed (or already processed)
+ *  - transaction_failed→ 200 — seller/payment is definitively not completed
+ *  - need_retry        → 503 — transient failure; Pesapal SHOULD retry
+ */
+export async function processPesapalIpn(input: {
+  supabase: SupabaseClient;
+  merchantReference: string | null;
+  trackingId: string | null;
+}): Promise<IpnProcessResult> {
+  const { supabase, merchantReference, trackingId } = input;
+
+  if (!merchantReference || !trackingId) {
+    console.warn("[processPesapalIpn] Missing merchantReference or trackingId — ignoring");
+    return { action: "ignored", reason: "Missing merchantReference or trackingId" };
+  }
+
+  const result = await verifyPesapalPayment(supabase, merchantReference, trackingId);
+
+  if (result.ok) {
+    return { action: "finalized", alreadyProcessed: result.alreadyVerified };
+  }
+
+  // "Payment is not completed" is a stable terminal/pending state (the two
+  // are differentiated by whether fail_pesapal_payment already ran). Nothing
+  // to gain from retrying now — Pesapal sends a new IPN on status change.
+  if (result.error === "Payment is not completed" || !isTransientPaymentError(result.error)) {
+    console.warn("[processPesapalIpn] Payment not finalized (permanent):", result.error, "ref:", merchantReference);
+    return { action: "transaction_failed" };
+  }
+
+  console.warn("[processPesapalIpn] Transient failure — requesting retry:", result.error, "ref:", merchantReference);
+  return { action: "need_retry", error: result.error };
 }
 
 export async function sendOrderConfirmationEmail(

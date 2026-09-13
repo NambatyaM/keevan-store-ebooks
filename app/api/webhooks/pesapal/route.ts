@@ -1,70 +1,106 @@
 import { NextRequest } from "next/server";
 import { json, withOptionalCsrf } from "@/lib/api";
+import { processPesapalIpn } from "@/lib/pesapal";
+import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
-import { normalizePesapalStatus, verifyPesapalPayment } from "@/lib/pesapal";
-import { getSupabaseAdminClient } from "@/lib/supabase";
+export const dynamic = "force-dynamic";
 
-export const POST = withOptionalCsrf(async (request: NextRequest) => {
-  // --- 1. IPN ID authentication ---
-  // Validate the IPN ID if configured. If it doesn't match, log and return 200
-  // to avoid Pesapal retrying indefinitely with a spoofed/wrong notification.
-  const expectedIpnId = process.env.PESAPAL_IPN_ID;
-  const receivedIpnId = request.nextUrl.searchParams.get("ipn_id") ?? "";
-  if (expectedIpnId && receivedIpnId !== expectedIpnId) {
+function extractIpnFields(
+  params: URLSearchParams,
+  body: Record<string, unknown>
+): { trackingId: string | null; merchantReference: string | null } {
+  const get = (name: string) => params.get(name)?.trim() ?? "";
+
+  const trackingId =
+    get("OrderTrackingId") ||
+    get("order_tracking_id") ||
+    (typeof body.OrderTrackingId === "string" ? String(body.OrderTrackingId).trim() : "") ||
+    (typeof body.order_tracking_id === "string" ? String(body.order_tracking_id).trim() : "") ||
+    (typeof body.tracking_id === "string" ? String(body.tracking_id).trim() : "");
+
+  const merchantReference =
+    get("OrderMerchantReference") ||
+    get("order_merchant_reference") ||
+    (typeof body.OrderMerchantReference === "string" ? String(body.OrderMerchantReference).trim() : "") ||
+    (typeof body.order_merchant_reference === "string" ? String(body.order_merchant_reference).trim() : "") ||
+    (typeof body.merchant_reference === "string" ? String(body.merchant_reference).trim() : "");
+
+  return {
+    trackingId: trackingId || null,
+    merchantReference: merchantReference || null,
+  };
+}
+
+async function handlePesapalIpn(request: NextRequest) {
+  // --- IPN ID is an identifier, not a secret. The real security check is the
+  // server-side re-verification against Pesapal inside processPesapalIpn —
+  // a spoofed notification can never pass it. So a missing/mismatched ipn_id
+  // is logged but NOT fatal (Pesapal sends it in the query string for GET IPNs
+  // and in the body for POST IPNs — rejecting based on only one of those was
+  // silently dropping real notifications).
+  let body: Record<string, unknown> = {};
+  let invalidJson = false;
+  if (request.method === "POST") {
+    try {
+      body = (await request.json()) as Record<string, unknown>;
+    } catch {
+      invalidJson = true;
+    }
+  }
+
+  const queryIpnId = request.nextUrl.searchParams.get("ipn_id")?.trim() ?? "";
+  const bodyIpnId = typeof body.ipn_id === "string" ? String(body.ipn_id).trim() : "";
+  const receivedIpnId = queryIpnId || bodyIpnId;
+  const expectedIpnId = process.env.PESAPAL_IPN_ID?.trim() ?? "";
+
+  if (expectedIpnId && receivedIpnId && receivedIpnId !== expectedIpnId) {
     console.warn("[PesapalIPN] IPN ID mismatch — received:", receivedIpnId, "expected:", expectedIpnId);
-    // Return 200 so Pesapal stops retrying; we've logged the suspicious request.
-    return json({ ok: true });
   }
 
-  // --- 2. Parse body — malformed JSON must never return 500 or 4xx ---
-  // Pesapal retries on any non-200 response, so always return 200 after logging.
-  let rawPayload: unknown;
-  try {
-    rawPayload = await request.json();
-  } catch {
-    console.warn("[PesapalIPN] Malformed JSON body — ignoring");
-    return json({ ok: true });
+  // Malformed JSON in a POST body. Returning 400 makes Pesapal retry, but a
+  // permanently malformed payload would loop forever — so log and accept.
+  if (invalidJson) {
+    console.warn("[PesapalIPN] POST body was not valid JSON — ignoring", String(request.body ?? ""));
+    return json({ ok: true, ignored: "malformed_json" });
   }
 
-  // --- 3. Normalize the notification payload ---
-  const normalized = normalizePesapalStatus(rawPayload);
+  const { trackingId, merchantReference } = extractIpnFields(request.nextUrl.searchParams, body);
 
-  if (!normalized.merchantReference || !normalized.trackingId) {
-    // Not enough info to look up the payment — log and return 200.
-    console.warn("[PesapalIPN] Missing merchantReference or trackingId in payload", JSON.stringify(rawPayload));
-    return json({ ok: true });
+  if (!merchantReference || !trackingId) {
+    console.warn("[PesapalIPN] Missing tracking/merchant reference — ignoring", JSON.stringify(body));
+    return json({ ok: true, ignored: "missing_reference" });
   }
 
-  // --- 4. Verify and finalize the payment ---
-  // Any error inside verifyPesapalPayment (network, DB, etc.) must NOT surface as
-  // a 4xx/5xx — Pesapal would retry endlessly. Catch and return 200 instead.
-  let finalized = false;
-  let alreadyVerified = false;
   try {
     const supabase = getSupabaseAdminClient();
-    const result = await verifyPesapalPayment(
-      supabase,
-      normalized.merchantReference,
-      normalized.trackingId
-    );
+    const outcome = await processPesapalIpn({ supabase, merchantReference, trackingId });
 
-    if (result.ok) {
-      finalized = true;
-      alreadyVerified = result.alreadyVerified;
-    } else {
-      // Log failures (amount mismatch, payment not found, etc.) but still return 200.
-      console.error("[PesapalIPN] verifyPesapalPayment failed:", result.error, "ref:", normalized.merchantReference);
+    if (outcome.action === "need_retry") {
+      // Transient failure (Pesapal API timeout, DB hiccup, etc.). Return 5xx
+      // so Pesapal retries — this is what keeps paid orders from getting
+      // stranded at "pending" after a single transient error.
+      console.warn("[PesapalIPN] Transient verification failure — returning 503 for retry:", outcome.error, "ref:", merchantReference);
+      return json({ ok: false, error: outcome.error }, { status: 503 });
     }
+
+    if (outcome.action === "ignored") {
+      return json({ ok: true, ignored: outcome.reason });
+    }
+
+    return json({
+      ok: true,
+      finalized: outcome.action === "finalized",
+      alreadyVerified: outcome.action === "finalized" ? outcome.alreadyProcessed : false,
+      outcome: outcome.action,
+    });
   } catch (err) {
-    // Unexpected error (network timeout, DB unavailable, etc.) — log and return 200.
-    console.error("[PesapalIPN] Unexpected error during payment verification:", err, "ref:", normalized.merchantReference);
+    // Unexpected error → 500 so Pesapal retries instead of stranding the order.
+    console.error("[PesapalIPN] Unexpected error during payment verification:", err, "ref:", merchantReference);
+    return json({ ok: false, error: "internal_error" }, { status: 500 });
   }
+}
 
-  // Note: order confirmation email is enqueued automatically by the DB trigger
-  // `trg_enqueue_order_confirmation` which fires on orders.status: pending → paid
-  // inside finalize_pesapal_payment. No manual enqueue needed here.
-
-  return json({ ok: true, finalized, alreadyVerified });
-});
+export const GET = withOptionalCsrf(handlePesapalIpn);
+export const POST = withOptionalCsrf(handlePesapalIpn);

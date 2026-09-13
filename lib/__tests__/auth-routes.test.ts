@@ -29,6 +29,10 @@ vi.mock("@/lib/supabase-server", () => ({
   applyPendingCookies: vi.fn((_req, res) => Promise.resolve(res)),
 }));
 
+vi.mock("@/lib/email", () => ({
+  sendEmail: vi.fn().mockResolvedValue({ ok: true }),
+}));
+
 function mockFromChain(data: unknown, error: unknown = null) {
   const eq = vi.fn(() => chain);
   const resolveValue = { data, error };
@@ -386,16 +390,31 @@ describe("POST /api/auth/reset-password", () => {
     expect(res.status).toBe(422);
   });
 
-  it("returns 400 when supabase returns error", async () => {
-    mockResetPasswordForEmail.mockResolvedValue({ error: new Error("User not found") });
+  it("returns 200 when user is not found (prevents email enumeration)", async () => {
+    const { sendEmail } = await import("@/lib/email");
+    (sendEmail as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: true });
     const POST = await importResetPassword();
     const res = await POST(makeRequest("/api/auth/reset-password", {
       body: JSON.stringify({ email: "missing@test.com" }),
     }));
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+  });
+
+  it("returns 500 when the reset email cannot be sent", async () => {
+    const { sendEmail } = await import("@/lib/email");
+    (sendEmail as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: false, error: "Resend API key is not configured" });
+    const POST = await importResetPassword();
+    const res = await POST(makeRequest("/api/auth/reset-password", {
+      body: JSON.stringify({ email: "user@test.com" }),
+    }));
+    expect(res.status).toBe(500);
   });
 
   it("returns 200 even when env vars are missing (mocked supabase)", async () => {
+    const { sendEmail } = await import("@/lib/email");
+    (sendEmail as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: true });
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
     const POST = await importResetPassword();
     const res = await POST(makeRequest("/api/auth/reset-password", {

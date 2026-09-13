@@ -31,6 +31,34 @@ function createFromChain(data: unknown, error: unknown = null) {
   return chain;
 }
 
+// verifyPesapalPayment now performs explicit two-step lookups:
+//   from("payments").select(...).eq(...).maybeSingle()
+//   from("orders").select(...).eq(...).maybeSingle()
+function makeVerifySupabase(
+  payment: unknown,
+  order: unknown,
+  overrides: Record<string, unknown> = {}
+) {
+  return {
+    from: vi.fn((table: string) => {
+      const dataMap: Record<string, unknown> = { payments: payment, orders: order };
+      const chain: Record<string, vi.Mock> = {} as never;
+      const select = vi.fn(() => chain);
+      const eq = vi.fn(() => chain);
+      const limit = vi.fn(() => chain);
+      const maybeSingle = vi.fn().mockResolvedValue({
+        data: table in dataMap ? dataMap[table] : null,
+        error: null,
+      });
+      Object.assign(chain, { select, eq, limit, maybeSingle });
+      return chain;
+    }),
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    ...overrides,
+  } as never;
+}
+
 function makeMockSupabase(overrides: Record<string, unknown> = {}) {
   const authGetUser = overrides.authGetUser ?? vi.fn().mockResolvedValue({ data: { user: null }, error: null });
   const profileData = overrides.profileData ?? null;
@@ -492,24 +520,10 @@ describe("Payment Security", () => {
       payment_status_description: "Completed",
     };
 
-    const mockSupabaseLocal = {
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                id: "pay-1",
-                merchant_reference: "REF-001",
-                order_id: "order-1",
-                orders: [{ amount: 50000 }],
-              },
-              error: null,
-            }),
-          })),
-        })),
-      })),
-      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
-    } as never;
+    const mockSupabaseLocal = makeVerifySupabase(
+      { id: "pay-1", order_id: "order-1", status: "pending" },
+      { amount: 50000, status: "pending" }
+    );
 
     const result = await verifyPesapalPayment(mockSupabaseLocal, "REF-001", "TRK-001");
     expect(result.ok).toBe(false);
@@ -524,24 +538,10 @@ describe("Payment Security", () => {
       payment_status_description: "Completed",
     };
 
-    const mockSupabaseLocal = {
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                id: "pay-1",
-                merchant_reference: "REF-001",
-                order_id: "order-1",
-                orders: [{ amount: 50000 }],
-              },
-              error: null,
-            }),
-          })),
-        })),
-      })),
-      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
-    } as never;
+    const mockSupabaseLocal = makeVerifySupabase(
+      { id: "pay-1", order_id: "order-1", status: "pending" },
+      { amount: 50000, status: "pending" }
+    );
 
     const result = await verifyPesapalPayment(mockSupabaseLocal, "REF-001", "TRK-001");
     expect(result.ok).toBe(false);
@@ -556,24 +556,10 @@ describe("Payment Security", () => {
       payment_status_description: "PENDING",
     };
 
-    const mockSupabaseLocal = {
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                id: "pay-1",
-                merchant_reference: "REF-001",
-                order_id: "order-1",
-                orders: [{ amount: 50000 }],
-              },
-              error: null,
-            }),
-          })),
-        })),
-      })),
-      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
-    } as never;
+    const mockSupabaseLocal = makeVerifySupabase(
+      { id: "pay-1", order_id: "order-1", status: "pending" },
+      { amount: 50000, status: "pending" }
+    );
 
     const result = await verifyPesapalPayment(mockSupabaseLocal, "REF-001", "TRK-001");
     expect(result.ok).toBe(false);
@@ -581,16 +567,7 @@ describe("Payment Security", () => {
   });
 
   it("verifyPesapalPayment rejects payment not found", async () => {
-    const mockSupabaseLocal = {
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({ data: null, error: null }),
-          })),
-        })),
-      })),
-      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
-    } as never;
+    const mockSupabaseLocal = makeVerifySupabase(null, null);
 
     const result = await verifyPesapalPayment(mockSupabaseLocal, "NONEXISTENT", "TRK-001");
     expect(result.ok).toBe(false);
@@ -605,24 +582,10 @@ describe("Payment Security", () => {
       payment_status_description: "Completed",
     };
 
-    const mockSupabaseLocal = {
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                id: "pay-1",
-                merchant_reference: "REF-001",
-                order_id: "order-1",
-                orders: [{ amount: 50000 }],
-              },
-              error: null,
-            }),
-          })),
-        })),
-      })),
-      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
-    } as never;
+    const mockSupabaseLocal = makeVerifySupabase(
+      { id: "pay-1", order_id: "order-1", status: "pending" },
+      { amount: 50000, status: "pending" }
+    );
 
     const result = await verifyPesapalPayment(mockSupabaseLocal, "REF-001", "TRK-001");
     expect(result.ok).toBe(false);
@@ -1219,28 +1182,16 @@ describe("Download Token Security", () => {
       payment_status_description: "Completed",
     };
 
-    const mockSupabaseLocal = {
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                id: "pay-1",
-                merchant_reference: "REF-001",
-                order_id: "order-1",
-                orders: [{ amount: 50000 }],
-              },
-              error: null,
-            }),
-          })),
-        })),
-        insert: vi.fn().mockResolvedValue({ data: null, error: null }),
-      })),
-      rpc: vi.fn().mockResolvedValue({
-        data: { ok: true, download_token: "secure-dl-token-abc123", already_processed: false, product_id: "prod-1", order_id: "order-1" },
-        error: null,
-      }),
-    } as never;
+    const mockSupabaseLocal = makeVerifySupabase(
+      { id: "pay-1", order_id: "order-1", status: "pending" },
+      { amount: 50000, status: "pending" },
+      {
+        rpc: vi.fn().mockResolvedValue({
+          data: { ok: true, download_token: "secure-dl-token-abc123", already_processed: false, product_id: "prod-1", order_id: "order-1" },
+          error: null,
+        }),
+      }
+    );
 
     const result = await verifyPesapalPayment(mockSupabaseLocal, "REF-001", "TRK-001");
     expect(result.ok).toBe(true);
@@ -1258,27 +1209,16 @@ describe("Download Token Security", () => {
       payment_status_description: "Completed",
     };
 
-    const mockSupabaseLocal = {
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                id: "pay-1",
-                merchant_reference: "REF-001",
-                order_id: "order-1",
-                orders: [{ amount: 50000 }],
-              },
-              error: null,
-            }),
-          })),
-        })),
-      })),
-      rpc: vi.fn().mockResolvedValue({
-        data: { ok: true, download_token: "existing-token", already_processed: true, product_id: null, order_id: "order-1" },
-        error: null,
-      }),
-    } as never;
+    const mockSupabaseLocal = makeVerifySupabase(
+      { id: "pay-1", order_id: "order-1", status: "pending" },
+      { amount: 50000, status: "pending" },
+      {
+        rpc: vi.fn().mockResolvedValue({
+          data: { ok: true, download_token: "existing-token", already_processed: true, product_id: null, order_id: "order-1" },
+          error: null,
+        }),
+      }
+    );
 
     const result = await verifyPesapalPayment(mockSupabaseLocal, "REF-001", "TRK-001");
     expect(result.ok).toBe(true);

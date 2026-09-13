@@ -4,7 +4,11 @@ import { NextRequest } from "next/server";
 const mockSupabase = {
   rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
   from: vi.fn(() => ({
-    update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ data: null, error: null }) })),
+    update: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        lt: vi.fn().mockResolvedValue({ data: null, error: null }),
+      })),
+    })),
     maybeSingle: vi.fn().mockResolvedValue({ data: { count: 5 }, error: null }),
   })),
   auth: {

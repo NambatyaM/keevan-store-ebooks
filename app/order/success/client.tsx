@@ -62,7 +62,6 @@ function OrderSuccessContent() {
 
   const confirm = useCallback(async () => {
     if (!orderId) { setState("error"); setErrorMsg("No order ID provided."); return; }
-    if (!trackingId) { setState("error"); setErrorMsg("No payment tracking ID found in URL."); return; }
 
     setState("confirming");
 

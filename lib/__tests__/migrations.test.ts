@@ -13,9 +13,9 @@ function listMigrations(): string[] {
 }
 
 describe("Migration files", () => {
-  it("all 30 migrations exist and are in order", () => {
+  it("all migrations exist and are in order", () => {
     const migrations = listMigrations();
-    expect(migrations).toHaveLength(30);
+    expect(migrations.length).toBeGreaterThanOrEqual(36);
     expect(migrations[0]).toBe("001_initial_schema.sql");
     expect(migrations[19]).toBe("020_fix_currency_constraint_and_production_issues.sql");
     expect(migrations[20]).toBe("021_fix_product_slug_uniqueness.sql");
@@ -28,6 +28,12 @@ describe("Migration files", () => {
     expect(migrations[27]).toBe("028_inline_set_config_in_finalize_pesapal.sql");
     expect(migrations[28]).toBe("029_fix_email_triggers_and_add_creator_order_email.sql");
     expect(migrations[29]).toBe("030_fix_reserve_withdrawal_auth_uid.sql");
+    expect(migrations[29 + 1]).toBe("031_store_avatar.sql");
+    expect(migrations[29 + 2]).toBe("032_password_reset_tokens.sql");
+    expect(migrations[29 + 3]).toBe("033_fix_email_queue_updated_at.sql");
+    expect(migrations[29 + 4]).toBe("034_fix_creator_sale_email_currency.sql");
+    expect(migrations[29 + 5]).toBe("035_increase_cover_image_size_limit.sql");
+    expect(migrations[29 + 6]).toBe("036_fix_pending_order_finalization.sql");
   });
 
   it("each migration has a sequential number prefix", () => {
